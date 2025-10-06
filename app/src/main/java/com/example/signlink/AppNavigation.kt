@@ -3,24 +3,18 @@ package com.example.signlink
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.unit.dp
 import com.example.signlink.screens.onboarding.OnboardingScreen
-import com.example.signlink.ui.theme.SignLinkTeal
+import com.example.signlink.screens.SplashScreen
 import com.google.accompanist.navigation.animation.composable
-import kotlinx.coroutines.delay
 
 object Destinations {
     const val SPLASH_SCREEN = "splash_screen"
@@ -63,28 +57,6 @@ fun AppNavHost() {
         composable(Destinations.HOME_SCREEN) {
             HomeScreen()
         }
-    }
-}
-
-@Composable
-fun SplashScreen(onTimeout: () -> Unit) {
-    LaunchedEffect(Unit) {
-        delay(3000L)
-        onTimeout()
-    }
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(SignLinkTeal),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Image(
-            painter = painterResource(id = R.drawable.putih_logo),
-            contentDescription = "SignLink Logo",
-            modifier = Modifier.size(200.dp)
-        )
     }
 }
 
