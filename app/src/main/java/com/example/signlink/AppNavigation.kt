@@ -81,7 +81,7 @@ fun SplashScreen(onTimeout: () -> Unit) {
         verticalArrangement = Arrangement.Center
     ) {
         Image(
-            painter = painterResource(id = R.drawable.hitam_logo),
+            painter = painterResource(id = R.drawable.putih_logo),
             contentDescription = "SignLink Logo",
             modifier = Modifier.size(200.dp)
         )
