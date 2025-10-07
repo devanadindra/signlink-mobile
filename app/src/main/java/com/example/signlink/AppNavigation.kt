@@ -14,11 +14,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import com.example.signlink.screens.onboarding.OnboardingScreen
 import com.example.signlink.screens.SplashScreen
+import com.example.signlink.screens.OpeningScreen
 import com.google.accompanist.navigation.animation.composable
 
 object Destinations {
     const val SPLASH_SCREEN = "splash_screen"
     const val ONBOARDING = "onboarding_screen"
+    const val OPENING_SCREEN = "opening_screen"
     const val HOME_SCREEN = "home_screen"
 }
 
@@ -45,15 +47,21 @@ fun AppNavHost() {
             OnboardingScreen(
                 onFinishClicked = {
                     navController.popBackStack()
-                    navController.navigate(Destinations.HOME_SCREEN)
+                    navController.navigate(Destinations.OPENING_SCREEN)
                 },
                 onSkipClicked = {
                     navController.popBackStack()
-                    navController.navigate(Destinations.HOME_SCREEN)
+                    navController.navigate(Destinations.OPENING_SCREEN)
                 }
             )
         }
 
+        composable(Destinations.OPENING_SCREEN) {
+            OpeningScreen(
+                onLoginClicked = {},
+                onSignUpClicked = {}
+            )
+        }
         composable(Destinations.HOME_SCREEN) {
             HomeScreen()
         }
