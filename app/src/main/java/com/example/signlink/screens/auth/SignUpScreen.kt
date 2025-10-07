@@ -24,27 +24,20 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.signlink.R
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Checkbox
-import androidx.compose.material3.CheckboxDefaults
-import androidx.compose.material3.Text
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.Icon
 import com.example.signlink.ui.theme.SignLinkTeal
 import com.example.signlink.ui.theme.DarkText
 
 @Composable
-fun LoginScreen(
-    onLoginSuccess: () -> Unit,
-    onSignUpClicked: () -> Unit,
-    onForgotPasswordClicked: () -> Unit
+fun SignUpScreen(
+    onSignUpSuccess: () -> Unit,
+    onLoginClicked: () -> Unit
 ) {
+    var fullName by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var confirmPassword by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
-    var rememberMe by remember { mutableStateOf(false) }
+    var confirmPasswordVisible by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -55,7 +48,7 @@ fun LoginScreen(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
 
-        Spacer(modifier = Modifier.height(74.dp))
+        Spacer(modifier = Modifier.height(64.dp))
 
         Image(
             painter = painterResource(id = R.drawable.signlink_logo),
@@ -63,17 +56,40 @@ fun LoginScreen(
             modifier = Modifier.size(80.dp)
         )
 
+
         Text(
-            text = "Selamat Datang Kembali!",
+            text = "Selamat Datang!",
             fontSize = 24.sp,
             fontWeight = FontWeight.Bold,
             color = DarkText,
             textAlign = TextAlign.Center
         )
 
-        Spacer(modifier = Modifier.height(40.dp))
+        Spacer(modifier = Modifier.height(20.dp))
 
-        Text(text = "Email", modifier = Modifier.fillMaxWidth(), color = DarkText, fontWeight = FontWeight.Medium)
+        Text(text = "Nama Lengkap", modifier = Modifier.fillMaxWidth(), fontWeight = FontWeight.Medium, color = DarkText)
+        Spacer(modifier = Modifier.height(8.dp))
+        OutlinedTextField(
+            value = fullName,
+            onValueChange = { fullName = it },
+            placeholder = { Text("Masukkan nama lengkap") },
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true,
+            shape = RoundedCornerShape(50),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedTextColor = Color.Black,
+                unfocusedTextColor = Color.Black,
+                focusedBorderColor = SignLinkTeal,
+                unfocusedBorderColor = Color.LightGray,
+                disabledContainerColor = Color(0xFFF0F0F0),
+                unfocusedPlaceholderColor = Color.Gray,
+                focusedPlaceholderColor = Color.Gray
+            )
+        )
+
+        Spacer(modifier = Modifier.height(14.dp))
+
+        Text(text = "Email", modifier = Modifier.fillMaxWidth(), fontWeight = FontWeight.Medium, color = DarkText)
         Spacer(modifier = Modifier.height(8.dp))
         OutlinedTextField(
             value = email,
@@ -81,18 +97,21 @@ fun LoginScreen(
             placeholder = { Text("Masukkan email") },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
-            shape = RoundedCornerShape(32.dp),
+            shape = RoundedCornerShape(50),
             colors = OutlinedTextFieldDefaults.colors(
                 focusedTextColor = Color.Black,
                 unfocusedTextColor = Color.Black,
                 focusedBorderColor = SignLinkTeal,
-                unfocusedBorderColor = Color.LightGray
+                unfocusedBorderColor = Color.LightGray,
+                disabledContainerColor = Color(0xFFF0F0F0),
+                unfocusedPlaceholderColor = Color.Gray,
+                focusedPlaceholderColor = Color.Gray
             )
         )
 
         Spacer(modifier = Modifier.height(14.dp))
 
-        Text(text = "Password", modifier = Modifier.fillMaxWidth(), color = DarkText, fontWeight = FontWeight.Medium)
+        Text(text = "Password", modifier = Modifier.fillMaxWidth(), fontWeight = FontWeight.Medium, color = DarkText)
         Spacer(modifier = Modifier.height(8.dp))
         OutlinedTextField(
             value = password,
@@ -107,53 +126,61 @@ fun LoginScreen(
                     Icon(imageVector = image, contentDescription = "Toggle password visibility")
                 }
             },
-            shape = RoundedCornerShape(32.dp),
+            shape = RoundedCornerShape(50),
             colors = OutlinedTextFieldDefaults.colors(
                 focusedTextColor = Color.Black,
                 unfocusedTextColor = Color.Black,
                 focusedBorderColor = SignLinkTeal,
-                unfocusedBorderColor = Color.LightGray
+                unfocusedBorderColor = Color.LightGray,
+                disabledContainerColor = Color(0xFFF0F0F0),
+                unfocusedPlaceholderColor = Color.Gray,
+                focusedPlaceholderColor = Color.Gray
             )
         )
 
-        Spacer(modifier = Modifier.height(10.dp))
+        Spacer(modifier = Modifier.height(14.dp))
 
-        Row(
+        Text(text = "Konfirmasi Password", modifier = Modifier.fillMaxWidth(), fontWeight = FontWeight.Medium, color = DarkText)
+        Spacer(modifier = Modifier.height(8.dp))
+        OutlinedTextField(
+            value = confirmPassword,
+            onValueChange = { confirmPassword = it },
+            placeholder = { Text("Masukkan password") },
             modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Checkbox(
-                    checked = rememberMe,
-                    onCheckedChange = { rememberMe = it },
-                    colors = CheckboxDefaults.colors(checkedColor = SignLinkTeal)
-                )
-                Text("Ingat Saya", fontSize = 14.sp, color = DarkText)
-            }
-            Text(
-                text = "Lupa Kata Sandi?",
-                fontSize = 14.sp,
-                color = SignLinkTeal,
-                fontWeight = FontWeight.SemiBold,
-                modifier = Modifier.clickable(onClick = onForgotPasswordClicked)
+            singleLine = true,
+            visualTransformation = if (confirmPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+            trailingIcon = {
+                val image = if (confirmPasswordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
+                IconButton(onClick = { confirmPasswordVisible = !confirmPasswordVisible }) {
+                    Icon(imageVector = image, contentDescription = "Toggle password visibility")
+                }
+            },
+            shape = RoundedCornerShape(50),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedTextColor = Color.Black,
+                unfocusedTextColor = Color.Black,
+                focusedBorderColor = SignLinkTeal,
+                unfocusedBorderColor = Color.LightGray,
+                disabledContainerColor = Color(0xFFF0F0F0),
+                unfocusedPlaceholderColor = Color.Gray,
+                focusedPlaceholderColor = Color.Gray
             )
-        }
+        )
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(20.dp))
 
         Button(
-            onClick = onLoginSuccess,
+            onClick = onSignUpSuccess,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(56.dp),
             colors = ButtonDefaults.buttonColors(containerColor = SignLinkTeal),
-            shape = RoundedCornerShape(32.dp)
+            shape = RoundedCornerShape(50)
         ) {
-            Text("Masuk", fontSize = 18.sp, fontWeight = FontWeight.SemiBold, color = Color.White)
+            Text("Daftar", fontSize = 18.sp, fontWeight = FontWeight.SemiBold, color = Color.White)
         }
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(4.dp))
 
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -172,16 +199,16 @@ fun LoginScreen(
             )
         }
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(4.dp))
 
         OutlinedButton(
             onClick = { /* Handle Google Login */ },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(56.dp)
-                .border(1.dp, Color.LightGray, RoundedCornerShape(32.dp)),
-            colors = ButtonDefaults.outlinedButtonColors(contentColor = DarkText),
-            shape = RoundedCornerShape(32.dp)
+                .border(1.dp, Color.LightGray, RoundedCornerShape(50)),
+            colors = ButtonDefaults.outlinedButtonColors(contentColor = DarkText, containerColor = Color.White),
+            shape = RoundedCornerShape(50)
         ) {
             Image(
                 painter = painterResource(id = R.drawable.google),
@@ -198,13 +225,13 @@ fun LoginScreen(
             horizontalArrangement = Arrangement.Center,
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text("Belum memiliki akun? ", color = Color.Gray, fontSize = 16.sp)
+            Text("Sudah memiliki akun? ", color = Color.Gray, fontSize = 16.sp)
             Text(
-                text = "Daftar",
+                text = "masuk",
                 color = SignLinkTeal,
                 fontSize = 16.sp,
                 fontWeight = FontWeight.SemiBold,
-                modifier = Modifier.clickable(onClick = onSignUpClicked)
+                modifier = Modifier.clickable(onClick = onLoginClicked)
             )
         }
 

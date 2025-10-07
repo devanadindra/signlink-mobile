@@ -15,12 +15,16 @@ import androidx.compose.ui.graphics.Color
 import com.example.signlink.screens.onboarding.OnboardingScreen
 import com.example.signlink.screens.SplashScreen
 import com.example.signlink.screens.OpeningScreen
+import com.example.signlink.screens.auth.LoginScreen
+import com.example.signlink.screens.auth.SignUpScreen
 import com.google.accompanist.navigation.animation.composable
 
 object Destinations {
     const val SPLASH_SCREEN = "splash_screen"
     const val ONBOARDING = "onboarding_screen"
     const val OPENING_SCREEN = "opening_screen"
+    const val LOGIN_SCREEN = "login_screen"
+    const val SIGNUP_SCREEN = "signup_screen"
     const val HOME_SCREEN = "home_screen"
 }
 
@@ -58,10 +62,31 @@ fun AppNavHost() {
 
         composable(Destinations.OPENING_SCREEN) {
             OpeningScreen(
-                onLoginClicked = {},
-                onSignUpClicked = {}
+                onLoginClicked = {navController.navigate(Destinations.LOGIN_SCREEN)},
+                onSignUpClicked = {navController.navigate(Destinations.SIGNUP_SCREEN)}
             )
         }
+        composable(Destinations.LOGIN_SCREEN) {
+            LoginScreen(
+                onLoginSuccess = {
+                    navController.popBackStack(Destinations.OPENING_SCREEN, inclusive = true)
+                    navController.navigate(Destinations.HOME_SCREEN)
+                },
+                onSignUpClicked = { navController.navigate(Destinations.SIGNUP_SCREEN) },
+                onForgotPasswordClicked = { }
+            )
+        }
+
+        composable(Destinations.SIGNUP_SCREEN) {
+            SignUpScreen(
+                onSignUpSuccess = {
+                    navController.popBackStack(Destinations.OPENING_SCREEN, inclusive = true)
+                    navController.navigate(Destinations.HOME_SCREEN)
+                },
+                onLoginClicked = { navController.navigate(Destinations.LOGIN_SCREEN) },
+            )
+        }
+
         composable(Destinations.HOME_SCREEN) {
             HomeScreen()
         }
