@@ -32,11 +32,19 @@ import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Icon
+import androidx.compose.ui.platform.LocalContext
 import com.example.signlink.ui.theme.SignLinkTeal
 import com.example.signlink.ui.theme.DarkText
+import com.example.signlink.viewmodel.AuthViewModel
+import kotlinx.coroutines.delay
+
+private fun isValidEmail(email: String): Boolean {
+    return android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()
+}
 
 @Composable
 fun LoginScreen(
+    viewModel: AuthViewModel,
     onLoginSuccess: () -> Unit,
     onSignUpClicked: () -> Unit,
     onForgotPasswordClicked: () -> Unit
@@ -45,6 +53,58 @@ fun LoginScreen(
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
     var rememberMe by remember { mutableStateOf(false) }
+
+    var emailError by remember { mutableStateOf<String?>(null) }
+    var passwordError by remember { mutableStateOf<String?>(null) }
+
+    // State baru untuk pesan sukses yang akan ditampilkan di UI
+    var successMessage by remember { mutableStateOf<String?>(null) }
+
+    val loginResult by viewModel.loginResult.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
+
+    fun validateForm(): Boolean {
+        var isValid = true
+
+        emailError = null
+        passwordError = null
+        successMessage = null
+
+        if (email.isBlank()) {
+            emailError = "Email tidak boleh kosong."
+            isValid = false
+        } else if (!isValidEmail(email)) {
+            emailError = "Format email tidak valid."
+            isValid = false
+        }
+
+        if (password.isBlank()) {
+            passwordError = "Password tidak boleh kosong."
+            isValid = false
+        } else if (password.length < 6) {
+            passwordError = "Password minimal 6 karakter."
+            isValid = false
+        }
+
+        return isValid
+    }
+
+    // --- LOGIC SIMULASI LOADING & NAVIGASI ---
+    LaunchedEffect(loginResult) {
+        // Cek hasil login dari ViewModel
+        loginResult?.let { result ->
+            if (result.contains("success", true)) {
+                // 1. Set pesan sukses
+                successMessage = "Berhasil Masuk! Selamat datang."
+
+                // 2. Tunda sebentar (simulasi loading lama/animasi sukses)
+                delay(2000L) // Menunda 2 detik (2000 milidetik)
+
+                // 3. Panggil navigasi sukses
+                onLoginSuccess()
+            }
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -73,30 +133,45 @@ fun LoginScreen(
 
         Spacer(modifier = Modifier.height(40.dp))
 
+        // --- EMAIL FIELD ---
         Text(text = "Email", modifier = Modifier.fillMaxWidth(), color = DarkText, fontWeight = FontWeight.Medium)
         Spacer(modifier = Modifier.height(8.dp))
         OutlinedTextField(
             value = email,
-            onValueChange = { email = it },
+            onValueChange = { email = it; emailError = null },
             placeholder = { Text("Masukkan email") },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
-            shape = RoundedCornerShape(32.dp),
+            isError = emailError != null,
+            shape = RoundedCornerShape(50),
             colors = OutlinedTextFieldDefaults.colors(
+                // Mengembalikan konfigurasi TextColor
                 focusedTextColor = Color.Black,
                 unfocusedTextColor = Color.Black,
+                // Menggunakan ContainerColor yang benar (jika ingin custom background)
+                focusedContainerColor = Color.White,
+                unfocusedContainerColor = Color.White,
+                errorContainerColor = Color.White,
                 focusedBorderColor = SignLinkTeal,
-                unfocusedBorderColor = Color.LightGray
+                unfocusedBorderColor = Color.LightGray,
+                errorBorderColor = Color.Red,
             )
         )
+        if (emailError != null) {
+            Text(text = emailError!!, color = Color.Red, style = MaterialTheme.typography.bodySmall,                 modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 16.dp),
+                textAlign = TextAlign.Start)
+        }
 
         Spacer(modifier = Modifier.height(14.dp))
 
+        // --- PASSWORD FIELD ---
         Text(text = "Password", modifier = Modifier.fillMaxWidth(), color = DarkText, fontWeight = FontWeight.Medium)
         Spacer(modifier = Modifier.height(8.dp))
         OutlinedTextField(
             value = password,
-            onValueChange = { password = it },
+            onValueChange = { password = it; passwordError = null },
             placeholder = { Text("Masukkan password") },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
@@ -107,17 +182,59 @@ fun LoginScreen(
                     Icon(imageVector = image, contentDescription = "Toggle password visibility")
                 }
             },
-            shape = RoundedCornerShape(32.dp),
+            isError = passwordError != null,
+            shape = RoundedCornerShape(50),
             colors = OutlinedTextFieldDefaults.colors(
+                // Mengembalikan konfigurasi TextColor
                 focusedTextColor = Color.Black,
                 unfocusedTextColor = Color.Black,
+                // Menggunakan ContainerColor yang benar (jika ingin custom background)
+                focusedContainerColor = Color.White,
+                unfocusedContainerColor = Color.White,
+                errorContainerColor = Color.White,
                 focusedBorderColor = SignLinkTeal,
-                unfocusedBorderColor = Color.LightGray
+                unfocusedBorderColor = Color.LightGray,
+                errorBorderColor = Color.Red,
             )
         )
+        if (passwordError != null) {
+            Text(text = passwordError!!, color = Color.Red, style = MaterialTheme.typography.bodySmall,                 modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 16.dp),
+                textAlign = TextAlign.Start)
+        }
+
+        // --- PESAN SUKSES (setelah berhasil login, sebelum navigasi) ---
+        if (successMessage != null) {
+            Text(
+                text = successMessage!!,
+                color = Color(0xFF4CAF50), // Warna hijau untuk sukses
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 10.dp),
+                textAlign = TextAlign.Center
+            )
+        }
+
+        // --- PESAN ERROR GLOBAL DARI VIEWMODEL (jika ada) ---
+        loginResult?.let {
+            if (!it.contains("success", true) && successMessage == null) {
+                Text(
+                    text = it,
+                    color = Color.Red,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 10.dp),
+                    textAlign = TextAlign.Center
+                )
+            }
+        }
 
         Spacer(modifier = Modifier.height(10.dp))
 
+        // --- REMEMBER ME & LUPA KATA SANDI ---
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
@@ -142,19 +259,42 @@ fun LoginScreen(
 
         Spacer(modifier = Modifier.height(12.dp))
 
+        // --- TOMBOL MASUK ---
+        val context = LocalContext.current
+
+        // Cek apakah sedang loading atau menampilkan pesan sukses
+        val showLoading = isLoading || (loginResult?.contains("success", true) == true && successMessage != null)
+
         Button(
-            onClick = onLoginSuccess,
+            onClick = {
+                // Hanya panggil login jika TIDAK sedang loading/menampilkan sukses
+                if (!showLoading && validateForm()) {
+                    viewModel.login(context, email, password)
+                }
+            },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(56.dp),
+            // Warna tombol tetap SignLinkTeal
             colors = ButtonDefaults.buttonColors(containerColor = SignLinkTeal),
-            shape = RoundedCornerShape(32.dp)
+            shape = RoundedCornerShape(50),
+            // Hapus 'enabled = ...' agar tombol tidak berubah menjadi abu-abu.
+            // Kita kontrol aksi klik di dalam 'onClick' di atas.
         ) {
-            Text("Masuk", fontSize = 18.sp, fontWeight = FontWeight.SemiBold, color = Color.White)
+            if (showLoading) {
+                // Tampilkan spinner saat loading atau setelah sukses (selama delay 2 detik)
+                CircularProgressIndicator(
+                    color = Color.White,
+                    modifier = Modifier.size(24.dp)
+                )
+            } else {
+                Text("Masuk", fontSize = 18.sp, fontWeight = FontWeight.SemiBold, color = Color.White)
+            }
         }
 
         Spacer(modifier = Modifier.height(24.dp))
 
+        // --- PEMISAH ATAU ---
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
@@ -174,15 +314,17 @@ fun LoginScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
 
+        // --- TOMBOL GOOGLE ---
         OutlinedButton(
             onClick = { /* Handle Google Login */ },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(56.dp)
-                .border(1.dp, Color.LightGray, RoundedCornerShape(32.dp)),
-            colors = ButtonDefaults.outlinedButtonColors(contentColor = DarkText),
-            shape = RoundedCornerShape(32.dp)
+                .border(1.dp, Color.LightGray, RoundedCornerShape(50)),
+            colors = ButtonDefaults.outlinedButtonColors(contentColor = DarkText, containerColor = Color.White),
+            shape = RoundedCornerShape(50)
         ) {
+            // Asumsi R.drawable.google_logo ada, jika tidak, ganti dengan R.drawable.google
             Image(
                 painter = painterResource(id = R.drawable.google),
                 contentDescription = "Google Logo",
@@ -194,6 +336,7 @@ fun LoginScreen(
 
         Spacer(modifier = Modifier.height(40.dp))
 
+        // --- LINK DAFTAR ---
         Row(
             horizontalArrangement = Arrangement.Center,
             modifier = Modifier.fillMaxWidth()

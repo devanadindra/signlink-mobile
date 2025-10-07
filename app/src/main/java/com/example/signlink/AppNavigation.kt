@@ -69,7 +69,9 @@ fun AppNavHost() {
             )
         }
         composable(Destinations.LOGIN_SCREEN) {
+            val viewModel: AuthViewModel = hiltViewModel()
             LoginScreen(
+                viewModel = viewModel,
                 onLoginSuccess = {
                     navController.popBackStack(Destinations.OPENING_SCREEN, inclusive = true)
                     navController.navigate(Destinations.HOME_SCREEN)
@@ -87,6 +89,7 @@ fun AppNavHost() {
                     navController.popBackStack(Destinations.OPENING_SCREEN, inclusive = true)
                     navController.navigate(Destinations.HOME_SCREEN)
                 },
+                onLoginFailed = { navController.navigate(Destinations.LOGIN_SCREEN) },
                 onLoginClicked = { navController.navigate(Destinations.LOGIN_SCREEN) }
             )
         }

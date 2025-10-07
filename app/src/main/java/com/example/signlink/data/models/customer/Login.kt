@@ -5,6 +5,12 @@ data class LoginRequest(
     val password: String
 )
 
+data class LoginData(
+    val token: String,
+    val expires: String,
+)
+
 data class LoginResponse(
-    val message: String
+    val data: LoginData?,
+    val errors: Any?
 )
