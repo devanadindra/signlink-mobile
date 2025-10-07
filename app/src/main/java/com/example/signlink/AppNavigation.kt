@@ -12,12 +12,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.signlink.screens.onboarding.OnboardingScreen
 import com.example.signlink.screens.SplashScreen
 import com.example.signlink.screens.OpeningScreen
 import com.example.signlink.screens.auth.LoginScreen
 import com.example.signlink.screens.auth.SignUpScreen
 import com.google.accompanist.navigation.animation.composable
+import com.example.signlink.viewmodel.AuthViewModel
 
 object Destinations {
     const val SPLASH_SCREEN = "splash_screen"
@@ -78,12 +80,14 @@ fun AppNavHost() {
         }
 
         composable(Destinations.SIGNUP_SCREEN) {
+            val viewModel: AuthViewModel = hiltViewModel()
             SignUpScreen(
+                viewModel = viewModel,
                 onSignUpSuccess = {
                     navController.popBackStack(Destinations.OPENING_SCREEN, inclusive = true)
                     navController.navigate(Destinations.HOME_SCREEN)
                 },
-                onLoginClicked = { navController.navigate(Destinations.LOGIN_SCREEN) },
+                onLoginClicked = { navController.navigate(Destinations.LOGIN_SCREEN) }
             )
         }
 

@@ -26,18 +26,90 @@ import androidx.compose.ui.unit.sp
 import com.example.signlink.R
 import com.example.signlink.ui.theme.SignLinkTeal
 import com.example.signlink.ui.theme.DarkText
+import com.example.signlink.viewmodel.AuthViewModel
+
+private fun isValidEmail(email: String): Boolean {
+    return android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()
+}
 
 @Composable
 fun SignUpScreen(
+    viewModel: AuthViewModel,
     onSignUpSuccess: () -> Unit,
     onLoginClicked: () -> Unit
 ) {
-    var fullName by remember { mutableStateOf("") }
+    // State Input
+    var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
     var confirmPasswordVisible by remember { mutableStateOf(false) }
+
+    // State Error Per Field
+    var nameError by remember { mutableStateOf<String?>(null) }
+    var emailError by remember { mutableStateOf<String?>(null) }
+    var passwordError by remember { mutableStateOf<String?>(null) }
+    var confirmPasswordError by remember { mutableStateOf<String?>(null) }
+
+    val registerResult by viewModel.registerResult.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
+
+    LaunchedEffect(password, confirmPassword) {
+        if (password != confirmPassword) {
+            confirmPasswordError = null
+        }
+    }
+
+    fun validateForm(): Boolean {
+        var isValid = true
+
+        if (name.isBlank()) {
+            nameError = "Nama lengkap tidak boleh kosong."
+            isValid = false
+        } else {
+            nameError = null
+        }
+
+        if (email.isBlank()) {
+            emailError = "Email tidak boleh kosong."
+            isValid = false
+        } else if (!isValidEmail(email)) {
+            emailError = "Format email tidak valid."
+            isValid = false
+        } else {
+            emailError = null
+        }
+
+        if (password.isBlank()) {
+            passwordError = "Password tidak boleh kosong."
+            isValid = false
+        } else if (password.length < 6) {
+            passwordError = "Password minimal 6 karakter."
+            isValid = false
+        } else {
+            passwordError = null
+        }
+
+        if (confirmPassword.isBlank()) {
+            confirmPasswordError = "Konfirmasi password tidak boleh kosong."
+            isValid = false
+        } else if (password != confirmPassword) {
+            confirmPasswordError = "Password tidak cocok."
+            isValid = false
+        } else {
+            confirmPasswordError = null
+        }
+
+        return isValid
+    }
+
+    val generalErrorMessage = if (passwordError == null && confirmPasswordError == null) {
+        registerResult
+    } else {
+        null
+    }
+
 
     Column(
         modifier = Modifier
@@ -47,16 +119,12 @@ fun SignUpScreen(
             .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-
         Spacer(modifier = Modifier.height(64.dp))
-
         Image(
             painter = painterResource(id = R.drawable.signlink_logo),
             contentDescription = "SignLink Logo",
             modifier = Modifier.size(80.dp)
         )
-
-
         Text(
             text = "Selamat Datang!",
             fontSize = 24.sp,
@@ -64,58 +132,84 @@ fun SignUpScreen(
             color = DarkText,
             textAlign = TextAlign.Center
         )
+        Spacer(modifier = Modifier.height(40.dp))
 
-        Spacer(modifier = Modifier.height(20.dp))
-
-        Text(text = "Nama Lengkap", modifier = Modifier.fillMaxWidth(), fontWeight = FontWeight.Medium, color = DarkText)
+        // --- Nama Lengkap ---
+        Text(
+            text = "Nama Lengkap",
+            modifier = Modifier.fillMaxWidth(),
+            fontWeight = FontWeight.Medium,
+            color = DarkText
+        )
         Spacer(modifier = Modifier.height(8.dp))
         OutlinedTextField(
-            value = fullName,
-            onValueChange = { fullName = it },
+            value = name,
+            onValueChange = { name = it; nameError = null },
             placeholder = { Text("Masukkan nama lengkap") },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
+            isError = nameError != null,
             shape = RoundedCornerShape(50),
             colors = OutlinedTextFieldDefaults.colors(
                 focusedTextColor = Color.Black,
                 unfocusedTextColor = Color.Black,
                 focusedBorderColor = SignLinkTeal,
                 unfocusedBorderColor = Color.LightGray,
-                disabledContainerColor = Color(0xFFF0F0F0),
-                unfocusedPlaceholderColor = Color.Gray,
-                focusedPlaceholderColor = Color.Gray
+                errorBorderColor = Color.Red,
             )
         )
+        if (nameError != null) {
+            Text(text = nameError!!, color = Color.Red, style = MaterialTheme.typography.bodySmall,                 modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 16.dp),
+                textAlign = TextAlign.Start)
+        }
 
-        Spacer(modifier = Modifier.height(14.dp))
+        Spacer(modifier = Modifier.height(4.dp))
 
-        Text(text = "Email", modifier = Modifier.fillMaxWidth(), fontWeight = FontWeight.Medium, color = DarkText)
+        Text(
+            text = "Email",
+            modifier = Modifier.fillMaxWidth(),
+            fontWeight = FontWeight.Medium,
+            color = DarkText
+        )
         Spacer(modifier = Modifier.height(8.dp))
         OutlinedTextField(
             value = email,
-            onValueChange = { email = it },
+            onValueChange = { email = it; emailError = null },
             placeholder = { Text("Masukkan email") },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
+            isError = emailError != null,
             shape = RoundedCornerShape(50),
             colors = OutlinedTextFieldDefaults.colors(
                 focusedTextColor = Color.Black,
                 unfocusedTextColor = Color.Black,
                 focusedBorderColor = SignLinkTeal,
                 unfocusedBorderColor = Color.LightGray,
-                disabledContainerColor = Color(0xFFF0F0F0),
-                unfocusedPlaceholderColor = Color.Gray,
-                focusedPlaceholderColor = Color.Gray
+                errorBorderColor = Color.Red,
             )
         )
+        if (emailError != null) {
+            Text(text = emailError!!, color = Color.Red, style = MaterialTheme.typography.bodySmall,                 modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 16.dp),
+                textAlign = TextAlign.Start)
+        }
 
-        Spacer(modifier = Modifier.height(14.dp))
+        Spacer(modifier = Modifier.height(4.dp))
 
-        Text(text = "Password", modifier = Modifier.fillMaxWidth(), fontWeight = FontWeight.Medium, color = DarkText)
+        // --- Password ---
+        Text(
+            text = "Password",
+            modifier = Modifier.fillMaxWidth(),
+            fontWeight = FontWeight.Medium,
+            color = DarkText
+        )
         Spacer(modifier = Modifier.height(8.dp))
         OutlinedTextField(
             value = password,
-            onValueChange = { password = it },
+            onValueChange = { password = it; passwordError = null },
             placeholder = { Text("Masukkan password") },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
@@ -126,58 +220,106 @@ fun SignUpScreen(
                     Icon(imageVector = image, contentDescription = "Toggle password visibility")
                 }
             },
+            isError = passwordError != null || confirmPasswordError != null,
             shape = RoundedCornerShape(50),
             colors = OutlinedTextFieldDefaults.colors(
                 focusedTextColor = Color.Black,
                 unfocusedTextColor = Color.Black,
                 focusedBorderColor = SignLinkTeal,
                 unfocusedBorderColor = Color.LightGray,
-                disabledContainerColor = Color(0xFFF0F0F0),
-                unfocusedPlaceholderColor = Color.Gray,
-                focusedPlaceholderColor = Color.Gray
+                errorBorderColor = Color.Red,
             )
         )
+        if (passwordError != null) {
+            Text(text = passwordError!!, color = Color.Red, style = MaterialTheme.typography.bodySmall,                 modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 16.dp),
+                textAlign = TextAlign.Start)
+        }
 
-        Spacer(modifier = Modifier.height(14.dp))
+        Spacer(modifier = Modifier.height(4.dp))
 
-        Text(text = "Konfirmasi Password", modifier = Modifier.fillMaxWidth(), fontWeight = FontWeight.Medium, color = DarkText)
+        // --- Konfirmasi Password ---
+        Text(
+            text = "Konfirmasi Password",
+            modifier = Modifier.fillMaxWidth(),
+            fontWeight = FontWeight.Medium,
+            color = DarkText
+        )
         Spacer(modifier = Modifier.height(8.dp))
         OutlinedTextField(
             value = confirmPassword,
-            onValueChange = { confirmPassword = it },
-            placeholder = { Text("Masukkan password") },
+            onValueChange = { confirmPassword = it; confirmPasswordError = null },
+            placeholder = { Text("Masukkan ulang password") },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
             visualTransformation = if (confirmPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
             trailingIcon = {
-                val image = if (confirmPasswordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
+                val image =
+                    if (confirmPasswordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
                 IconButton(onClick = { confirmPasswordVisible = !confirmPasswordVisible }) {
                     Icon(imageVector = image, contentDescription = "Toggle password visibility")
                 }
             },
+            isError = confirmPasswordError != null,
             shape = RoundedCornerShape(50),
             colors = OutlinedTextFieldDefaults.colors(
                 focusedTextColor = Color.Black,
                 unfocusedTextColor = Color.Black,
                 focusedBorderColor = SignLinkTeal,
                 unfocusedBorderColor = Color.LightGray,
-                disabledContainerColor = Color(0xFFF0F0F0),
-                unfocusedPlaceholderColor = Color.Gray,
-                focusedPlaceholderColor = Color.Gray
+                errorBorderColor = Color.Red,
             )
         )
+        if (confirmPasswordError != null) {
+            Text(text = confirmPasswordError!!, color = Color.Red, style = MaterialTheme.typography.bodySmall,                 modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 16.dp),
+                textAlign = TextAlign.Start)
+        }
+
+        generalErrorMessage?.let {
+            Text(
+                text = it,
+                color = if (it.contains("success", true)) Color.Green else Color.Red,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp, start = 2.dp),
+                textAlign = TextAlign.Start
+            )
+        }
 
         Spacer(modifier = Modifier.height(20.dp))
 
         Button(
-            onClick = onSignUpSuccess,
+            onClick = {
+                if (validateForm()) {
+                    viewModel.register(name, email, password)
+                }
+            },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(56.dp),
             colors = ButtonDefaults.buttonColors(containerColor = SignLinkTeal),
-            shape = RoundedCornerShape(50)
+            shape = RoundedCornerShape(50),
+            enabled = !isLoading
         ) {
-            Text("Daftar", fontSize = 18.sp, fontWeight = FontWeight.SemiBold, color = Color.White)
+            if (isLoading) {
+                CircularProgressIndicator(
+                    color = Color.White,
+                    modifier = Modifier.size(24.dp)
+                )
+            } else {
+                Text("Daftar", fontSize = 18.sp, fontWeight = FontWeight.SemiBold, color = Color.White)
+            }
+        }
+
+        LaunchedEffect(registerResult) {
+            registerResult?.let {
+                if (it.contains("success", true)) {
+                    onSignUpSuccess()
+                }
+            }
         }
 
         Spacer(modifier = Modifier.height(4.dp))
@@ -199,7 +341,7 @@ fun SignUpScreen(
             )
         }
 
-        Spacer(modifier = Modifier.height(4.dp))
+        Spacer(modifier = Modifier.height(14.dp))
 
         OutlinedButton(
             onClick = { /* Handle Google Login */ },
@@ -219,15 +361,12 @@ fun SignUpScreen(
             Text("Lanjutkan dengan Google", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
         }
 
-        Spacer(modifier = Modifier.height(40.dp))
+        Spacer(modifier = Modifier.height(32.dp))
 
-        Row(
-            horizontalArrangement = Arrangement.Center,
-            modifier = Modifier.fillMaxWidth()
-        ) {
+        Row(horizontalArrangement = Arrangement.Center, modifier = Modifier.fillMaxWidth()) {
             Text("Sudah memiliki akun? ", color = Color.Gray, fontSize = 16.sp)
             Text(
-                text = "masuk",
+                text = "Masuk",
                 color = SignLinkTeal,
                 fontSize = 16.sp,
                 fontWeight = FontWeight.SemiBold,

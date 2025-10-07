@@ -2,6 +2,8 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    id("com.google.dagger.hilt.android")
+    kotlin("kapt")
 }
 
 android {
@@ -56,6 +58,7 @@ dependencies {
 
     // Navigation Compose
     implementation("androidx.navigation:navigation-compose:2.8.0")
+    implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
 
     // Animasi
     implementation("androidx.compose.animation:animation:1.7.0")
@@ -70,7 +73,11 @@ dependencies {
     implementation("androidx.compose.material:material-icons-extended:1.7.0")
     implementation("androidx.compose.material3:material3:1.4.0")
 
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
 
+    implementation("com.google.dagger:hilt-android:2.51")
+    kapt("com.google.dagger:hilt-compiler:2.51")
 
     // Testing
     testImplementation(libs.junit)
