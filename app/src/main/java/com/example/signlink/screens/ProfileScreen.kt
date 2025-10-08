@@ -63,6 +63,8 @@ fun ProfileScreen(
                 .background(Color.White)
                 .verticalScroll(rememberScrollState())
         ) {
+            Spacer(modifier = Modifier.height(32.dp))
+
             // Header: Detail Akun
             ProfileHeader(
                 name = "User",

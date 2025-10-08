@@ -43,7 +43,7 @@ fun AppNavHost() {
             SplashScreen(
                 onTimeout = {
                     navController.popBackStack()
-                    navController.navigate(Destinations.KAMUS_SCREEN)
+                    navController.navigate(Destinations.PROFILE_SCREEN)
                 }
             )
         }
