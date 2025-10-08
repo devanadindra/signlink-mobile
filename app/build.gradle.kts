@@ -42,10 +42,6 @@ android {
         compose = true
     }
 
-    androidResources {
-        noCompress += "model"
-    }
-
 }
 
 dependencies {

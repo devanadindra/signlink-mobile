@@ -3,20 +3,13 @@ package com.example.signlink
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.signlink.screens.onboarding.OnboardingScreen
 import com.example.signlink.screens.SplashScreen
 import com.example.signlink.screens.OpeningScreen
 import com.example.signlink.screens.HomeScreen
+import com.example.signlink.screens.KamusScreen
 import com.example.signlink.screens.VoiceToTextScreen
 import com.example.signlink.screens.auth.LoginScreen
 import com.example.signlink.screens.auth.SignUpScreen
@@ -31,6 +24,7 @@ object Destinations {
     const val SIGNUP_SCREEN = "signup_screen"
     const val HOME_SCREEN = "home_screen"
     const val VTT_SCREEN = "vtt_screen"
+    const val KAMUS_SCREEN = "kamus_screen"
 }
 
 @OptIn(ExperimentalAnimationApi::class)
@@ -100,7 +94,7 @@ fun AppNavHost() {
         composable(Destinations.HOME_SCREEN) {
             HomeScreen(
                 onKamusClicked = {
-//                    navController.navigate(Destinations.KAMUS_SCREEN)
+                    navController.navigate(Destinations.KAMUS_SCREEN)
                 },
                 onVTTClicked = {
                     navController.navigate(Destinations.VTT_SCREEN)
@@ -122,7 +116,27 @@ fun AppNavHost() {
         composable(Destinations.VTT_SCREEN) {
             VoiceToTextScreen(
                 onKamusClicked = {
-//                    navController.navigate(Destinations.KAMUS_SCREEN)
+                    navController.navigate(Destinations.KAMUS_SCREEN)
+                },
+                onVTTClicked = {
+                    navController.navigate(Destinations.VTT_SCREEN)
+                },
+                onCameraClicked = {
+//                    navController.navigate(Destinations.CAMERA_SCREEN)
+                },
+                onHomeClicked = {
+                    navController.navigate(Destinations.HOME_SCREEN)
+                },
+                onProfileClicked = {
+//                    navController.navigate(Destinations.PROFIL_SCREEN)
+                }
+            )
+        }
+
+        composable(Destinations.KAMUS_SCREEN) {
+            KamusScreen(
+                onKamusClicked = {
+                    navController.navigate(Destinations.KAMUS_SCREEN)
                 },
                 onVTTClicked = {
                     navController.navigate(Destinations.VTT_SCREEN)
