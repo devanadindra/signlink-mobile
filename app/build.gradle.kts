@@ -41,6 +41,11 @@ android {
     buildFeatures {
         compose = true
     }
+
+    androidResources {
+        noCompress += "model"
+    }
+
 }
 
 dependencies {
@@ -79,6 +84,9 @@ dependencies {
     implementation("com.google.dagger:hilt-android:2.51")
     kapt("com.google.dagger:hilt-compiler:2.51")
     implementation("androidx.datastore:datastore-preferences:1.1.1")
+
+    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.0")
+
 
 
     // Testing
