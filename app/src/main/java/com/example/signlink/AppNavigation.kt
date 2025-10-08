@@ -10,6 +10,7 @@ import com.example.signlink.screens.SplashScreen
 import com.example.signlink.screens.OpeningScreen
 import com.example.signlink.screens.HomeScreen
 import com.example.signlink.screens.KamusScreen
+import com.example.signlink.screens.ProfileScreen
 import com.example.signlink.screens.VoiceToTextScreen
 import com.example.signlink.screens.auth.LoginScreen
 import com.example.signlink.screens.auth.SignUpScreen
@@ -25,6 +26,7 @@ object Destinations {
     const val HOME_SCREEN = "home_screen"
     const val VTT_SCREEN = "vtt_screen"
     const val KAMUS_SCREEN = "kamus_screen"
+    const val PROFILE_SCREEN = "profile_screen"
 }
 
 @OptIn(ExperimentalAnimationApi::class)
@@ -41,7 +43,7 @@ fun AppNavHost() {
             SplashScreen(
                 onTimeout = {
                     navController.popBackStack()
-                    navController.navigate(Destinations.VTT_SCREEN)
+                    navController.navigate(Destinations.KAMUS_SCREEN)
                 }
             )
         }
@@ -109,7 +111,7 @@ fun AppNavHost() {
                     navController.navigate(Destinations.HOME_SCREEN)
                 },
                 onProfileClicked = {
-//                    navController.navigate(Destinations.PROFIL_SCREEN)
+                    navController.navigate(Destinations.PROFILE_SCREEN)
                 }
             )
         }
@@ -128,7 +130,7 @@ fun AppNavHost() {
                     navController.navigate(Destinations.HOME_SCREEN)
                 },
                 onProfileClicked = {
-//                    navController.navigate(Destinations.PROFIL_SCREEN)
+                    navController.navigate(Destinations.PROFILE_SCREEN)
                 }
             )
         }
@@ -148,9 +150,30 @@ fun AppNavHost() {
                     navController.navigate(Destinations.HOME_SCREEN)
                 },
                 onProfileClicked = {
-//                    navController.navigate(Destinations.PROFIL_SCREEN)
+                    navController.navigate(Destinations.PROFILE_SCREEN)
+                }
+            )
+        }
+
+        composable(Destinations.PROFILE_SCREEN) {
+            ProfileScreen(
+                onKamusClicked = {
+                    navController.navigate(Destinations.KAMUS_SCREEN)
+                },
+                onVTTClicked = {
+                    navController.navigate(Destinations.VTT_SCREEN)
+                },
+                onCameraClicked = {
+//                    navController.navigate(Destinations.CAMERA_SCREEN)
+                },
+                onHomeClicked = {
+                    navController.navigate(Destinations.HOME_SCREEN)
+                },
+                onProfileClicked = {
+                    navController.navigate(Destinations.PROFILE_SCREEN)
                 }
             )
         }
     }
+
 }

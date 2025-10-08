@@ -17,3 +17,4 @@ val DotActive = Color(0xFF0094AE)
 val CardBackground = Color.White
 val LightGrayBackground = Color(0xFFE0E0E0)
 val LightTealBackground = Color(0xFFE0F7FA)
+val DangerRed = Color(0xFFCC3333)

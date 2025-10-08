@@ -79,7 +79,7 @@ fun KamusScreen(
             // 2. Deskripsi Card untuk Kamus
             DictionaryHeaderCard(
                 modifier = Modifier.fillMaxWidth(0.9f).padding(horizontal = 8.dp),
-                title = "Kamus Bahasa Isyarat Sibi",
+                title = "Kamus Bahasa Isyarat SIBI",
                 description = "Kumpulan Bahasa Isyarat dan terjemahannya"
             )
 
