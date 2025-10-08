@@ -16,6 +16,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.signlink.screens.onboarding.OnboardingScreen
 import com.example.signlink.screens.SplashScreen
 import com.example.signlink.screens.OpeningScreen
+import com.example.signlink.screens.HomeScreen
 import com.example.signlink.screens.auth.LoginScreen
 import com.example.signlink.screens.auth.SignUpScreen
 import com.google.accompanist.navigation.animation.composable
@@ -44,7 +45,7 @@ fun AppNavHost() {
             SplashScreen(
                 onTimeout = {
                     navController.popBackStack()
-                    navController.navigate(Destinations.ONBOARDING)
+                    navController.navigate(Destinations.HOME_SCREEN)
                 }
             )
         }
@@ -97,18 +98,5 @@ fun AppNavHost() {
         composable(Destinations.HOME_SCREEN) {
             HomeScreen()
         }
-    }
-}
-
-@Composable
-fun HomeScreen() {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.White),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Text("Home Screen (Selamat Datang)")
     }
 }
