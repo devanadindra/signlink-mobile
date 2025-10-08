@@ -17,6 +17,7 @@ import com.example.signlink.screens.onboarding.OnboardingScreen
 import com.example.signlink.screens.SplashScreen
 import com.example.signlink.screens.OpeningScreen
 import com.example.signlink.screens.HomeScreen
+import com.example.signlink.screens.VoiceToTextScreen
 import com.example.signlink.screens.auth.LoginScreen
 import com.example.signlink.screens.auth.SignUpScreen
 import com.google.accompanist.navigation.animation.composable
@@ -29,6 +30,7 @@ object Destinations {
     const val LOGIN_SCREEN = "login_screen"
     const val SIGNUP_SCREEN = "signup_screen"
     const val HOME_SCREEN = "home_screen"
+    const val VTT_SCREEN = "vtt_screen"
 }
 
 @OptIn(ExperimentalAnimationApi::class)
@@ -45,7 +47,7 @@ fun AppNavHost() {
             SplashScreen(
                 onTimeout = {
                     navController.popBackStack()
-                    navController.navigate(Destinations.HOME_SCREEN)
+                    navController.navigate(Destinations.VTT_SCREEN)
                 }
             )
         }
@@ -96,7 +98,45 @@ fun AppNavHost() {
         }
 
         composable(Destinations.HOME_SCREEN) {
-            HomeScreen()
+            HomeScreen(
+                onKamusClicked = {
+//                    navController.navigate(Destinations.KAMUS_SCREEN)
+                },
+                onVTTClicked = {
+                    navController.navigate(Destinations.VTT_SCREEN)
+                },
+                onKuisClicked = {
+//                    navController.navigate(Destinations.KUIS_SCREEN)
+                },
+                onCameraClicked = {
+//                    navController.navigate(Destinations.CAMERA_SCREEN)
+                },
+                onHomeClicked = {
+                    navController.navigate(Destinations.HOME_SCREEN)
+                },
+                onProfileClicked = {
+//                    navController.navigate(Destinations.PROFIL_SCREEN)
+                }
+            )
+        }
+        composable(Destinations.VTT_SCREEN) {
+            VoiceToTextScreen(
+                onKamusClicked = {
+//                    navController.navigate(Destinations.KAMUS_SCREEN)
+                },
+                onVTTClicked = {
+                    navController.navigate(Destinations.VTT_SCREEN)
+                },
+                onCameraClicked = {
+//                    navController.navigate(Destinations.CAMERA_SCREEN)
+                },
+                onHomeClicked = {
+                    navController.navigate(Destinations.HOME_SCREEN)
+                },
+                onProfileClicked = {
+//                    navController.navigate(Destinations.PROFIL_SCREEN)
+                }
+            )
         }
     }
 }

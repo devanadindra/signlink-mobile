@@ -18,28 +18,48 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.signlink.R // Asumsi Resource R ada untuk logo kuis
-import com.example.signlink.ui.theme.SignLinkTeal // Menggunakan warna dari theme Anda
+import com.example.signlink.R
+import com.example.signlink.ui.theme.*
+import com.example.signlink.components.NavItem
+import com.example.signlink.components.BottomBarSignLink
+import com.example.signlink.components.MainFloatingActionButton
 
 // Definisi warna tambahan
-val LightTealBackground = Color(0xFFE0F7FA) // Warna latar belakang pucat untuk area atas/kartu
-val CardBackground = Color.White
-val DarkText = Color(0xFF1E1E1E)
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen() { // Saya biarkan namanya tetap HomeScreen sesuai file yang Anda berikan
+// DIPERBARUI: Menambahkan parameter fungsi callback untuk semua aksi klik (termasuk bottom bar)
+fun HomeScreen(
+    onKamusClicked: () -> Unit = {},
+    onVTTClicked: () -> Unit = {},
+    onKuisClicked: () -> Unit = {},
+    onCameraClicked: () -> Unit = {},
+    onHomeClicked: () -> Unit = {},
+    onProfileClicked: () -> Unit = {}
+) {
     val navItems = listOf(
-        NavItem("Beranda", Icons.Default.Home, true),
-        NavItem("Kamus", Icons.Default.Book, false),
-        NavItem("Penerjemah", Icons.Default.Camera, false),
-        NavItem("VTT", Icons.Default.Mic, false),
-        NavItem("Profil", Icons.Default.Person, false)
+        // BARU: Menambahkan 'tag' untuk identifikasi item navigasi
+        NavItem("Beranda", Icons.Default.Home, true, "home"),
+        NavItem("Kamus", Icons.Default.Book, false, "kamus"),
+        NavItem("Penerjemah", Icons.Default.Camera, false, "penerjemah"),
+        NavItem("VTT", Icons.Default.Mic, false, "vtt"),
+        NavItem("Profil", Icons.Default.Person, false, "profil")
     )
 
     Scaffold(
-        bottomBar = { BottomBarSignLink(navItems) },
-        floatingActionButton = { MainFloatingActionButton() },
+        // MENGGUNAKAN: BottomBarSignLink dari AppComponents.kt
+        bottomBar = {
+            BottomBarSignLink(
+                items = navItems,
+                onHomeClicked = onHomeClicked,
+                onKamusClicked = onKamusClicked,
+                onVTTClicked = onVTTClicked,
+                onProfileClicked = onProfileClicked
+            )
+        },
+        // MENGGUNAKAN: MainFloatingActionButton dari AppComponents.kt
+        floatingActionButton = { MainFloatingActionButton(onCameraClicked) }, // Meneruskan callback
         floatingActionButtonPosition = FabPosition.Center
     ) { paddingValues ->
         Column(
@@ -49,7 +69,8 @@ fun HomeScreen() { // Saya biarkan namanya tetap HomeScreen sesuai file yang And
                 .background(Color.White)
         ) {
 
-            HeaderWithTranslatorSection()
+            // Komponen gabungan Header dan Tombol Kamera
+            HeaderWithTranslatorSection(onCameraClicked) // Meneruskan callback
 
             Column(
                 modifier = Modifier
@@ -59,7 +80,8 @@ fun HomeScreen() { // Saya biarkan namanya tetap HomeScreen sesuai file yang And
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Spacer(modifier = Modifier.height(32.dp)) // Jarak antara Tombol Kamera dan QuickAccessSection
-                QuickAccessSection()
+                // Meneruskan callback ke QuickAccessSection
+                QuickAccessSection(onKamusClicked, onVTTClicked, onKuisClicked)
                 Spacer(modifier = Modifier.height(16.dp))
             }
         }
@@ -72,7 +94,8 @@ fun HomeScreen() { // Saya biarkan namanya tetap HomeScreen sesuai file yang And
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HeaderWithTranslatorSection() {
+// DIPERBARUI: Menerima callback klik kamera
+fun HeaderWithTranslatorSection(onCameraClicked: () -> Unit) {
     // Gunakan Box untuk menumpuk: Latar belakang Kurva, TopAppBar, dan Tombol Kamera
     Box(
         modifier = Modifier.fillMaxWidth().wrapContentHeight()
@@ -111,14 +134,15 @@ fun HeaderWithTranslatorSection() {
         )
 
         // 3. Tombol Penerjemah Utama (diletakkan di bagian bawah Box, tertanam di kurva)
+        // DIPERBARUI: Meneruskan callback onCameraClicked
         MainTranslatorButton(
             modifier = Modifier
                 .fillMaxWidth(0.9f) // Biarkan sedikit padding di sisi
                 .align(Alignment.BottomCenter) // Posisikan di bagian bawah Box
-                .offset(y = 80.dp) // DIPERBAIKI: Mengembalikan offset menjadi 50.dp dan Spacer juga 50.dp agar tata letak tidak terlalu longgar
+                .offset(y = 80.dp),
+            onClick = onCameraClicked
         )
     }
-    // DIPERBAIKI: Mengembalikan Spacer menjadi 50.dp agar menyeimbangkan offset Tombol Kamera
     Spacer(modifier = Modifier.height(80.dp))
 }
 
@@ -126,7 +150,8 @@ fun HeaderWithTranslatorSection() {
  * Komponen Tombol Penerjemah Utama (Hero Section) yang sekarang menerima Modifier.
  */
 @Composable
-fun MainTranslatorButton(modifier: Modifier = Modifier) {
+// DIPERBARUI: Menerima fungsi onClick
+fun MainTranslatorButton(modifier: Modifier = Modifier, onClick: () -> Unit) {
     // Kartu luar yang besar dengan background light teal
     Card(
         shape = RoundedCornerShape(16.dp),
@@ -135,7 +160,7 @@ fun MainTranslatorButton(modifier: Modifier = Modifier) {
         modifier = modifier
             .height(180.dp)
             .padding(vertical = 8.dp)
-            .clickable { /* Aksi: Mulai terjemahan kamera */ }
+            .clickable { onClick() } // MENGAKTIFKAN KLIK
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -161,14 +186,18 @@ fun MainTranslatorButton(modifier: Modifier = Modifier) {
     }
 }
 
-// --- Komponen Lain Tetap Sama (Kecuali TopBarSignLink Dihapus) ---
+// --- Komponen Lain ---
 
 /**
  * Komponen Bagian Akses Cepat (Quick Access)
- * DIPERBAIKI: Mengubah tata letak agar semua kartu berada dalam satu kolom vertikal.
  */
 @Composable
-fun QuickAccessSection() {
+// DIPERBARUI: Menerima fungsi onClick untuk setiap kartu
+fun QuickAccessSection(
+    onKamusClicked: () -> Unit,
+    onVTTClicked: () -> Unit,
+    onKuisClicked: () -> Unit
+) {
     Column(
         modifier = Modifier.fillMaxWidth()
     ) {
@@ -177,7 +206,8 @@ fun QuickAccessSection() {
             title = "Kamus Sibi",
             subtitle = "Kumpulan Bahasa Isyarat dan terjemahannya",
             icon = Icons.Default.Book,
-            modifier = Modifier.fillMaxWidth().height(120.dp) // Menghapus padding horizontal
+            modifier = Modifier.fillMaxWidth().height(120.dp), // Menghapus padding horizontal
+            onClick = onKamusClicked // Meneruskan callback
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -187,7 +217,8 @@ fun QuickAccessSection() {
             title = "Suara ke Tulisan",
             subtitle = "Rekam suara untuk mengubah ke tulisan",
             icon = Icons.Default.Mic,
-            modifier = Modifier.fillMaxWidth().height(120.dp) // Menghapus padding horizontal
+            modifier = Modifier.fillMaxWidth().height(120.dp), // Menghapus padding horizontal
+            onClick = onVTTClicked // Meneruskan callback
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -198,27 +229,28 @@ fun QuickAccessSection() {
             subtitle = "Kerjakan Kuis singkat untuk melatih kemampuan bahasa isyarat anda",
             icon = R.drawable.signlink_logo, // Saya asumsikan nama resource yang benar adalah signlink
             modifier = Modifier.fillMaxWidth().height(120.dp),
+            onClick = onKuisClicked // Meneruskan callback
         )
     }
 }
 
 /**
  * Komponen Card Akses Cepat Reusable
- * DIPERBAIKI: Mengubah tipe parameter 'icon' menjadi Any? dan menambahkan logika 'when' untuk menangani ImageVector dan Int (Drawable ID).
- * TATA LETAK DIPERBAIKI: Ikon di kiri, seluruh teks di kanan, dan menghapus ikon Star tambahan di paling kanan.
  */
 @Composable
+// DIPERBARUI: Menerima fungsi onClick
 fun QuickAccessCard(
     title: String,
     subtitle: String,
     icon: Any?, // DIPERBAIKI: Mengubah tipe data menjadi Any?
     modifier: Modifier,
+    onClick: () -> Unit // Parameter onClick baru
 ) {
     Card(
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = CardBackground),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-        modifier = modifier.clickable { /* Aksi kartu */ }
+        modifier = modifier.clickable { onClick() } // MENGAKTIFKAN KLIK
     ) {
         // DIPERBAIKI: Menggunakan Row untuk ikon/gambar (kiri) dan Column teks (kanan)
         Row(
@@ -270,64 +302,6 @@ fun QuickAccessCard(
                     lineHeight = 12.sp
                 )
             }
-            // DIPERBAIKI: Menghapus ikon Icons.Default.Star tambahan di paling kanan
-        }
-    }
-}
-
-/**
- * Komponen Floating Action Button utama (Kamera)
- */
-@Composable
-fun MainFloatingActionButton() {
-    FloatingActionButton(
-        onClick = { /* Aksi: Kamera utama */ },
-        containerColor = SignLinkTeal,
-        shape = RoundedCornerShape(50),
-        elevation = FloatingActionButtonDefaults.elevation(defaultElevation = 8.dp),
-        modifier = Modifier.offset(y = 52.dp)
-    ) {
-        Icon(
-            Icons.Default.PhotoCamera,
-            contentDescription = "Kamera",
-            tint = Color.White,
-            modifier = Modifier.size(36.dp)
-        )
-    }
-}
-
-/**
- * Data class untuk item navigasi bawah
- */
-data class NavItem(val label: String, val icon: ImageVector, val isSelected: Boolean)
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun BottomBarSignLink(items: List<NavItem>) {
-    BottomAppBar(
-        containerColor = Color.White,
-        modifier = Modifier.height(72.dp)
-    ) {
-        val navItemsFiltered = items.filter { it.icon != Icons.Default.Camera }
-
-        navItemsFiltered.forEachIndexed { index, item ->
-            // Logika untuk menempatkan spacer di tengah (setelah item kedua dari total 4 item yang difilter)
-            if (index == 2) {
-                Spacer(Modifier.weight(1f))
-            }
-
-            NavigationBarItem(
-                icon = {
-                    Icon(
-                        item.icon,
-                        contentDescription = item.label,
-                        tint = if (item.isSelected) SignLinkTeal else Color.Gray
-                    )
-                },
-                selected = item.isSelected,
-                onClick = { /* Aksi navigasi */ },
-                label = null
-            )
         }
     }
 }
