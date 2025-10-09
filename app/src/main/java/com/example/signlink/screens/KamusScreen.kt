@@ -18,15 +18,20 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 import com.example.signlink.R
 import com.example.signlink.components.BottomBarSignLink
 import com.example.signlink.components.MainFloatingActionButton
 import com.example.signlink.components.NavItem
-import com.example.signlink.ui.theme.*
+// IMPOR KOMPONEN HEADER YANG SUDAH TERPISAH
+import com.example.signlink.components.DictionaryHeaderCard
+import com.example.signlink.ui.theme.* // Variabel warna global yang mungkin masih dibutuhkan oleh komponen lokal (seperti AlphabetButton)
+val SignLinkTeal = Color(0xFF0094AE)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun KamusScreen(
+    navController: NavController,
     onHomeClicked: () -> Unit = {},
     onKamusClicked: () -> Unit = {},
     onVTTClicked: () -> Unit = {},
@@ -68,6 +73,7 @@ fun KamusScreen(
             Spacer(modifier = Modifier.height(32.dp))
 
             // 1. Logo
+            // CATATAN: Pastikan resource R.drawable.signlink tersedia.
             Image(
                 painter = painterResource(id = R.drawable.signlink),
                 contentDescription = "SignLink Logo",
@@ -76,7 +82,7 @@ fun KamusScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // 2. Deskripsi Card untuk Kamus
+            // 2. Deskripsi Card untuk Kamus (Menggunakan komponen yang diimpor)
             DictionaryHeaderCard(
                 modifier = Modifier.fillMaxWidth(0.9f).padding(horizontal = 8.dp),
                 title = "Kamus Bahasa Isyarat SIBI",
@@ -88,8 +94,7 @@ fun KamusScreen(
             // 3. Grid Alphabet
             AlphabetGrid(
                 onLetterClick = { letter ->
-                    // TODO: Tambahkan logika navigasi ke halaman detail kata
-                    println("Letter clicked: $letter")
+                    navController.navigate("kamus_list/${letter}")
                 }
             )
 
@@ -98,43 +103,7 @@ fun KamusScreen(
     }
 }
 
-/**
- * Komponen Header Card khusus untuk Kamus
- */
-@Composable
-fun DictionaryHeaderCard(
-    modifier: Modifier = Modifier,
-    title: String,
-    description: String
-) {
-    Card(
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = CardBackground),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-        modifier = modifier
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.padding(20.dp).fillMaxWidth()
-        ) {
-            Text(
-                text = title,
-                color = DarkText,
-                fontSize = 18.sp,
-                fontWeight = FontWeight.SemiBold
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = description,
-                color = Color.Gray,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Normal,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth()
-            )
-        }
-    }
-}
+// DEFINISI DictionaryHeaderCard DIHAPUS DARI SINI KARENA SUDAH DIMODULARISASI
 
 /**
  * Komponen Grid Tombol Alphabet (A-Z)

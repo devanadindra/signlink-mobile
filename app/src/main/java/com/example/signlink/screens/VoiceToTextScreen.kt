@@ -35,11 +35,6 @@ import com.example.signlink.components.NavItem
 import com.example.signlink.ui.theme.*
 import androidx.core.content.ContextCompat
 
-// Definisikan warna yang digunakan (disusun ulang)
-val DarkText = Color(0xFF1E1E1E)
-val LightGrayBackground = Color(0xFFE0E0E0) // Warna abu-abu pucat untuk area teks
-val CardBackground = Color.White // Tambahkan definisi warna Card
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun VoiceToTextScreen(

@@ -2,6 +2,8 @@ package com.example.signlink.data.di
 
 import com.example.signlink.data.services.CustomerService
 import com.example.signlink.data.repository.AuthRepository
+import com.example.signlink.data.repository.KamusRepository
+import com.example.signlink.data.services.KamusService
 import com.example.signlink.data.utils.AuthUtil
 import dagger.Module
 import dagger.Provides
@@ -54,5 +56,17 @@ object NetworkModule {
     @Singleton
     fun provideAuthRepository(service: CustomerService): AuthRepository {
         return AuthRepository(service)
+    }
+
+    @Provides
+    @Singleton
+    fun provideKamusService(retrofit: Retrofit): KamusService {
+        return retrofit.create(KamusService::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideKamusRepository(service: KamusService): KamusRepository {
+        return KamusRepository(service)
     }
 }

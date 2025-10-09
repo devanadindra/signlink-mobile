@@ -4,10 +4,13 @@ import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.example.signlink.screens.HomeScreen
 import com.example.signlink.screens.KamusScreen
+import com.example.signlink.screens.KamusListScreen
 import com.example.signlink.screens.ProfileScreen
 import com.example.signlink.screens.VoiceToTextScreen
 import com.example.signlink.screens.SplashScreen
@@ -138,6 +141,7 @@ fun AppNavHost() {
         // Kamus Screen
         composable(Destinations.KAMUS_SCREEN) {
             KamusScreen(
+                navController = navController,
                 onKamusClicked = { navController.navigate(Destinations.KAMUS_SCREEN) },
                 onVTTClicked = { navController.navigate(Destinations.VTT_SCREEN) },
                 onHomeClicked = { navController.navigate(Destinations.HOME_SCREEN) },
@@ -152,6 +156,16 @@ fun AppNavHost() {
                 onVTTClicked = { navController.navigate(Destinations.VTT_SCREEN) },
                 onHomeClicked = { navController.navigate(Destinations.HOME_SCREEN) },
                 onProfileClicked = { navController.navigate(Destinations.PROFILE_SCREEN) }
+            )
+        }
+
+        composable(
+            route = "kamus_list/{letter}"
+        ) { backStackEntry ->
+            val letter = backStackEntry.arguments?.getString("letter")?.firstOrNull() ?: 'A'
+            KamusListScreen(
+                letter = letter,
+                navController = navController
             )
         }
     }
