@@ -1,4 +1,4 @@
-package com.example.signlink.screens
+package com.example.signlink.screens.kamus
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -23,10 +23,7 @@ import com.example.signlink.R
 import com.example.signlink.components.BottomBarSignLink
 import com.example.signlink.components.MainFloatingActionButton
 import com.example.signlink.components.NavItem
-// IMPOR KOMPONEN HEADER YANG SUDAH TERPISAH
-import com.example.signlink.components.DictionaryHeaderCard
-import com.example.signlink.ui.theme.* // Variabel warna global yang mungkin masih dibutuhkan oleh komponen lokal (seperti AlphabetButton)
-val SignLinkTeal = Color(0xFF0094AE)
+import com.example.signlink.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -73,7 +70,6 @@ fun KamusScreen(
             Spacer(modifier = Modifier.height(32.dp))
 
             // 1. Logo
-            // CATATAN: Pastikan resource R.drawable.signlink tersedia.
             Image(
                 painter = painterResource(id = R.drawable.signlink),
                 contentDescription = "SignLink Logo",
@@ -82,7 +78,7 @@ fun KamusScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // 2. Deskripsi Card untuk Kamus (Menggunakan komponen yang diimpor)
+            // 2. Deskripsi Card untuk Kamus
             DictionaryHeaderCard(
                 modifier = Modifier.fillMaxWidth(0.9f).padding(horizontal = 8.dp),
                 title = "Kamus Bahasa Isyarat SIBI",
@@ -103,7 +99,43 @@ fun KamusScreen(
     }
 }
 
-// DEFINISI DictionaryHeaderCard DIHAPUS DARI SINI KARENA SUDAH DIMODULARISASI
+/**
+ * Komponen Header Card khusus untuk Kamus
+ */
+@Composable
+fun DictionaryHeaderCard(
+    modifier: Modifier = Modifier,
+    title: String,
+    description: String
+) {
+    Card(
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = CardBackground),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        modifier = modifier
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.padding(20.dp).fillMaxWidth()
+        ) {
+            Text(
+                text = title,
+                color = DarkText,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.SemiBold
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = description,
+                color = Color.Gray,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Normal,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+    }
+}
 
 /**
  * Komponen Grid Tombol Alphabet (A-Z)

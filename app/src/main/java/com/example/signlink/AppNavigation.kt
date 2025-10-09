@@ -9,8 +9,9 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.signlink.screens.HomeScreen
-import com.example.signlink.screens.KamusScreen
-import com.example.signlink.screens.KamusListScreen
+import com.example.signlink.screens.kamus.KamusScreen
+import com.example.signlink.screens.kamus.KamusListScreen
+import com.example.signlink.screens.kamus.KamusDetailScreen
 import com.example.signlink.screens.ProfileScreen
 import com.example.signlink.screens.VoiceToTextScreen
 import com.example.signlink.screens.SplashScreen
@@ -30,6 +31,7 @@ object Destinations {
     const val HOME_SCREEN = "home_screen"
     const val VTT_SCREEN = "vtt_screen"
     const val KAMUS_SCREEN = "kamus_screen"
+    const val KAMUS_DETAIL_SCREEN = "kamus_detail_screen"
     const val PROFILE_SCREEN = "profile_screen"
 }
 
@@ -166,6 +168,22 @@ fun AppNavHost() {
             KamusListScreen(
                 letter = letter,
                 navController = navController
+            )
+        }
+
+        composable(
+            route = Destinations.KAMUS_DETAIL_SCREEN + "/{arti}/{videoUrl}",
+            arguments = listOf(
+                navArgument("arti") { type = NavType.StringType },
+                navArgument("videoUrl") { type = NavType.StringType; defaultValue = "" }
+            )
+        ) { backStackEntry ->
+            val arti = backStackEntry.arguments?.getString("arti") ?: ""
+            val videoUrl = backStackEntry.arguments?.getString("videoUrl")
+            KamusDetailScreen(
+                navController = navController,
+                arti = arti,
+                videoUrl = videoUrl
             )
         }
     }

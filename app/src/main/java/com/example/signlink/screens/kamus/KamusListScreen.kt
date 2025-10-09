@@ -1,5 +1,6 @@
-package com.example.signlink.screens
+package com.example.signlink.screens.kamus
 
+import android.net.Uri
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -24,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.example.signlink.Destinations
 import com.example.signlink.R
 import com.example.signlink.viewmodel.KamusViewModel
 import com.example.signlink.ui.theme.*
@@ -114,7 +116,10 @@ fun KamusListScreen(
                         .weight(1f)
                 ) {
                     items(kamusList) { item ->
-                        KamusListItem(item = item)
+                        KamusListItem(
+                            item = item,
+                            navController = navController
+                        )
                     }
                 }
             }
@@ -126,30 +131,29 @@ fun KamusListScreen(
  * Komponen Tombol Item Kamus dalam Grid
  */
 @Composable
-fun KamusListItem(item: KamusData) {
+fun KamusListItem(item: KamusData, navController: NavController) {
     Button(
-        onClick = { /* Bisa dikosongkan atau tambahkan logika navigasi nanti */ },
+        onClick = {
+            // Encode arti agar aman untuk URL
+            val artiEncoded = Uri.encode(item.arti)
+            val videoEncoded = Uri.encode(item.url)
+            navController.navigate("${Destinations.KAMUS_DETAIL_SCREEN}/$artiEncoded/$videoEncoded")
+        },
         colors = ButtonDefaults.buttonColors(
             containerColor = SignLinkTeal,
             contentColor = Color.White
         ),
         shape = RoundedCornerShape(12.dp),
         elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp),
-        contentPadding = PaddingValues(vertical = 16.dp, horizontal = 12.dp),
         modifier = Modifier
             .fillMaxWidth()
             .height(60.dp)
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center
-        ) {
-            Text(
-                text = item.arti,
-                fontSize = 18.sp,
-                fontWeight = FontWeight.SemiBold
-            )
-        }
+        Text(
+            text = item.arti,
+            fontSize = 18.sp,
+            fontWeight = FontWeight.SemiBold
+        )
     }
 }
+
