@@ -1,21 +1,22 @@
 package com.example.signlink
 
 import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.runtime.*
+import androidx.compose.ui.platform.LocalContext
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
-import androidx.compose.runtime.Composable
-import androidx.hilt.navigation.compose.hiltViewModel
-import com.example.signlink.screens.onboarding.OnboardingScreen
-import com.example.signlink.screens.SplashScreen
-import com.example.signlink.screens.OpeningScreen
 import com.example.signlink.screens.HomeScreen
 import com.example.signlink.screens.KamusScreen
 import com.example.signlink.screens.ProfileScreen
 import com.example.signlink.screens.VoiceToTextScreen
+import com.example.signlink.screens.SplashScreen
+import com.example.signlink.screens.OpeningScreen
+import com.example.signlink.screens.onboarding.OnboardingScreen
 import com.example.signlink.screens.auth.LoginScreen
 import com.example.signlink.screens.auth.SignUpScreen
-import com.google.accompanist.navigation.animation.composable
 import com.example.signlink.viewmodel.AuthViewModel
+import com.google.accompanist.navigation.animation.composable
 
 object Destinations {
     const val SPLASH_SCREEN = "splash_screen"
@@ -34,20 +35,37 @@ object Destinations {
 @Composable
 fun AppNavHost() {
     val navController = rememberNavController()
+    val context = LocalContext.current
+    var startDestination by remember { mutableStateOf(Destinations.SPLASH_SCREEN) }
+    val viewModel: AuthViewModel = hiltViewModel()
+
+    // Cek JWT saat pertama kali
+    LaunchedEffect(Unit) {
+        viewModel.checkJwt(context) { isValid ->
+            startDestination = if (isValid) Destinations.HOME_SCREEN else Destinations.ONBOARDING
+        }
+    }
 
     NavHost(
         navController = navController,
-        startDestination = Destinations.SPLASH_SCREEN
+        startDestination = startDestination
     ) {
+        // Splash Screen
         composable(Destinations.SPLASH_SCREEN) {
             SplashScreen(
                 onTimeout = {
                     navController.popBackStack()
-                    navController.navigate(Destinations.PROFILE_SCREEN)
+                    navController.navigate(
+                        if (startDestination == Destinations.HOME_SCREEN)
+                            Destinations.HOME_SCREEN
+                        else
+                            Destinations.ONBOARDING
+                    )
                 }
             )
         }
 
+        // Onboarding
         composable(Destinations.ONBOARDING) {
             OnboardingScreen(
                 onFinishClicked = {
@@ -61,12 +79,15 @@ fun AppNavHost() {
             )
         }
 
+        // Opening Screen
         composable(Destinations.OPENING_SCREEN) {
             OpeningScreen(
-                onLoginClicked = {navController.navigate(Destinations.LOGIN_SCREEN)},
-                onSignUpClicked = {navController.navigate(Destinations.SIGNUP_SCREEN)}
+                onLoginClicked = { navController.navigate(Destinations.LOGIN_SCREEN) },
+                onSignUpClicked = { navController.navigate(Destinations.SIGNUP_SCREEN) }
             )
         }
+
+        // Login Screen
         composable(Destinations.LOGIN_SCREEN) {
             val viewModel: AuthViewModel = hiltViewModel()
             LoginScreen(
@@ -80,6 +101,7 @@ fun AppNavHost() {
             )
         }
 
+        // SignUp Screen
         composable(Destinations.SIGNUP_SCREEN) {
             val viewModel: AuthViewModel = hiltViewModel()
             SignUpScreen(
@@ -93,87 +115,44 @@ fun AppNavHost() {
             )
         }
 
+        // Home Screen
         composable(Destinations.HOME_SCREEN) {
             HomeScreen(
-                onKamusClicked = {
-                    navController.navigate(Destinations.KAMUS_SCREEN)
-                },
-                onVTTClicked = {
-                    navController.navigate(Destinations.VTT_SCREEN)
-                },
-                onKuisClicked = {
-//                    navController.navigate(Destinations.KUIS_SCREEN)
-                },
-                onCameraClicked = {
-//                    navController.navigate(Destinations.CAMERA_SCREEN)
-                },
-                onHomeClicked = {
-                    navController.navigate(Destinations.HOME_SCREEN)
-                },
-                onProfileClicked = {
-                    navController.navigate(Destinations.PROFILE_SCREEN)
-                }
+                onKamusClicked = { navController.navigate(Destinations.KAMUS_SCREEN) },
+                onVTTClicked = { navController.navigate(Destinations.VTT_SCREEN) },
+                onHomeClicked = { navController.navigate(Destinations.HOME_SCREEN) },
+                onProfileClicked = { navController.navigate(Destinations.PROFILE_SCREEN) }
             )
         }
+
+        // Voice to Text
         composable(Destinations.VTT_SCREEN) {
             VoiceToTextScreen(
-                onKamusClicked = {
-                    navController.navigate(Destinations.KAMUS_SCREEN)
-                },
-                onVTTClicked = {
-                    navController.navigate(Destinations.VTT_SCREEN)
-                },
-                onCameraClicked = {
-//                    navController.navigate(Destinations.CAMERA_SCREEN)
-                },
-                onHomeClicked = {
-                    navController.navigate(Destinations.HOME_SCREEN)
-                },
-                onProfileClicked = {
-                    navController.navigate(Destinations.PROFILE_SCREEN)
-                }
+                onKamusClicked = { navController.navigate(Destinations.KAMUS_SCREEN) },
+                onVTTClicked = { navController.navigate(Destinations.VTT_SCREEN) },
+                onHomeClicked = { navController.navigate(Destinations.HOME_SCREEN) },
+                onProfileClicked = { navController.navigate(Destinations.PROFILE_SCREEN) }
             )
         }
 
+        // Kamus Screen
         composable(Destinations.KAMUS_SCREEN) {
             KamusScreen(
-                onKamusClicked = {
-                    navController.navigate(Destinations.KAMUS_SCREEN)
-                },
-                onVTTClicked = {
-                    navController.navigate(Destinations.VTT_SCREEN)
-                },
-                onCameraClicked = {
-//                    navController.navigate(Destinations.CAMERA_SCREEN)
-                },
-                onHomeClicked = {
-                    navController.navigate(Destinations.HOME_SCREEN)
-                },
-                onProfileClicked = {
-                    navController.navigate(Destinations.PROFILE_SCREEN)
-                }
+                onKamusClicked = { navController.navigate(Destinations.KAMUS_SCREEN) },
+                onVTTClicked = { navController.navigate(Destinations.VTT_SCREEN) },
+                onHomeClicked = { navController.navigate(Destinations.HOME_SCREEN) },
+                onProfileClicked = { navController.navigate(Destinations.PROFILE_SCREEN) }
             )
         }
 
+        // Profile Screen
         composable(Destinations.PROFILE_SCREEN) {
             ProfileScreen(
-                onKamusClicked = {
-                    navController.navigate(Destinations.KAMUS_SCREEN)
-                },
-                onVTTClicked = {
-                    navController.navigate(Destinations.VTT_SCREEN)
-                },
-                onCameraClicked = {
-//                    navController.navigate(Destinations.CAMERA_SCREEN)
-                },
-                onHomeClicked = {
-                    navController.navigate(Destinations.HOME_SCREEN)
-                },
-                onProfileClicked = {
-                    navController.navigate(Destinations.PROFILE_SCREEN)
-                }
+                onKamusClicked = { navController.navigate(Destinations.KAMUS_SCREEN) },
+                onVTTClicked = { navController.navigate(Destinations.VTT_SCREEN) },
+                onHomeClicked = { navController.navigate(Destinations.HOME_SCREEN) },
+                onProfileClicked = { navController.navigate(Destinations.PROFILE_SCREEN) }
             )
         }
     }
-
 }

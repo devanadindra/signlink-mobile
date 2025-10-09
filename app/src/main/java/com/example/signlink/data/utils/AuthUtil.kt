@@ -34,4 +34,9 @@ object AuthUtil {
     suspend fun clearToken(context: Context) {
         context.dataStore.edit { it.clear() }
     }
+
+    suspend fun jwtAuth(context: Context): String? {
+        val token = getToken(context) ?: return null
+        return "Bearer $token"
+    }
 }

@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import com.example.signlink.data.utils.AuthUtil
 import android.content.Context
+import android.util.Log
 
 
 @HiltViewModel
@@ -22,6 +23,9 @@ class AuthViewModel @Inject constructor(
 
     private val _registerResult = MutableStateFlow<String?>(null)
     val registerResult: StateFlow<String?> = _registerResult
+
+    private val _jwtResult = MutableStateFlow<String?>(null)
+    val jwtResult: StateFlow<String?> = _jwtResult
 
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading
@@ -46,6 +50,7 @@ class AuthViewModel @Inject constructor(
             }
         }
     }
+
     fun register(name: String, email: String, password: String) {
         viewModelScope.launch {
             try {
@@ -66,4 +71,24 @@ class AuthViewModel @Inject constructor(
             }
         }
     }
+
+    // Di AuthViewModel
+    fun checkJwt(context: Context, onResult: (Boolean) -> Unit) {
+        viewModelScope.launch {
+            val token = AuthUtil.jwtAuth(context)
+            if (token != null) {
+                try {
+                    val response = repository.checkJwt(token)
+                    onResult(response?.data != null)
+                } catch (e: Exception) {
+                    onResult(false)
+                }
+            } else {
+                onResult(false)
+            }
+        }
+    }
+
+
+
 }

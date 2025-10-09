@@ -1,11 +1,9 @@
 package com.example.signlink.data.services
 
-import com.example.signlink.data.models.customer.RegisterRequest
-import com.example.signlink.data.models.customer.RegisterResponse
-import com.example.signlink.data.models.customer.LoginRequest
-import com.example.signlink.data.models.customer.LoginResponse
+import com.example.signlink.data.models.customer.*
 import retrofit2.Response
 import retrofit2.http.Body
+import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.POST
 
@@ -21,4 +19,9 @@ interface CustomerService {
         @Header("Authorization") authHeader: String,
         @Body req: RegisterRequest
     ): Response<RegisterResponse>
+
+    @GET("user/check-jwt")
+    suspend fun checkjwt(
+        @Header("Authorization") authHeader: String,
+    ): Response<CheckJWTResponse>
 }
