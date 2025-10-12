@@ -12,6 +12,7 @@ import com.example.signlink.screens.HomeScreen
 import com.example.signlink.screens.kamus.KamusScreen
 import com.example.signlink.screens.kamus.KamusListScreen
 import com.example.signlink.screens.kamus.KamusDetailScreen
+import com.example.signlink.screens.kuis.KuisScreen
 import com.example.signlink.screens.ProfileScreen
 import com.example.signlink.screens.VoiceToTextScreen
 import com.example.signlink.screens.SplashScreen
@@ -19,6 +20,7 @@ import com.example.signlink.screens.OpeningScreen
 import com.example.signlink.screens.onboarding.OnboardingScreen
 import com.example.signlink.screens.auth.LoginScreen
 import com.example.signlink.screens.auth.SignUpScreen
+import com.example.signlink.screens.kuis.KuisDetailScreen
 import com.example.signlink.viewmodel.AuthViewModel
 import com.google.accompanist.navigation.animation.composable
 
@@ -31,6 +33,8 @@ object Destinations {
     const val HOME_SCREEN = "home_screen"
     const val VTT_SCREEN = "vtt_screen"
     const val KAMUS_SCREEN = "kamus_screen"
+    const val KUIS_SCREEN = "kuis_screen"
+    const val KUIS_DETAIL_SCREEN = "kuis_detail_screen"
     const val KAMUS_DETAIL_SCREEN = "kamus_detail_screen"
     const val PROFILE_SCREEN = "profile_screen"
 }
@@ -47,7 +51,7 @@ fun AppNavHost() {
     // Cek JWT saat pertama kali
     LaunchedEffect(Unit) {
         viewModel.checkJwt(context) { isValid ->
-            startDestination = if (isValid) Destinations.HOME_SCREEN else Destinations.ONBOARDING
+            startDestination = if (isValid) Destinations.HOME_SCREEN else Destinations.HOME_SCREEN
         }
     }
 
@@ -64,7 +68,7 @@ fun AppNavHost() {
                         if (startDestination == Destinations.HOME_SCREEN)
                             Destinations.HOME_SCREEN
                         else
-                            Destinations.ONBOARDING
+                            Destinations.HOME_SCREEN
                     )
                 }
             )
@@ -123,6 +127,7 @@ fun AppNavHost() {
         // Home Screen
         composable(Destinations.HOME_SCREEN) {
             HomeScreen(
+                onKuisClicked = { navController.navigate(Destinations.KUIS_SCREEN)},
                 onKamusClicked = { navController.navigate(Destinations.KAMUS_SCREEN) },
                 onVTTClicked = { navController.navigate(Destinations.VTT_SCREEN) },
                 onHomeClicked = { navController.navigate(Destinations.HOME_SCREEN) },
@@ -130,7 +135,27 @@ fun AppNavHost() {
             )
         }
 
-        // Voice to Text
+        // Kuis
+        composable(Destinations.KUIS_SCREEN) {
+            KuisScreen(
+                navController = navController,
+            )
+        }
+
+        composable(
+            route = Destinations.KUIS_DETAIL_SCREEN + "/{quizId}",
+            arguments = listOf(
+                navArgument("quizId") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val quizId = backStackEntry.arguments?.getString("quizId")
+            KuisDetailScreen(
+                navController = navController,
+                quizId = quizId
+            )
+        }
+
+        // Voice to Texts
         composable(Destinations.VTT_SCREEN) {
             VoiceToTextScreen(
                 onKamusClicked = { navController.navigate(Destinations.KAMUS_SCREEN) },
@@ -186,5 +211,6 @@ fun AppNavHost() {
                 videoUrl = videoUrl
             )
         }
+
     }
 }
