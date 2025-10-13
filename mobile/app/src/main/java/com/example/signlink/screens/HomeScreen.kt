@@ -53,15 +53,17 @@ fun HomeScreen(
             )
         },
         floatingActionButton = { MainFloatingActionButton(onCameraClicked) },
-        floatingActionButtonPosition = FabPosition.Center
+        floatingActionButtonPosition = FabPosition.Center,
+        containerColor = SignLinkTeal
     ) { paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .padding(paddingValues)
                 .background(Color.White)
         ) {
 
-            HeaderWithTranslatorSection(onCameraClicked, paddingValues)
+            HeaderWithTranslatorSection(onCameraClicked)
 
             Column(
                 modifier = Modifier
@@ -83,7 +85,7 @@ fun HomeScreen(
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HeaderWithTranslatorSection(onCameraClicked: () -> Unit, paddingValues: PaddingValues) {
+fun HeaderWithTranslatorSection(onCameraClicked: () -> Unit) {
     Box(
         modifier = Modifier.fillMaxWidth().wrapContentHeight()
     ) {

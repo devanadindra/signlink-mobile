@@ -1,6 +1,5 @@
 package com.example.signlink.screens.kamus
 
-import android.annotation.SuppressLint
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -26,7 +25,6 @@ import com.example.signlink.components.MainFloatingActionButton
 import com.example.signlink.components.NavItem
 import com.example.signlink.ui.theme.*
 
-@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun KamusScreen(
@@ -37,6 +35,7 @@ fun KamusScreen(
     onProfileClicked: () -> Unit = {},
     onCameraClicked: () -> Unit = {}
 ) {
+    // Menetapkan Kamus sebagai item navigasi aktif
     val navItems = listOf(
         NavItem("Beranda", Icons.Default.Home, false, "home"),
         NavItem("Kamus", Icons.Default.Book, true, "kamus"),
@@ -56,12 +55,14 @@ fun KamusScreen(
             )
         },
         floatingActionButton = { MainFloatingActionButton(onClick = onCameraClicked) },
-        floatingActionButtonPosition = FabPosition.Center
-    ) {
+        floatingActionButtonPosition = FabPosition.Center,
+        containerColor = Color.White
+    ) { paddingValues ->
 
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .padding(paddingValues)
                 .background(Color.White)
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
