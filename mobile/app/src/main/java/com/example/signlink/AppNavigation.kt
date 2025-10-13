@@ -53,7 +53,7 @@ fun AppNavHost() {
     // Cek JWT saat pertama kali
     LaunchedEffect(Unit) {
         viewModel.checkJwt(context) { isValid ->
-            startDestination = if (isValid) Destinations.HOME_SCREEN else Destinations.HOME_SCREEN
+            startDestination = if (isValid) Destinations.HOME_SCREEN else Destinations.ONBOARDING
         }
     }
 
@@ -70,7 +70,7 @@ fun AppNavHost() {
                         if (startDestination == Destinations.HOME_SCREEN)
                             Destinations.HOME_SCREEN
                         else
-                            Destinations.HOME_SCREEN
+                            Destinations.ONBOARDING
                     )
                 }
             )
