@@ -104,9 +104,6 @@ fun KuisResultScreen(
                         color = SignLinkTeal
                     )
                 },
-                divider = {
-                    Divider(color = Color.LightGray.copy(alpha = 0.3f))
-                }
             ) {
                 tabs.forEachIndexed { index, title ->
                     Tab(
@@ -134,7 +131,7 @@ fun KuisResultScreen(
                     scoreColor = scoreColor,
                     onRepeatQuiz = {
                         if (storedQuizId != null) {
-                            navController.navigate("${Destinations.KUIS_DETAIL_SCREEN}/$storedQuizId")
+                            navController.navigate("${Destinations.KUIS_DETAIL_SCREEN}/$quizId")
                         }
                     },
                     onGoHome = {
