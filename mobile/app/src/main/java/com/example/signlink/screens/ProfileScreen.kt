@@ -1,5 +1,6 @@
 package com.example.signlink.screens
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -7,33 +8,45 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+// Tambahkan import NavController jika belum ada
+import androidx.navigation.NavController
+
+import com.example.signlink.Destinations
 import com.example.signlink.components.BottomBarSignLink
 import com.example.signlink.components.MainFloatingActionButton
 import com.example.signlink.components.NavItem
 import com.example.signlink.ui.theme.*
+import com.example.signlink.viewmodel.AuthViewModel
+import kotlinx.coroutines.launch
 
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(
+    // FIX: Tambahkan NavController sebagai parameter wajib untuk navigasi
+    navController: NavController,
+    viewModel: AuthViewModel,
     onHomeClicked: () -> Unit = {},
     onKamusClicked: () -> Unit = {},
     onVTTClicked: () -> Unit = {},
     onProfileClicked: () -> Unit = {},
     onCameraClicked: () -> Unit = {}
 ) {
-    // Menetapkan Profil sebagai item navigasi aktif
     val navItems = listOf(
         NavItem("Beranda", Icons.Default.Home, false, "home"),
         NavItem("Kamus", Icons.Default.Book, false, "kamus"),
@@ -41,6 +54,12 @@ fun ProfileScreen(
         NavItem("VTT", Icons.Default.Mic, false, "vtt"),
         NavItem("Profil", Icons.Default.Person, true, "profil")
     )
+
+    val context = LocalContext.current
+
+    val snackbarHostState = remember { SnackbarHostState() }
+    val coroutineScope = rememberCoroutineScope()
+
 
     Scaffold(
         bottomBar = {
@@ -53,26 +72,24 @@ fun ProfileScreen(
             )
         },
         floatingActionButton = { MainFloatingActionButton(onClick = onCameraClicked) },
-        floatingActionButtonPosition = FabPosition.Center
-    ) { paddingValues ->
+        floatingActionButtonPosition = FabPosition.Center,
+        snackbarHost = { SnackbarHost(snackbarHostState) }
+    ) {
 
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues)
                 .background(Color.White)
                 .verticalScroll(rememberScrollState())
         ) {
             Spacer(modifier = Modifier.height(32.dp))
 
-            // Header: Detail Akun
             ProfileHeader(
                 name = "User",
                 phone = "+6285935294045",
                 onEditProfileClicked = { /* TODO: Navigasi ke Edit Profil */ }
             )
 
-            // --- Bagian Keamanan ---
             ProfileSection(title = "Keamanan") {
                 ProfileOptionItem(
                     text = "Ubah Password",
@@ -86,7 +103,6 @@ fun ProfileScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // --- Bagian Pusat Bantuan ---
             ProfileSection(title = "Pusat Bantuan") {
                 ProfileOptionItem(
                     text = "Kebijakan Privasi",
@@ -99,28 +115,32 @@ fun ProfileScreen(
             }
 
             Spacer(modifier = Modifier.height(16.dp))
-            Divider(color = LightGrayBackground, thickness = 1.dp)
+            HorizontalDivider(modifier = Modifier, thickness = 1.dp, color = LightGrayBackground)
 
-            // --- Bagian Keluar ---
             ProfileOptionItem(
-                icon = Icons.Default.ExitToApp,
+                icon = Icons.AutoMirrored.Filled.ExitToApp,
                 text = "Keluar",
-                onClick = { /* TODO: Logout User */ },
-                contentColor = DarkText,
-                showTrailingIcon = false // Menghilangkan panah di kanan
-            )
-
-            Divider(color = LightGrayBackground, thickness = 1.dp)
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // --- Bagian Hapus Akun ---
-            ProfileOptionItem(
-                icon = Icons.Default.Delete,
-                text = "Hapus Akun",
-                onClick = { /* TODO: Tampilkan konfirmasi dialog Hapus Akun */ },
+                onClick = {
+                    viewModel.logout(context) { isSuccess ->
+                        if (isSuccess) {
+                            navController.navigate(Destinations.OPENING_SCREEN) {
+                                popUpTo(navController.graph.id) { inclusive = true }
+                            }
+                        } else {
+                            coroutineScope.launch {
+                                snackbarHostState.showSnackbar(
+                                    message = "Gagal keluar. Silakan coba lagi.",
+                                    actionLabel = "Tutup",
+                                    duration = SnackbarDuration.Short
+                                )
+                            }
+                        }
+                    }
+                },
                 contentColor = DangerRed,
                 showTrailingIcon = false
             )
+
 
             Spacer(modifier = Modifier.height(32.dp))
         }
@@ -142,7 +162,6 @@ fun ProfileHeader(
             .padding(24.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Ikon Profil Besar
         Box(
             modifier = Modifier
                 .size(60.dp)
@@ -160,7 +179,6 @@ fun ProfileHeader(
 
         Spacer(modifier = Modifier.width(16.dp))
 
-        // Detail Nama dan Nomor HP
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = name,
@@ -175,7 +193,6 @@ fun ProfileHeader(
             )
         }
 
-        // Tombol Edit Profil
         Text(
             text = "Edit Profil",
             fontSize = 14.sp,
@@ -208,9 +225,8 @@ fun ProfileSection(
             modifier = Modifier.padding(horizontal = 24.dp)
         )
         Spacer(modifier = Modifier.height(8.dp))
-        Divider(color = LightGrayBackground, thickness = 1.dp)
+        HorizontalDivider(modifier = Modifier, thickness = 1.dp, color = LightGrayBackground)
 
-        // Konten Bagian (Opsi-opsi)
         content()
     }
 }
@@ -254,23 +270,14 @@ fun ProfileOptionItem(
 
             if (showTrailingIcon) {
                 Icon(
-                    imageVector = Icons.Default.KeyboardArrowRight,
+                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                     contentDescription = "Next",
                     tint = Color.Gray
                 )
             }
         }
-        // Pemisah hanya di bawah item kecuali yang terakhir di setiap bagian
         if (text != "Bantuan SignLink" && text != "Keluar" && contentColor != DangerRed) {
-            Divider(color = LightGrayBackground, thickness = 1.dp)
+            HorizontalDivider(modifier = Modifier, thickness = 1.dp, color = LightGrayBackground)
         }
     }
-}
-
-// Preview untuk memvisualisasikan layar
-@Preview(showBackground = true)
-@Composable
-fun PreviewProfileScreen() {
-    // Membungkus dalam MaterialTheme jika ini adalah file standalone
-    ProfileScreen()
 }

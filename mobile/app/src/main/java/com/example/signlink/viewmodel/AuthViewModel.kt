@@ -10,7 +10,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import com.example.signlink.data.utils.AuthUtil
 import android.content.Context
-import android.util.Log
 
 
 @HiltViewModel
@@ -23,9 +22,6 @@ class AuthViewModel @Inject constructor(
 
     private val _registerResult = MutableStateFlow<String?>(null)
     val registerResult: StateFlow<String?> = _registerResult
-
-    private val _jwtResult = MutableStateFlow<String?>(null)
-    val jwtResult: StateFlow<String?> = _jwtResult
 
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading
@@ -72,7 +68,6 @@ class AuthViewModel @Inject constructor(
         }
     }
 
-    // Di AuthViewModel
     fun checkJwt(context: Context, onResult: (Boolean) -> Unit) {
         viewModelScope.launch {
             val token = AuthUtil.jwtAuth(context)
@@ -80,7 +75,7 @@ class AuthViewModel @Inject constructor(
                 try {
                     val response = repository.checkJwt(token)
                     onResult(response?.data != null)
-                } catch (e: Exception) {
+                } catch (_: Exception) {
                     onResult(false)
                 }
             } else {
@@ -89,6 +84,28 @@ class AuthViewModel @Inject constructor(
         }
     }
 
+    fun logout(context: Context, onResult: (Boolean) -> Unit) {
+        viewModelScope.launch {
+            val token = AuthUtil.jwtAuth(context)
+            if (token != null) {
+                try {
+                    val response = repository.logout(token)
+                    val isSuccess = response?.data?.loggedOut == true
+
+                    if (isSuccess) {
+                        AuthUtil.clearToken(context)
+                    }
+
+                    onResult(isSuccess)
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    onResult(false)
+                }
+            } else {
+                onResult(false)
+            }
+        }
+    }
 
 
 }

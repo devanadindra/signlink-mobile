@@ -99,7 +99,7 @@ fun KuisResultScreen(
                 indicator = {
                     TabRowDefaults.SecondaryIndicator(
                         Modifier
-                            .fillMaxWidth()
+                            .tabIndicatorOffset(selectedTabIndex)
                             .height(3.dp),
                         color = SignLinkTeal
                     )

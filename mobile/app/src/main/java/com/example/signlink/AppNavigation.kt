@@ -50,7 +50,6 @@ fun AppNavHost() {
     var startDestination by remember { mutableStateOf(Destinations.SPLASH_SCREEN) }
     val viewModel: AuthViewModel = hiltViewModel()
 
-    // Cek JWT saat pertama kali
     LaunchedEffect(Unit) {
         viewModel.checkJwt(context) { isValid ->
             startDestination = if (isValid) Destinations.HOME_SCREEN else Destinations.ONBOARDING
@@ -194,6 +193,8 @@ fun AppNavHost() {
         // Profile Screen
         composable(Destinations.PROFILE_SCREEN) {
             ProfileScreen(
+                viewModel = viewModel,
+                navController = navController,
                 onKamusClicked = { navController.navigate(Destinations.KAMUS_SCREEN) },
                 onVTTClicked = { navController.navigate(Destinations.VTT_SCREEN) },
                 onHomeClicked = { navController.navigate(Destinations.HOME_SCREEN) },

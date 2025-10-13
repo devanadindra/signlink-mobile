@@ -57,7 +57,6 @@ fun LoginScreen(
     var emailError by remember { mutableStateOf<String?>(null) }
     var passwordError by remember { mutableStateOf<String?>(null) }
 
-    // State baru untuk pesan sukses yang akan ditampilkan di UI
     var successMessage by remember { mutableStateOf<String?>(null) }
 
     val loginResult by viewModel.loginResult.collectAsState()
@@ -89,18 +88,13 @@ fun LoginScreen(
         return isValid
     }
 
-    // --- LOGIC SIMULASI LOADING & NAVIGASI ---
     LaunchedEffect(loginResult) {
-        // Cek hasil login dari ViewModel
         loginResult?.let { result ->
             if (result.contains("success", true)) {
-                // 1. Set pesan sukses
                 successMessage = "Berhasil Masuk! Selamat datang."
 
-                // 2. Tunda sebentar (simulasi loading lama/animasi sukses)
-                delay(2000L) // Menunda 2 detik (2000 milidetik)
+                delay(2000L)
 
-                // 3. Panggil navigasi sukses
                 onLoginSuccess()
             }
         }
@@ -133,7 +127,6 @@ fun LoginScreen(
 
         Spacer(modifier = Modifier.height(40.dp))
 
-        // --- EMAIL FIELD ---
         Text(text = "Email", modifier = Modifier.fillMaxWidth(), color = DarkText, fontWeight = FontWeight.Medium)
         Spacer(modifier = Modifier.height(8.dp))
         OutlinedTextField(
@@ -145,10 +138,8 @@ fun LoginScreen(
             isError = emailError != null,
             shape = RoundedCornerShape(50),
             colors = OutlinedTextFieldDefaults.colors(
-                // Mengembalikan konfigurasi TextColor
                 focusedTextColor = Color.Black,
                 unfocusedTextColor = Color.Black,
-                // Menggunakan ContainerColor yang benar (jika ingin custom background)
                 focusedContainerColor = Color.White,
                 unfocusedContainerColor = Color.White,
                 errorContainerColor = Color.White,
@@ -166,7 +157,6 @@ fun LoginScreen(
 
         Spacer(modifier = Modifier.height(14.dp))
 
-        // --- PASSWORD FIELD ---
         Text(text = "Password", modifier = Modifier.fillMaxWidth(), color = DarkText, fontWeight = FontWeight.Medium)
         Spacer(modifier = Modifier.height(8.dp))
         OutlinedTextField(
@@ -185,10 +175,8 @@ fun LoginScreen(
             isError = passwordError != null,
             shape = RoundedCornerShape(50),
             colors = OutlinedTextFieldDefaults.colors(
-                // Mengembalikan konfigurasi TextColor
                 focusedTextColor = Color.Black,
                 unfocusedTextColor = Color.Black,
-                // Menggunakan ContainerColor yang benar (jika ingin custom background)
                 focusedContainerColor = Color.White,
                 unfocusedContainerColor = Color.White,
                 errorContainerColor = Color.White,
@@ -204,11 +192,10 @@ fun LoginScreen(
                 textAlign = TextAlign.Start)
         }
 
-        // --- PESAN SUKSES (setelah berhasil login, sebelum navigasi) ---
         if (successMessage != null) {
             Text(
                 text = successMessage!!,
-                color = Color(0xFF4CAF50), // Warna hijau untuk sukses
+                color = Color(0xFF4CAF50),
                 fontWeight = FontWeight.SemiBold,
                 modifier = Modifier
                     .fillMaxWidth()
@@ -217,7 +204,6 @@ fun LoginScreen(
             )
         }
 
-        // --- PESAN ERROR GLOBAL DARI VIEWMODEL (jika ada) ---
         loginResult?.let {
             if (!it.contains("success", true) && successMessage == null) {
                 Text(
@@ -234,7 +220,6 @@ fun LoginScreen(
 
         Spacer(modifier = Modifier.height(10.dp))
 
-        // --- REMEMBER ME & LUPA KATA SANDI ---
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
@@ -259,15 +244,12 @@ fun LoginScreen(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // --- TOMBOL MASUK ---
         val context = LocalContext.current
 
-        // Cek apakah sedang loading atau menampilkan pesan sukses
         val showLoading = isLoading || (loginResult?.contains("success", true) == true && successMessage != null)
 
         Button(
             onClick = {
-                // Hanya panggil login jika TIDAK sedang loading/menampilkan sukses
                 if (!showLoading && validateForm()) {
                     viewModel.login(context, email, password)
                 }
@@ -275,14 +257,10 @@ fun LoginScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(56.dp),
-            // Warna tombol tetap SignLinkTeal
             colors = ButtonDefaults.buttonColors(containerColor = SignLinkTeal),
             shape = RoundedCornerShape(50),
-            // Hapus 'enabled = ...' agar tombol tidak berubah menjadi abu-abu.
-            // Kita kontrol aksi klik di dalam 'onClick' di atas.
         ) {
             if (showLoading) {
-                // Tampilkan spinner saat loading atau setelah sukses (selama delay 2 detik)
                 CircularProgressIndicator(
                     color = Color.White,
                     modifier = Modifier.size(24.dp)
@@ -294,7 +272,6 @@ fun LoginScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // --- PEMISAH ATAU ---
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
@@ -314,9 +291,8 @@ fun LoginScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // --- TOMBOL GOOGLE ---
         OutlinedButton(
-            onClick = { /* Handle Google Login */ },
+            onClick = {},
             modifier = Modifier
                 .fillMaxWidth()
                 .height(56.dp)
@@ -324,7 +300,6 @@ fun LoginScreen(
             colors = ButtonDefaults.outlinedButtonColors(contentColor = DarkText, containerColor = Color.White),
             shape = RoundedCornerShape(50)
         ) {
-            // Asumsi R.drawable.google_logo ada, jika tidak, ganti dengan R.drawable.google
             Image(
                 painter = painterResource(id = R.drawable.google),
                 contentDescription = "Google Logo",
@@ -336,7 +311,6 @@ fun LoginScreen(
 
         Spacer(modifier = Modifier.height(40.dp))
 
-        // --- LINK DAFTAR ---
         Row(
             horizontalArrangement = Arrangement.Center,
             modifier = Modifier.fillMaxWidth()
