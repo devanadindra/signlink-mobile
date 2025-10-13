@@ -12,7 +12,6 @@ import com.example.signlink.screens.HomeScreen
 import com.example.signlink.screens.kamus.KamusScreen
 import com.example.signlink.screens.kamus.KamusListScreen
 import com.example.signlink.screens.kamus.KamusDetailScreen
-import com.example.signlink.screens.kuis.KuisScreen
 import com.example.signlink.screens.ProfileScreen
 import com.example.signlink.screens.VoiceToTextScreen
 import com.example.signlink.screens.SplashScreen
@@ -20,7 +19,9 @@ import com.example.signlink.screens.OpeningScreen
 import com.example.signlink.screens.onboarding.OnboardingScreen
 import com.example.signlink.screens.auth.LoginScreen
 import com.example.signlink.screens.auth.SignUpScreen
+import com.example.signlink.screens.kuis.KuisScreen
 import com.example.signlink.screens.kuis.KuisDetailScreen
+import com.example.signlink.screens.kuis.KuisResultScreen
 import com.example.signlink.viewmodel.AuthViewModel
 import com.google.accompanist.navigation.animation.composable
 
@@ -35,6 +36,7 @@ object Destinations {
     const val KAMUS_SCREEN = "kamus_screen"
     const val KUIS_SCREEN = "kuis_screen"
     const val KUIS_DETAIL_SCREEN = "kuis_detail_screen"
+    const val KUIS_RESULT_SCREEN = "kuis_result_screen"
     const val KAMUS_DETAIL_SCREEN = "kamus_detail_screen"
     const val PROFILE_SCREEN = "profile_screen"
 }
@@ -150,6 +152,19 @@ fun AppNavHost() {
         ) { backStackEntry ->
             val quizId = backStackEntry.arguments?.getString("quizId")
             KuisDetailScreen(
+                navController = navController,
+                quizId = quizId
+            )
+        }
+
+        composable(
+            route = Destinations.KUIS_RESULT_SCREEN + "/{quizId}",
+            arguments = listOf(
+                navArgument("quizId") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val quizId = backStackEntry.arguments?.getString("quizId")
+            KuisResultScreen(
                 navController = navController,
                 quizId = quizId
             )

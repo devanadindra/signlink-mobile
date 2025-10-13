@@ -64,24 +64,24 @@ fun KuisDetailScreen(
             timeRemainingSeconds--
         } else if (timeRemainingSeconds == 0 && !isTimeUp) {
             isTimeUp = true
-            // TODO: Aksi saat waktu habis, misalnya langsung submit kuis
-            println("WAKTU HABIS! Submitting quiz...")
             navController.navigate("kuis_result_screen/$quizId")
         }
     }
 
-    // ... (State dan variabel lainnya seperti sebelumnya)
     var currentQuestionIndex by remember { mutableIntStateOf(0) }
     val userAnswers = remember { mutableStateMapOf<Int, String>() }
     val currentQuestion = questions.getOrNull(currentQuestionIndex)
     val totalQuestions = questions.size
 
+    val isQuizComplete = userAnswers.size == totalQuestions
+
     val quizTitle = quizId
         ?.split("/")?.last()
-        ?.replace("_", " ")?.replaceFirstChar { it.uppercase() }
+        ?.replace("_", " ")
+        ?.split(" ")
+        ?.joinToString(" ") { it.replaceFirstChar { c -> c.uppercase() } }
         ?: "Kuis SignLink"
 
-    // Teks waktu yang akan ditampilkan
     val timeDisplayText = formatTime(timeRemainingSeconds)
 
     Scaffold(
@@ -97,10 +97,9 @@ fun KuisDetailScreen(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Default.AccessTime, contentDescription = "Sisa Waktu", tint = SignLinkTeal, modifier = Modifier.size(20.dp))
                         Spacer(modifier = Modifier.width(4.dp))
-                        // Tampilkan waktu mundur
                         Text(
                             text = timeDisplayText,
-                            color = if (timeRemainingSeconds <= 60) Color.Red else SignLinkTeal, // Warna merah jika sisa 1 menit
+                            color = if (timeRemainingSeconds <= 60) Color.Red else SignLinkTeal,
                             fontWeight = FontWeight.Bold,
                             modifier = Modifier.padding(end = 8.dp)
                         )
@@ -112,12 +111,10 @@ fun KuisDetailScreen(
     ) { paddingValues ->
         if (questions.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize().padding(paddingValues), contentAlignment = Alignment.Center) {
-                Text("Soal kuis untuk $quizTitle tidak ditemukan. Cek QuizData.kt.", color = DarkText)
+                Text("Soal kuis untuk $quizTitle tidak ditemukan. Cek QuizRepository.kt.", color = DarkText)
             }
             return@Scaffold
         }
-
-        // ... (Sisa Body Screen tetap sama)
 
         Column(
             modifier = Modifier
@@ -126,71 +123,76 @@ fun KuisDetailScreen(
                 .background(Color.White)
         ) {
             currentQuestion?.let { question ->
-                // 1. Status Pertanyaan (Stepper)
                 QuestionStepper(
                     currentStep = currentQuestionIndex,
                     totalSteps = totalQuestions,
                     onStepClick = { index -> currentQuestionIndex = index },
+                    answeredQuestionIds = userAnswers.keys.toList(),
+                    allQuestions = questions,
                     modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp)
                 )
 
-                // 2. Konten Pertanyaan
                 Column(
                     modifier = Modifier
                         .weight(1f)
                         .padding(horizontal = 24.dp)
                 ) {
-                    // Video Player
                     VideoPlayer(
                         videoUrl = question.videoUrl,
-                        modifier = Modifier.fillMaxWidth().height(250.dp).clip(RoundedCornerShape(8.dp))
+                        modifier = Modifier.fillMaxWidth().width(300.dp).clip(RoundedCornerShape(8.dp))
                     )
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // Teks Pertanyaan
                     Text(text = question.questionText, fontSize = 18.sp, color = DarkText, modifier = Modifier.padding(bottom = 16.dp))
 
-                    // Opsi Jawaban
                     question.options.forEach { option ->
                         QuizOption(
                             option = option,
                             isSelected = userAnswers[question.id] == option.answerText,
-                            onSelect = { selectedAnswer -> userAnswers[question.id] = selectedAnswer }
+                            onSelect = { selectedAnswer ->
+                                userAnswers[question.id] = selectedAnswer
+                                QuizResultHolder.userAnswers = userAnswers.toMap()
+                                QuizResultHolder.quizId = quizId
+                            }
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                     }
                 }
 
-                // 3. Kontrol Navigasi
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(24.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Tombol Sebelumnya
                     IconButton(
                         onClick = { if (currentQuestionIndex > 0) currentQuestionIndex-- },
                         enabled = currentQuestionIndex > 0,
                         colors = IconButtonDefaults.iconButtonColors(containerColor = Color.LightGray.copy(alpha = 0.5f), contentColor = DarkText, disabledContentColor = Color.LightGray),
                         modifier = Modifier.size(48.dp)
                     ) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Sebelumnya") }
+
                     if (currentQuestionIndex == totalQuestions - 1) {
                         Button(
                             onClick = {
                                 navController.navigate("kuis_result_screen/$quizId")
                             },
+                            enabled = isQuizComplete,
                             shape = RoundedCornerShape(8.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = SignLinkTeal),
+                            colors = ButtonDefaults.buttonColors(containerColor = SignLinkTeal, disabledContainerColor = SignLinkTeal.copy(alpha = 0.4f)),
                             modifier = Modifier.weight(1f).height(48.dp).padding(horizontal = 16.dp)
                         ) { Text("Submit Quiz", fontSize = 16.sp, fontWeight = FontWeight.Bold) }
                     } else {
                         Spacer(modifier = Modifier.weight(1f))
                     }
 
-                    // Tombol Selanjutnya
                     IconButton(
-                        onClick = { if (currentQuestionIndex < totalQuestions - 1) currentQuestionIndex++ },
+                        onClick = {
+                            if (currentQuestionIndex < totalQuestions - 1) currentQuestionIndex++
+                            else if (currentQuestionIndex == totalQuestions - 1 && isQuizComplete) {
+                                navController.navigate("kuis_result_screen/$quizId")
+                            }
+                        },
                         enabled = currentQuestionIndex < totalQuestions - 1,
                         colors = IconButtonDefaults.iconButtonColors(containerColor = SignLinkTeal, contentColor = Color.White, disabledContainerColor = SignLinkTeal.copy(alpha = 0.5f)),
                         modifier = Modifier.size(48.dp)
@@ -209,6 +211,8 @@ fun QuestionStepper(
     currentStep: Int,
     totalSteps: Int,
     onStepClick: (Int) -> Unit,
+    answeredQuestionIds: List<Int>,
+    allQuestions: List<QuizQuestion>,
     modifier: Modifier = Modifier
 ) {
     LazyRow(
@@ -218,8 +222,15 @@ fun QuestionStepper(
     ) {
         items(totalSteps) { index ->
             val isActive = index == currentStep
-            val color = if (isActive) SignLinkTeal else Color.LightGray
-            val textColor = if (isActive) Color.White else DarkText
+            val questionId = allQuestions.getOrNull(index)?.id ?: -1
+            val isAnswered = answeredQuestionIds.contains(questionId)
+
+            val color = when {
+                isActive -> SignLinkTeal
+                isAnswered -> Color(0xFF4CAF50)
+                else -> Color.LightGray
+            }
+            val textColor = if (isActive || isAnswered) Color.White else DarkText
 
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Box(
@@ -279,7 +290,6 @@ fun QuizOption(
             .padding(vertical = 12.dp, horizontal = 16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Label (A, B, C, D)
         Box(
             modifier = Modifier
                 .size(24.dp)
@@ -297,7 +307,6 @@ fun QuizOption(
 
         Spacer(modifier = Modifier.width(16.dp))
 
-        // Teks Jawaban
         Text(
             text = option.answerText,
             color = contentColor,

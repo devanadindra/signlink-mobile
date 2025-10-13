@@ -10,13 +10,57 @@ data class QuizQuestion(
     val correctAnswer: String
 )
 
+data class QuestionResult(
+    val questionId: Int,
+    val questionText: String,
+    val videoUrl: String,
+    val userAnswer: String?,
+    val correctAnswer: String,
+    val isCorrect: Boolean
+)
+
+object QuizResultHolder {
+    var userAnswers: Map<Int, String> = emptyMap()
+    var quizId: String? = null
+
+    fun calculateDetailedScore(questions: List<QuizQuestion>): Pair<List<QuestionResult>, Int> {
+        val results = mutableListOf<QuestionResult>()
+        var correctCount = 0
+
+        questions.forEach { question ->
+            val userAnswer = userAnswers[question.id]
+            val isCorrect = userAnswer != null && userAnswer == question.correctAnswer
+
+            if (isCorrect) {
+                correctCount++
+            }
+
+            results.add(
+                QuestionResult(
+                    questionId = question.id,
+                    questionText = question.questionText,
+                    videoUrl = question.videoUrl,
+                    userAnswer = userAnswer,
+                    correctAnswer = question.correctAnswer,
+                    isCorrect = isCorrect
+                )
+            )
+        }
+        return Pair(results, correctCount)
+    }
+
+    fun clear() {
+        userAnswers = emptyMap()
+        quizId = null
+    }
+}
+
+
 /**
  * Repository sederhana untuk data kuis.
- * Dalam aplikasi nyata, data ini akan diambil dari Firestore atau API.
  */
 object QuizRepository {
 
-    // Kumpulan data untuk Kuis "Kata Dasar A"
     private val kataDasarAQuestions = listOf(
         QuizQuestion(
             id = 1,
@@ -146,21 +190,18 @@ object QuizRepository {
 
     private val allQuizzes = mapOf(
         "abjad" to abjadDasarQuestions,
-        "kata_a" to kataDasarAQuestions,
-
+        "kata_dasar_a" to kataDasarAQuestions,
     )
 
-    /**
-     * Mengambil daftar pertanyaan kuis berdasarkan ID/Route.
-     */
-    fun getQuestionsByRoute(route: String): List<QuizQuestion> {
-        return allQuizzes[route] ?: emptyList()
+    fun getQuestionsByRoute(route: String?): List<QuizQuestion> {
+        val key = route?.split("/")?.last() ?: return emptyList()
+        return allQuizzes[key] ?: emptyList()
     }
 
     fun getTimeLimit(route: String?): Int? {
         return when (route) {
             "kuis_start/abjad" -> 10
-            "kuis_start/kata_a" -> 10
+            "kuis_start/kata_dasar_a" -> 10
             else -> null
         }
     }

@@ -15,7 +15,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.core.net.toUri
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
@@ -27,9 +26,11 @@ fun VideoPlayer(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
-    val exoPlayer = remember {
+
+    val exoPlayer = remember(videoUrl) {
         ExoPlayer.Builder(context).build().apply {
-            setMediaItem(MediaItem.fromUri(videoUrl.toUri()))
+            val item = MediaItem.fromUri(videoUrl)
+            setMediaItem(item)
             prepare()
             playWhenReady = false
         }
@@ -43,11 +44,13 @@ fun VideoPlayer(
                 if (state == Player.STATE_ENDED) {
                     isPlaying = false
                     exoPlayer.seekTo(0)
-                    exoPlayer.playWhenReady = false
+                    exoPlayer.pause()
                 }
             }
         }
+
         exoPlayer.addListener(listener)
+
         onDispose {
             exoPlayer.removeListener(listener)
             exoPlayer.release()
@@ -65,6 +68,9 @@ fun VideoPlayer(
                         FrameLayout.LayoutParams.WRAP_CONTENT
                     )
                 }
+            },
+            update = { view ->
+                if (view.player != exoPlayer) view.player = exoPlayer
             },
             modifier = Modifier
                 .fillMaxWidth()
@@ -84,22 +90,15 @@ fun VideoPlayer(
             }) {
                 Icon(
                     imageVector = Icons.Filled.FastRewind,
-                    contentDescription = "Rewind 2s",
-                    modifier = Modifier.size(32.dp)
+                    contentDescription = "Rewind 2s"
                 )
             }
-
-            Spacer(modifier = Modifier.width(16.dp))
 
             IconButton(onClick = {
                 if (exoPlayer.isPlaying) {
                     exoPlayer.pause()
                     isPlaying = false
                 } else {
-                    if (exoPlayer.currentPosition >= exoPlayer.duration) {
-                        exoPlayer.seekTo(0)
-                    }
-                    exoPlayer.playWhenReady = true
                     exoPlayer.play()
                     isPlaying = true
                 }
@@ -111,18 +110,16 @@ fun VideoPlayer(
                 )
             }
 
-            Spacer(modifier = Modifier.width(16.dp))
-
             IconButton(onClick = {
                 val newPosition = (exoPlayer.currentPosition + 2_000).coerceAtMost(exoPlayer.duration)
                 exoPlayer.seekTo(newPosition)
             }) {
                 Icon(
                     imageVector = Icons.Filled.FastForward,
-                    contentDescription = "Forward 2s",
-                    modifier = Modifier.size(32.dp)
+                    contentDescription = "Forward 2s"
                 )
             }
         }
     }
 }
+
