@@ -59,16 +59,13 @@ fun KamusListScreen(
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
             )
         }
-    ) { paddingValues ->
-        // MEMBUAT COLUMN UTAMA UNTUK MENGCONTAIN SEMUA ELEMEN
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues)
                 .background(Color.White),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // --- ELEMEN STATIS (TIDAK BERGULIR) ---
 
             Spacer(modifier = Modifier.height(32.dp))
 

@@ -9,8 +9,3 @@ data class LoginData(
     val token: String,
     val expires: String,
 )
-
-data class LoginResponse(
-    val data: LoginData?,
-    val errors: Any?
-)

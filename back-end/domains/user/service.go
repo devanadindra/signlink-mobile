@@ -191,7 +191,7 @@ func (s *service) Logout(ctx context.Context, input LogoutReq) (res *LogoutRes, 
 	}, nil
 }
 
-func (s *service) ValidateToken(ctx context.Context, token string) (err error) {
+func (s *service) ValidateToken(ctx context.Context, token string) error {
 	db, err := s.dbSelector.GetDBByRole(ctx)
 	if err != nil {
 		db = s.CustomerDB.DB
@@ -205,7 +205,7 @@ func (s *service) ValidateToken(ctx context.Context, token string) (err error) {
 		return err
 	}
 
-	return nil
+	return errors.New("token is blacklisted")
 }
 
 func (s *service) Register(ctx context.Context, input RegisterReq) (res *Customer, err error) {

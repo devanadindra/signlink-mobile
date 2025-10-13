@@ -1,6 +1,7 @@
 package com.example.signlink.screens
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
@@ -35,6 +36,7 @@ import com.example.signlink.components.NavItem
 import com.example.signlink.ui.theme.*
 import androidx.core.content.ContextCompat
 
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun VoiceToTextScreen(
@@ -49,7 +51,6 @@ fun VoiceToTextScreen(
     var isRecording by remember { mutableStateOf(false) }
     var isIndonesian by remember { mutableStateOf(true) }
 
-    // SpeechRecognizer dibuat sekali
     val speechRecognizer = remember {
         SpeechRecognizer.createSpeechRecognizer(context).apply {
             setRecognitionListener(object : RecognitionListener {
@@ -101,18 +102,15 @@ fun VoiceToTextScreen(
         },
         floatingActionButton = { MainFloatingActionButton(onClick = onCameraClicked) },
         floatingActionButtonPosition = FabPosition.Center
-    ) { paddingValues ->
-
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues)
                 .background(Color.White),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Spacer(modifier = Modifier.height(72.dp))
 
-            // 1. Logo
             Image(
                 painter = painterResource(id = R.drawable.signlink),
                 contentDescription = "SignLink Logo",
@@ -121,16 +119,14 @@ fun VoiceToTextScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // 2. Deskripsi Card
             VttDescriptionCard(
                 modifier = Modifier.fillMaxWidth(0.9f).padding(horizontal = 8.dp),
                 subtitle = "Suara ke Tulisan",
                 description = "Mulailah berbicara untuk mengubah suara menjadi teks"
             )
 
-            Spacer(modifier = Modifier.height(24.dp)) // Jarak antara Card dan Toggle
+            Spacer(modifier = Modifier.height(24.dp))
 
-            // BARU: Toggle Pilih Bahasa
             LanguageToggle(
                 isIndonesian = isIndonesian,
                 onToggle = { isIndonesian = it }
@@ -138,7 +134,6 @@ fun VoiceToTextScreen(
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // 3. Text hasil rekaman
             Card(
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(containerColor = LightGrayBackground),
@@ -160,7 +155,6 @@ fun VoiceToTextScreen(
                 )
             }
 
-            // 4. Tombol rekam
             Box(
                 modifier = Modifier
                     .fillMaxWidth(0.9f)
@@ -227,7 +221,6 @@ fun LanguageToggle(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier.fillMaxWidth(0.9f)
     ) {
-        // Tombol Indonesia
         Button(
             onClick = { onToggle(true) },
             colors = ButtonDefaults.buttonColors(
@@ -243,7 +236,6 @@ fun LanguageToggle(
 
         Spacer(modifier = Modifier.width(16.dp))
 
-        // Tombol English
         Button(
             onClick = { onToggle(false) },
             colors = ButtonDefaults.buttonColors(
