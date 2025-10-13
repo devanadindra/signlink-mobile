@@ -87,8 +87,6 @@ fun KamusDetailScreen(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier.padding(16.dp)
                 ) {
-                    // Komponen Video Player dengan URL
-                    // CATATAN: Masalah utama berada di dalam VideoPlayer.kt, memastikan ExoPlayer dilepas tepat waktu.
                     VideoPlayer(
                         videoUrl = videoUrl ?: "",
                         modifier = Modifier

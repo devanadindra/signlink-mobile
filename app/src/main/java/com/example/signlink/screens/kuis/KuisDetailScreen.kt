@@ -1,5 +1,6 @@
 package com.example.signlink.screens.kuis
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -12,7 +13,6 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material3.*
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -23,9 +23,17 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.signlink.components.VideoPlayer
-
 import com.example.signlink.ui.theme.DarkText
 import com.example.signlink.ui.theme.SignLinkTeal
+import kotlinx.coroutines.delay
+import java.util.concurrent.TimeUnit
+
+@SuppressLint("DefaultLocale")
+private fun formatTime(seconds: Int): String {
+    val minutes = TimeUnit.SECONDS.toMinutes(seconds.toLong())
+    val remainingSeconds = seconds - TimeUnit.MINUTES.toSeconds(minutes)
+    return String.format("%02d:%02d", minutes, remainingSeconds)
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -41,9 +49,30 @@ fun KuisDetailScreen(
         }
     }
 
+    val timeLimitMinutes = remember(quizId) {
+        QuizRepository.getTimeLimit(quizId) ?: 10
+    }
+
+    val totalTimeSeconds = timeLimitMinutes * 60
+
+    var timeRemainingSeconds by remember { mutableIntStateOf(totalTimeSeconds) }
+    var isTimeUp by remember { mutableStateOf(false) }
+
+    LaunchedEffect(timeRemainingSeconds) {
+        if (timeRemainingSeconds > 0) {
+            delay(1000L)
+            timeRemainingSeconds--
+        } else if (timeRemainingSeconds == 0 && !isTimeUp) {
+            isTimeUp = true
+            // TODO: Aksi saat waktu habis, misalnya langsung submit kuis
+            println("WAKTU HABIS! Submitting quiz...")
+            navController.navigate("kuis_result_screen/$quizId")
+        }
+    }
+
+    // ... (State dan variabel lainnya seperti sebelumnya)
     var currentQuestionIndex by remember { mutableIntStateOf(0) }
     val userAnswers = remember { mutableStateMapOf<Int, String>() }
-
     val currentQuestion = questions.getOrNull(currentQuestionIndex)
     val totalQuestions = questions.size
 
@@ -52,7 +81,8 @@ fun KuisDetailScreen(
         ?.replace("_", " ")?.replaceFirstChar { it.uppercase() }
         ?: "Kuis SignLink"
 
-    val timeRemaining = "16:35"
+    // Teks waktu yang akan ditampilkan
+    val timeDisplayText = formatTime(timeRemainingSeconds)
 
     Scaffold(
         topBar = {
@@ -67,7 +97,13 @@ fun KuisDetailScreen(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Default.AccessTime, contentDescription = "Sisa Waktu", tint = SignLinkTeal, modifier = Modifier.size(20.dp))
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text(text = timeRemaining, color = SignLinkTeal, fontWeight = FontWeight.Bold, modifier = Modifier.padding(end = 8.dp))
+                        // Tampilkan waktu mundur
+                        Text(
+                            text = timeDisplayText,
+                            color = if (timeRemainingSeconds <= 60) Color.Red else SignLinkTeal, // Warna merah jika sisa 1 menit
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(end = 8.dp)
+                        )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
@@ -80,6 +116,8 @@ fun KuisDetailScreen(
             }
             return@Scaffold
         }
+
+        // ... (Sisa Body Screen tetap sama)
 
         Column(
             modifier = Modifier
@@ -105,7 +143,7 @@ fun KuisDetailScreen(
                     // Video Player
                     VideoPlayer(
                         videoUrl = question.videoUrl,
-                        modifier = Modifier.fillMaxWidth().aspectRatio(16f / 9f).clip(RoundedCornerShape(8.dp))
+                        modifier = Modifier.fillMaxWidth().height(250.dp).clip(RoundedCornerShape(8.dp))
                     )
 
                     Spacer(modifier = Modifier.height(16.dp))

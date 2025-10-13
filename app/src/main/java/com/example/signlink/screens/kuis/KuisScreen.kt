@@ -24,7 +24,7 @@ import androidx.navigation.NavController
 import com.example.signlink.R
 import com.example.signlink.components.DictionaryHeaderCard
 import com.example.signlink.ui.theme.SignLinkTeal
-import com.example.signlink.Destinations // <-- IMPORT BARU
+import com.example.signlink.Destinations
 
 data class KuisModul(
     val title: String,
