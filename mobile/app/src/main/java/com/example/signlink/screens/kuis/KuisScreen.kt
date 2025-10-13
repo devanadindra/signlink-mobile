@@ -40,16 +40,16 @@ fun KuisScreen(
 ) {
     val kuisModules = listOf(
         KuisModul("Abjad Dasar", 5, 10, "kuis_start/abjad"),
-        KuisModul("Kata Dasar A", 5, 10, "kuis_start/kata_a"),
-        KuisModul("Kata Dasar B", 5, 10, "kuis_start/kata_b"),
-        KuisModul("Kata Dasar C", 5, 10, "kuis_start/kata_c"),
-        KuisModul("Kata Dasar D", 5, 10, "kuis_start/kata_d"),
+        KuisModul("Kata Dasar A", 5, 10, "kuis_start/kata_dasar_a"),
+        KuisModul("Kata Dasar B", 5, 10, "kuis_start/kata_dasar_b"),
+        KuisModul("Kata Dasar C", 5, 10, "kuis_start/kata_dasar_c"),
+        KuisModul("Kata Dasar D", 5, 10, "kuis_start/kata_dasar_d"),
     )
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { /* Kosongkan atau bisa diisi "Kuis SignLink" */ },
+                title = {},
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Kembali")
@@ -67,7 +67,6 @@ fun KuisScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             contentPadding = PaddingValues(top = 16.dp, bottom = 16.dp)
         ) {
-            // 1. Logo
             item {
                 Image(
                     painter = painterResource(id = R.drawable.signlink),
@@ -76,7 +75,6 @@ fun KuisScreen(
                 )
             }
 
-            // 2. Header Card untuk Kuis
             item {
                 Spacer(modifier = Modifier.height(16.dp))
                 DictionaryHeaderCard(
@@ -89,7 +87,6 @@ fun KuisScreen(
                 Spacer(modifier = Modifier.height(24.dp))
             }
 
-            // 3. Daftar Modul Kuis (LazyColumn)
             items(kuisModules) { modul ->
                 KuisModulCard(
                     modul = modul,
