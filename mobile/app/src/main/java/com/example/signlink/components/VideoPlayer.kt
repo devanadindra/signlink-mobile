@@ -26,15 +26,18 @@ fun VideoPlayer(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
+    val baseUrl = "http://10.0.2.2:7777/api/"
 
     val exoPlayer = remember(videoUrl) {
         ExoPlayer.Builder(context).build().apply {
-            val item = MediaItem.fromUri(videoUrl)
+            val cleanUrl = videoUrl.removePrefix("/")
+            val item = MediaItem.fromUri(baseUrl + cleanUrl)
             setMediaItem(item)
             prepare()
             playWhenReady = false
         }
     }
+
 
     var isPlaying by remember { mutableStateOf(false) }
 

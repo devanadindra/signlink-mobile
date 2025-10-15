@@ -40,10 +40,7 @@ fun KuisScreen(
 ) {
     val kuisModules = listOf(
         KuisModul("Abjad Dasar", 5, 10, "kuis_start/abjad"),
-        KuisModul("Kata Dasar A", 5, 10, "kuis_start/kata_dasar_a"),
-        KuisModul("Kata Dasar B", 5, 10, "kuis_start/kata_dasar_b"),
-        KuisModul("Kata Dasar C", 5, 10, "kuis_start/kata_dasar_c"),
-        KuisModul("Kata Dasar D", 5, 10, "kuis_start/kata_dasar_d"),
+        KuisModul("Kata Dasar Batch 1", 5, 10, "kuis_start/kata_dasar_1"),
     )
 
     Scaffold(
