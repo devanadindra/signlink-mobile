@@ -61,64 +61,64 @@ object QuizResultHolder {
  */
 object QuizRepository {
 
-    private val kataDasarAQuestions = listOf(
+    private val kataDasar1Questions = listOf(
         QuizQuestion(
             id = 1,
-            videoUrl = "http://pmpk.kemdikbud.go.id/sibi/SIBI/katadasar/Abang.webm",
+            videoUrl = "/kamus_videos/A/Apa.mp4",
             questionText = "Apa arti dari bahasa isyarat pada video diatas?",
             options = listOf(
-                Option("A", "Abang"),
+                Option("A", "Apa"),
                 Option("B", "Abadi"),
                 Option("C", "Abad"),
                 Option("D", "Aku")
             ),
-            correctAnswer = "Abang"
+            correctAnswer = "Apa"
         ),
         QuizQuestion(
             id = 2,
-            videoUrl = "http://pmpk.kemdikbud.go.id/sibi/SIBI/katadasar/Ayah.webm",
+            videoUrl = "/kamus_videos/B/Baik.mp4",
             questionText = "Kata apa yang diperagakan?",
             options = listOf(
                 Option("A", "Anak"),
-                Option("B", "Ayah"),
-                Option("C", "Anda"),
-                Option("D", "Aku")
+                Option("B", "Baik"),
+                Option("C", "Kamu"),
+                Option("D", "Contoh")
             ),
-            correctAnswer = "Ayah"
+            correctAnswer = "Baik"
         ),
         QuizQuestion(
             id = 3,
-            videoUrl = "http://pmpk.kemdikbud.go.id/sibi/SIBI/katadasar/Aku.webm",
+            videoUrl = "/kamus_videos/B/Belajar.mp4",
             questionText = "Pilihan mana yang benar?",
             options = listOf(
                 Option("A", "Aku"),
-                Option("B", "Andai"),
+                Option("B", "Cara"),
                 Option("C", "Anak"),
-                Option("D", "Ayah")
+                Option("D", "Belajar")
             ),
-            correctAnswer = "Aku"
+            correctAnswer = "Belajar"
         ),
         QuizQuestion(
             id = 4,
-            videoUrl = "http://pmpk.kemdikbud.go.id/sibi/SIBI/katadasar/Andai.webm",
+            videoUrl = "/kamus_videos/D/Duduk.mp4",
             questionText = "Tebak kata ini!",
             options = listOf(
-                Option("A", "Aku"),
-                Option("B", "Akan"),
-                Option("C", "Andai"),
+                Option("A", "Bicara"),
+                Option("B", "Belajar"),
+                Option("C", "Duduk"),
                 Option("D", "Abad")
             ),
-            correctAnswer = "Andai"
+            correctAnswer = "Duduk"
         ),
         QuizQuestion(
             id = 5,
-            videoUrl = "http://pmpk.kemdikbud.go.id/sibi/SIBI/katadasar/Abad.webm",
+            videoUrl = "/kamus_videos/D/Dia.mp4",
             questionText = "Terakhir, apa isyaratnya?",
             options = listOf(
-                Option("A", "Aba"),
-                Option("B", "Abang"),
+                Option("A", "Dia"),
+                Option("B", "Duduk"),
                 Option("C", "Abad"),
-                Option("D", "Aku")
+                Option("D", "Bisa")
             ),
             correctAnswer = "Abad"
         )
@@ -127,7 +127,7 @@ object QuizRepository {
     private val abjadDasarQuestions = listOf(
         QuizQuestion(
             id = 1,
-            videoUrl = "http://pmpk.kemdikbud.go.id/sibi/SIBI/katadasar/A.webm",
+            videoUrl = "/kamus_videos/A/A.mp4",
             questionText = "Isyarat ini mewakili huruf apa?",
             options = listOf(
                 Option("A", "A"),
@@ -139,7 +139,7 @@ object QuizRepository {
         ),
         QuizQuestion(
             id = 2,
-            videoUrl = "http://pmpk.kemdikbud.go.id/sibi/SIBI/katadasar/H.webm",
+            videoUrl = "/kamus_videos/H/H.mp4",
             questionText = "Huruf yang benar adalah?",
             options = listOf(
                 Option("A", "E"),
@@ -151,7 +151,7 @@ object QuizRepository {
         ),
         QuizQuestion(
             id = 3,
-            videoUrl = "http://pmpk.kemdikbud.go.id/sibi/SIBI/katadasar/G.webm",
+            videoUrl = "/kamus_videos/G/G.mp4",
             questionText = "Huruf yang benar adalah?",
             options = listOf(
                 Option("A", "E"),
@@ -163,7 +163,7 @@ object QuizRepository {
         ),
         QuizQuestion(
             id = 4,
-            videoUrl = "http://pmpk.kemdikbud.go.id/sibi/SIBI/katadasar/F.webm",
+            videoUrl = "/kamus_videos/F/F.mp4",
             questionText = "Huruf yang benar adalah?",
             options = listOf(
                 Option("A", "E"),
@@ -175,7 +175,7 @@ object QuizRepository {
         ),
         QuizQuestion(
             id = 5,
-            videoUrl = "http://pmpk.kemdikbud.go.id/sibi/SIBI/katadasar/E.webm",
+            videoUrl = "/kamus_videos/E/E.mp4",
             questionText = "Huruf yang benar adalah?",
             options = listOf(
                 Option("A", "E"),
@@ -190,7 +190,7 @@ object QuizRepository {
 
     private val allQuizzes = mapOf(
         "abjad" to abjadDasarQuestions,
-        "kata_dasar_a" to kataDasarAQuestions,
+        "kata_dasar_1" to kataDasar1Questions,
     )
 
     fun getQuestionsByRoute(route: String?): List<QuizQuestion> {
@@ -201,7 +201,7 @@ object QuizRepository {
     fun getTimeLimit(route: String?): Int? {
         return when (route) {
             "kuis_start/abjad" -> 10
-            "kuis_start/kata_dasar_a" -> 10
+            "kuis_start/kata_dasar_1" -> 10
             else -> null
         }
     }
