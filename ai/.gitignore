@@ -2,3 +2,5 @@ dataset/*
 alfabet-bisindo.zip
 indonesian-sign-language-bisindo.zip
 bisindo-dataset.zip
+sign_classifier_label.pkl
+hand_keypoints.csv
