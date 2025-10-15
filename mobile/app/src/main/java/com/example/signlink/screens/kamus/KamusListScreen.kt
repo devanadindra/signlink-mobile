@@ -84,16 +84,13 @@ fun KamusListScreen(
                 modifier = Modifier
                     .fillMaxWidth(0.9f)
                     .padding(horizontal = 8.dp),
-                title = "Kamus Bahasa Isyarat SIBI",
+                title = "Kamus Bahasa Isyarat BISINDO",
                 description = "Kumpulan Bahasa Isyarat dan terjemahannya"
             )
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // --- KONTEN DINAMIS (DAPAT BERGULIR) ---
-
             if (isLoading) {
-                // Gunakan Modifier.weight(1f) agar indicator loading mengambil sisa ruang
                 Box(
                     modifier = Modifier.fillMaxWidth().weight(1f),
                     contentAlignment = Alignment.Center
@@ -101,14 +98,11 @@ fun KamusListScreen(
                     CircularProgressIndicator(modifier = Modifier.padding(32.dp))
                 }
             } else {
-                // LazyVerticalGrid akan mengisi sisa ruang dan dapat bergulir
                 LazyVerticalGrid(
                     columns = GridCells.Fixed(2),
-                    // Mengurangi vertical padding karena sudah ada spacer di atas
                     contentPadding = PaddingValues(horizontal = 24.dp, vertical = 0.dp),
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp),
-                    // PENTING: Gunakan weight(1f) agar mengambil sisa ruang yang tersisa
                     modifier = Modifier
                         .fillMaxWidth()
                         .weight(1f)
@@ -132,8 +126,7 @@ fun KamusListScreen(
 fun KamusListItem(item: KamusData, navController: NavController) {
     Button(
         onClick = {
-            // Encode arti agar aman untuk URL
-            val artiEncoded = Uri.encode(item.arti)
+            val artiEncoded = Uri.encode(item.arti.replace("_", " "))
             val videoEncoded = Uri.encode(item.url)
             navController.navigate("${Destinations.KAMUS_DETAIL_SCREEN}/$artiEncoded/$videoEncoded")
         },
@@ -148,7 +141,7 @@ fun KamusListItem(item: KamusData, navController: NavController) {
             .height(60.dp)
     ) {
         Text(
-            text = item.arti,
+            text = item.arti.replace("_", " "),
             fontSize = 18.sp,
             fontWeight = FontWeight.SemiBold
         )
