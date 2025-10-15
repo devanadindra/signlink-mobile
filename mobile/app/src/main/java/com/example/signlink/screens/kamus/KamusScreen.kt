@@ -35,7 +35,6 @@ fun KamusScreen(
     onProfileClicked: () -> Unit = {},
     onCameraClicked: () -> Unit = {}
 ) {
-    // Menetapkan Kamus sebagai item navigasi aktif
     val navItems = listOf(
         NavItem("Beranda", Icons.Default.Home, false, "home"),
         NavItem("Kamus", Icons.Default.Book, true, "kamus"),
@@ -81,7 +80,7 @@ fun KamusScreen(
             // 2. Deskripsi Card untuk Kamus
             DictionaryHeaderCard(
                 modifier = Modifier.fillMaxWidth(0.9f).padding(horizontal = 8.dp),
-                title = "Kamus Bahasa Isyarat SIBI",
+                title = "Kamus Bahasa Isyarat BISINDO",
                 description = "Kumpulan Bahasa Isyarat dan terjemahannya"
             )
 
