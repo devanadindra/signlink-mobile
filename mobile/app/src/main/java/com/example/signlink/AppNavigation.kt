@@ -16,6 +16,7 @@ import com.example.signlink.screens.ProfileScreen
 import com.example.signlink.screens.VoiceToTextScreen
 import com.example.signlink.screens.SplashScreen
 import com.example.signlink.screens.OpeningScreen
+import com.example.signlink.screens.SignClassifierScreen
 import com.example.signlink.screens.onboarding.OnboardingScreen
 import com.example.signlink.screens.auth.LoginScreen
 import com.example.signlink.screens.auth.SignUpScreen
@@ -39,6 +40,7 @@ object Destinations {
     const val KUIS_RESULT_SCREEN = "kuis_result_screen"
     const val KAMUS_DETAIL_SCREEN = "kamus_detail_screen"
     const val PROFILE_SCREEN = "profile_screen"
+    const val SIGN_CLASSIFIER_SCREEN = "sign_classifier_screen"
 }
 
 @OptIn(ExperimentalAnimationApi::class)
@@ -128,6 +130,7 @@ fun AppNavHost() {
         // Home Screen
         composable(Destinations.HOME_SCREEN) {
             HomeScreen(
+                onCameraClicked = { navController.navigate(Destinations.SIGN_CLASSIFIER_SCREEN)},
                 onKuisClicked = { navController.navigate(Destinations.KUIS_SCREEN)},
                 onKamusClicked = { navController.navigate(Destinations.KAMUS_SCREEN) },
                 onVTTClicked = { navController.navigate(Destinations.VTT_SCREEN) },
@@ -172,6 +175,7 @@ fun AppNavHost() {
         // Voice to Texts
         composable(Destinations.VTT_SCREEN) {
             VoiceToTextScreen(
+                onCameraClicked = { navController.navigate(Destinations.SIGN_CLASSIFIER_SCREEN)},
                 onKamusClicked = { navController.navigate(Destinations.KAMUS_SCREEN) },
                 onVTTClicked = { navController.navigate(Destinations.VTT_SCREEN) },
                 onHomeClicked = { navController.navigate(Destinations.HOME_SCREEN) },
@@ -183,6 +187,7 @@ fun AppNavHost() {
         composable(Destinations.KAMUS_SCREEN) {
             KamusScreen(
                 navController = navController,
+                onCameraClicked = { navController.navigate(Destinations.SIGN_CLASSIFIER_SCREEN)},
                 onKamusClicked = { navController.navigate(Destinations.KAMUS_SCREEN) },
                 onVTTClicked = { navController.navigate(Destinations.VTT_SCREEN) },
                 onHomeClicked = { navController.navigate(Destinations.HOME_SCREEN) },
@@ -195,6 +200,7 @@ fun AppNavHost() {
             ProfileScreen(
                 viewModel = viewModel,
                 navController = navController,
+                onCameraClicked = { navController.navigate(Destinations.SIGN_CLASSIFIER_SCREEN)},
                 onKamusClicked = { navController.navigate(Destinations.KAMUS_SCREEN) },
                 onVTTClicked = { navController.navigate(Destinations.VTT_SCREEN) },
                 onHomeClicked = { navController.navigate(Destinations.HOME_SCREEN) },
@@ -228,5 +234,10 @@ fun AppNavHost() {
             )
         }
 
+        composable(Destinations.SIGN_CLASSIFIER_SCREEN) {
+            SignClassifierScreen(
+                navController = navController,
+            )
+        }
     }
 }
