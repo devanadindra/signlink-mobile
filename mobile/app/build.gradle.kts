@@ -93,7 +93,20 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
 
+    // Mediapipe
+    implementation("com.google.mediapipe:tasks-vision:0.10.26")
 
+    // TensorFlow Lite
+    implementation("org.tensorflow:tensorflow-lite:2.16.1")
+
+    // Optional: TFLite Support Library untuk TensorBuffer, ops, dsb
+    implementation("org.tensorflow:tensorflow-lite-support:0.4.3")
+
+    // CameraX core
+    implementation("androidx.camera:camera-core:1.2.0")
+    implementation("androidx.camera:camera-camera2:1.2.0")
+    implementation("androidx.camera:camera-lifecycle:1.2.0")
+    implementation("androidx.camera:camera-view:1.2.0")
 
     // Testing
     testImplementation(libs.junit)
