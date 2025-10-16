@@ -54,7 +54,7 @@ fun AppNavHost() {
 
     LaunchedEffect(Unit) {
         viewModel.checkJwt(context) { isValid ->
-            startDestination = if (isValid) Destinations.HOME_SCREEN else Destinations.ONBOARDING
+            startDestination = if (isValid) Destinations.HOME_SCREEN else Destinations.HOME_SCREEN
         }
     }
 
@@ -71,7 +71,7 @@ fun AppNavHost() {
                         if (startDestination == Destinations.HOME_SCREEN)
                             Destinations.HOME_SCREEN
                         else
-                            Destinations.ONBOARDING
+                            Destinations.HOME_SCREEN
                     )
                 }
             )

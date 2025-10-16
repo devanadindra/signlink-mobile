@@ -94,7 +94,7 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
 
     // Mediapipe
-    implementation("com.google.mediapipe:tasks-vision:0.10.26")
+    implementation("com.google.mediapipe:tasks-vision:0.10.29")
 
     // TensorFlow Lite
     implementation("org.tensorflow:tensorflow-lite:2.16.1")

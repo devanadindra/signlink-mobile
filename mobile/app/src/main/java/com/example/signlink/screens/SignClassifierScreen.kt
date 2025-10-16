@@ -1,3 +1,4 @@
+// SignClassifierScreen.kt
 package com.example.signlink.screens
 
 import android.Manifest
@@ -6,6 +7,8 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.ImageFormat
+import android.graphics.YuvImage
 import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -30,6 +33,7 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.navigation.NavController
 import com.example.signlink.data.signclassifier.HandsDetector
 import com.example.signlink.data.signclassifier.SignClassifier
+import java.io.ByteArrayOutputStream
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
@@ -38,22 +42,17 @@ import java.util.concurrent.Executors
 fun SignClassifierScreen(navController: NavController) {
     val context = LocalContext.current
 
-    // State Izin Kamera
     var hasCameraPermission by remember {
         mutableStateOf(
             ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED
         )
     }
 
-    // Launcher untuk meminta izin
     val cameraPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission(),
-        onResult = { isGranted ->
-            hasCameraPermission = isGranted
-        }
+        onResult = { isGranted -> hasCameraPermission = isGranted }
     )
 
-    // SideEffect: Minta izin saat Composable pertama kali masuk
     LaunchedEffect(Unit) {
         if (!hasCameraPermission) {
             cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
@@ -80,7 +79,7 @@ fun SignClassifierScreen(navController: NavController) {
                 contentAlignment = Alignment.Center
             ) {
                 if (hasCameraPermission) {
-                    CameraContent(navController)
+                    CameraContent()
                 } else {
                     PermissionDeniedView(cameraPermissionLauncher)
                 }
@@ -89,55 +88,48 @@ fun SignClassifierScreen(navController: NavController) {
     )
 }
 
-// --- Komponen yang Memegang Logika Kamera dan Cleanup ---
-
 @Composable
-fun CameraContent(navController: NavController) {
+fun CameraContent() {
     val context = LocalContext.current
     val lifecycleOwner = LocalContext.current as LifecycleOwner
-
-    // State & Resources
     var predictedLabel by remember { mutableStateOf("Menunggu gesture...") }
     val cameraExecutor = remember { Executors.newSingleThreadExecutor() }
-    val handsDetector = remember { HandsDetector(context, SignClassifier(context)) }
+
+    val handsDetector = remember {
+        HandsDetector(context, SignClassifier(context)) { label ->
+            predictedLabel = label
+        }
+    }
+
     var cameraProvider by remember { mutableStateOf<ProcessCameraProvider?>(null) }
 
-    // Efek untuk cleanup: mematikan kamera dan executor saat layar keluar (PopBackStack)
     DisposableEffect(lifecycleOwner) {
         onDispose {
-            Log.d("Cleanup", "Mematikan CameraX, menutup executor, dan detector.")
             cameraProvider?.unbindAll()
             cameraExecutor.shutdown()
-            // Penting: Tutup resource ML
             handsDetector.close()
         }
     }
 
-    // Camera Preview dan Overlay
     Box(modifier = Modifier.fillMaxSize()) {
         AndroidView(factory = { ctx ->
             val previewView = PreviewView(ctx)
-
-            // Panggil fungsi startCamera
             startCamera(
                 context = ctx,
                 lifecycleOwner = lifecycleOwner,
                 previewView = previewView,
                 handsDetector = handsDetector,
                 executor = cameraExecutor,
-                onPrediction = { label -> predictedLabel = label },
                 onProviderReady = { provider -> cameraProvider = provider }
             )
-
             previewView
         }, modifier = Modifier.fillMaxSize())
 
-        // Overlay prediksi gesture
         Box(
             modifier = Modifier
                 .align(Alignment.TopCenter)
                 .padding(top = 16.dp)
-                .background(Color(0xAA000000), shape = RoundedCornerShape(16.dp))
+                .background(Color(0xAA000000), RoundedCornerShape(16.dp))
                 .padding(horizontal = 16.dp, vertical = 8.dp)
         ) {
             Text(
@@ -148,8 +140,6 @@ fun CameraContent(navController: NavController) {
         }
     }
 }
-
-// --- Komponen untuk View Izin Ditolak ---
 
 @Composable
 fun PermissionDeniedView(launcher: androidx.activity.compose.ManagedActivityResultLauncher<String, Boolean>) {
@@ -170,11 +160,6 @@ fun PermissionDeniedView(launcher: androidx.activity.compose.ManagedActivityResu
     }
 }
 
-// --- Fungsi Pendukung CameraX ---
-
-/**
- * Fungsi startCamera menggunakan CameraX ImageAnalysis
- */
 @SuppressLint("UnsafeOptInUsageError")
 private fun startCamera(
     context: Context,
@@ -182,7 +167,6 @@ private fun startCamera(
     previewView: PreviewView,
     handsDetector: HandsDetector,
     executor: ExecutorService,
-    onPrediction: (String) -> Unit,
     onProviderReady: (ProcessCameraProvider) -> Unit
 ) {
     val cameraProviderFuture = ProcessCameraProvider.getInstance(context)
@@ -193,15 +177,9 @@ private fun startCamera(
         val preview = Preview.Builder().build()
         preview.setSurfaceProvider(previewView.surfaceProvider)
 
-        // Ubah ke DEFAULT_CAMERA atau DEFAULT_BACK_CAMERA jika kamera depan (DEFAULT_FRONT_CAMERA) gelap di emulator
-        val cameraSelector = if (
-            cameraProvider.hasCamera(CameraSelector.DEFAULT_FRONT_CAMERA)
-        ) {
+        val cameraSelector = if (cameraProvider.hasCamera(CameraSelector.DEFAULT_FRONT_CAMERA))
             CameraSelector.DEFAULT_FRONT_CAMERA
-        } else {
-            CameraSelector.DEFAULT_BACK_CAMERA
-        }
-
+        else CameraSelector.DEFAULT_BACK_CAMERA
 
         val imageAnalyzer = ImageAnalysis.Builder()
             .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
@@ -212,36 +190,46 @@ private fun startCamera(
                 imageProxy.close()
                 return@setAnalyzer
             }
-
-            val label = handsDetector.detect(bitmap)
-            onPrediction(label.toString())
-
+            handsDetector.detect(bitmap)
             imageProxy.close()
         }
 
         try {
             cameraProvider.unbindAll()
-            cameraProvider.bindToLifecycle(
-                lifecycleOwner,
-                cameraSelector,
-                preview,
-                imageAnalyzer
-            )
+            cameraProvider.bindToLifecycle(lifecycleOwner, cameraSelector, preview, imageAnalyzer)
         } catch (e: Exception) {
-            // Ini akan log error jika binding CameraX gagal (misal, tidak ada izin)
             Log.e("CameraX", "Use case binding failed", e)
         }
 
     }, ContextCompat.getMainExecutor(context))
 }
 
-/**
- * Extension function: konversi ImageProxy -> Bitmap
- */
 fun ImageProxy.toBitmap(): Bitmap? {
-    val planeProxy = planes.firstOrNull() ?: return null
-    val buffer = planeProxy.buffer
-    val bytes = ByteArray(buffer.capacity())
-    buffer.get(bytes)
-    return BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+    if (format != ImageFormat.YUV_420_888) return null
+
+    val yBuffer = planes[0].buffer
+    val uBuffer = planes[1].buffer
+    val vBuffer = planes[2].buffer
+    val ySize = yBuffer.remaining()
+    val uSize = uBuffer.remaining()
+    val vSize = vBuffer.remaining()
+
+    val nv21 = ByteArray(ySize + uSize + vSize)
+    yBuffer.get(nv21, 0, ySize)
+    vBuffer.get(nv21, ySize, vSize)
+    uBuffer.get(nv21, ySize + vSize, uSize)
+
+    return try {
+        val yuvImage = YuvImage(nv21, ImageFormat.NV21, width, height, null)
+        val out = ByteArrayOutputStream()
+        val success = yuvImage.compressToJpeg(android.graphics.Rect(0, 0, width, height), 100, out)
+        Log.i("CameraX", "JPEG compression success: $success, output bytes=${out.size()}")
+        val imageBytes = out.toByteArray()
+        val bitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
+        Log.i("CameraX", "Bitmap created: ${bitmap.width}x${bitmap.height}")
+        bitmap
+    } catch (e: Exception) {
+        Log.e("CameraX", "toBitmap failed", e)
+        null
+    }
 }
