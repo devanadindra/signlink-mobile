@@ -9,6 +9,7 @@ import java.io.FileInputStream
 import java.nio.MappedByteBuffer
 import java.nio.channels.FileChannel
 
+@Suppress("SameParameterValue")
 class SignClassifier(context: Context) {
 
     private val interpreter: InterpreterApi

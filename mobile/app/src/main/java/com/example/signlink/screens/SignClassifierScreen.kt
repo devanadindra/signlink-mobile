@@ -1,15 +1,8 @@
-// SignClassifierScreen.kt
 package com.example.signlink.screens
 
 import android.Manifest
 import android.annotation.SuppressLint
-import android.content.Context
 import android.content.pm.PackageManager
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import android.graphics.ImageFormat
-import android.graphics.YuvImage
-import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.*
@@ -29,13 +22,13 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
-import androidx.lifecycle.LifecycleOwner
 import androidx.navigation.NavController
 import com.example.signlink.data.signclassifier.HandsDetector
-import com.example.signlink.data.signclassifier.SignClassifier
-import java.io.ByteArrayOutputStream
-import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+import android.util.Size
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.LocalLifecycleOwner
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -88,56 +81,92 @@ fun SignClassifierScreen(navController: NavController) {
     )
 }
 
+@SuppressLint("DefaultLocale")
 @Composable
 fun CameraContent() {
     val context = LocalContext.current
-    val lifecycleOwner = LocalContext.current as LifecycleOwner
-    var predictedLabel by remember { mutableStateOf("Menunggu gesture...") }
+    val lifecycleOwner = LocalLifecycleOwner.current
+    var label by remember { mutableStateOf("Menunggu gesture...") }
+    var confidence by remember { mutableFloatStateOf(0f) }
+
     val cameraExecutor = remember { Executors.newSingleThreadExecutor() }
 
-    val handsDetector = remember {
-        HandsDetector(context, SignClassifier(context)) { label ->
-            predictedLabel = label
-        }
-    }
+    var detector by remember { mutableStateOf<HandsDetector?>(null) }
 
-    var cameraProvider by remember { mutableStateOf<ProcessCameraProvider?>(null) }
-
-    DisposableEffect(lifecycleOwner) {
-        onDispose {
-            cameraProvider?.unbindAll()
-            cameraExecutor.shutdown()
-            handsDetector.close()
-        }
-    }
-
-    Box(modifier = Modifier.fillMaxSize()) {
-        AndroidView(factory = { ctx ->
+    AndroidView(
+        factory = { ctx ->
             val previewView = PreviewView(ctx)
-            startCamera(
-                context = ctx,
-                lifecycleOwner = lifecycleOwner,
-                previewView = previewView,
-                handsDetector = handsDetector,
-                executor = cameraExecutor,
-                onProviderReady = { provider -> cameraProvider = provider }
-            )
-            previewView
-        }, modifier = Modifier.fillMaxSize())
+            val cameraProviderFuture = ProcessCameraProvider.getInstance(ctx)
 
-        Box(
+            cameraProviderFuture.addListener({
+                val cameraProvider = cameraProviderFuture.get()
+
+                // Pilih kamera yang tersedia
+                val cameraSelector = when {
+                    cameraProvider.hasCamera(CameraSelector.DEFAULT_FRONT_CAMERA) ->
+                        CameraSelector.DEFAULT_FRONT_CAMERA
+                    cameraProvider.hasCamera(CameraSelector.DEFAULT_BACK_CAMERA) ->
+                        CameraSelector.DEFAULT_BACK_CAMERA
+                    else -> throw IllegalStateException("No camera available")
+                }
+
+                val isFront = cameraSelector == CameraSelector.DEFAULT_FRONT_CAMERA
+
+                detector = HandsDetector(
+                    context = context,
+                    onGestureDetected = { gesture, conf ->
+                        label = gesture
+                        confidence = conf
+                    },
+                    isFrontCamera = isFront
+                )
+
+                val preview = Preview.Builder().build().apply {
+                    setSurfaceProvider(previewView.surfaceProvider)
+                }
+
+                val analyzer = ImageAnalysis.Builder()
+                    .setTargetResolution(Size(640, 480))
+                    .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                    .setOutputImageFormat(ImageAnalysis.OUTPUT_IMAGE_FORMAT_YUV_420_888)
+                    .build()
+                    .also { analysis ->
+                        analysis.setAnalyzer(cameraExecutor) { imageProxy ->
+                            detector?.detect(imageProxy)
+                        }
+                    }
+
+                cameraProvider.unbindAll()
+                cameraProvider.bindToLifecycle(
+                    lifecycleOwner,
+                    cameraSelector,
+                    preview,
+                    analyzer
+                )
+
+            }, ContextCompat.getMainExecutor(ctx))
+
+            previewView
+        },
+        modifier = Modifier.fillMaxSize()
+    )
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        contentAlignment = Alignment.BottomCenter
+    ) {
+        Text(
+            text = if (label == "No Hand") "Tidak ada tangan"
+            else "$label (${String.format("%.2f", confidence)})",
+            color = Color.White,
+            fontSize = 22.sp,
+            fontWeight = FontWeight.Bold,
             modifier = Modifier
-                .align(Alignment.TopCenter)
-                .padding(top = 16.dp)
-                .background(Color(0xAA000000), RoundedCornerShape(16.dp))
-                .padding(horizontal = 16.dp, vertical = 8.dp)
-        ) {
-            Text(
-                text = predictedLabel,
-                color = Color.White,
-                style = MaterialTheme.typography.titleMedium
-            )
-        }
+                .background(Color.Black.copy(alpha = 0.6f), RoundedCornerShape(8.dp))
+                .padding(horizontal = 12.dp, vertical = 8.dp)
+        )
     }
 }
 
@@ -157,79 +186,5 @@ fun PermissionDeniedView(launcher: androidx.activity.compose.ManagedActivityResu
         Button(onClick = { launcher.launch(Manifest.permission.CAMERA) }) {
             Text("Minta Izin Kamera")
         }
-    }
-}
-
-@SuppressLint("UnsafeOptInUsageError")
-private fun startCamera(
-    context: Context,
-    lifecycleOwner: LifecycleOwner,
-    previewView: PreviewView,
-    handsDetector: HandsDetector,
-    executor: ExecutorService,
-    onProviderReady: (ProcessCameraProvider) -> Unit
-) {
-    val cameraProviderFuture = ProcessCameraProvider.getInstance(context)
-    cameraProviderFuture.addListener({
-        val cameraProvider = cameraProviderFuture.get()
-        onProviderReady(cameraProvider)
-
-        val preview = Preview.Builder().build()
-        preview.setSurfaceProvider(previewView.surfaceProvider)
-
-        val cameraSelector = if (cameraProvider.hasCamera(CameraSelector.DEFAULT_FRONT_CAMERA))
-            CameraSelector.DEFAULT_FRONT_CAMERA
-        else CameraSelector.DEFAULT_BACK_CAMERA
-
-        val imageAnalyzer = ImageAnalysis.Builder()
-            .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-            .build()
-
-        imageAnalyzer.setAnalyzer(executor) { imageProxy ->
-            val bitmap = imageProxy.toBitmap() ?: run {
-                imageProxy.close()
-                return@setAnalyzer
-            }
-            handsDetector.detect(bitmap)
-            imageProxy.close()
-        }
-
-        try {
-            cameraProvider.unbindAll()
-            cameraProvider.bindToLifecycle(lifecycleOwner, cameraSelector, preview, imageAnalyzer)
-        } catch (e: Exception) {
-            Log.e("CameraX", "Use case binding failed", e)
-        }
-
-    }, ContextCompat.getMainExecutor(context))
-}
-
-fun ImageProxy.toBitmap(): Bitmap? {
-    if (format != ImageFormat.YUV_420_888) return null
-
-    val yBuffer = planes[0].buffer
-    val uBuffer = planes[1].buffer
-    val vBuffer = planes[2].buffer
-    val ySize = yBuffer.remaining()
-    val uSize = uBuffer.remaining()
-    val vSize = vBuffer.remaining()
-
-    val nv21 = ByteArray(ySize + uSize + vSize)
-    yBuffer.get(nv21, 0, ySize)
-    vBuffer.get(nv21, ySize, vSize)
-    uBuffer.get(nv21, ySize + vSize, uSize)
-
-    return try {
-        val yuvImage = YuvImage(nv21, ImageFormat.NV21, width, height, null)
-        val out = ByteArrayOutputStream()
-        val success = yuvImage.compressToJpeg(android.graphics.Rect(0, 0, width, height), 100, out)
-        Log.i("CameraX", "JPEG compression success: $success, output bytes=${out.size()}")
-        val imageBytes = out.toByteArray()
-        val bitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
-        Log.i("CameraX", "Bitmap created: ${bitmap.width}x${bitmap.height}")
-        bitmap
-    } catch (e: Exception) {
-        Log.e("CameraX", "toBitmap failed", e)
-        null
     }
 }
