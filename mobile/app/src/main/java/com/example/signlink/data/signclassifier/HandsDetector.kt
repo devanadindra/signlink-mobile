@@ -13,6 +13,7 @@ import com.google.mediapipe.tasks.core.BaseOptions
 import com.google.mediapipe.tasks.vision.core.RunningMode
 import com.google.mediapipe.tasks.vision.handlandmarker.HandLandmarker
 import com.google.mediapipe.tasks.vision.handlandmarker.HandLandmarker.HandLandmarkerOptions
+import androidx.core.graphics.createBitmap
 
 class HandsDetector(
     private val context: Context,
@@ -24,6 +25,9 @@ class HandsDetector(
     private val signClassifier = SignClassifier(context)
     private val yuvConverter = YuvToRgbConverter()
 
+    var handCount: Int = 0
+        private set
+
     private val handLandmarker: HandLandmarker by lazy {
         val baseOptions = BaseOptions.builder()
             .setModelAssetPath("hand_landmarker.task")
@@ -33,7 +37,7 @@ class HandsDetector(
             .setBaseOptions(baseOptions)
             .setNumHands(2)
             .setRunningMode(RunningMode.LIVE_STREAM)
-            .setResultListener { result, mpImage ->
+            .setResultListener { result, _ ->
                 handleLandmarkResult(result.landmarks())
             }
             .setErrorListener { error ->
@@ -46,8 +50,7 @@ class HandsDetector(
 
     fun detect(imageProxy: ImageProxy) {
         try {
-            val bitmap = Bitmap.createBitmap(imageProxy.width, imageProxy.height, Bitmap.Config.ARGB_8888)
-
+            val bitmap = createBitmap(imageProxy.width, imageProxy.height)
             yuvConverter.yuvToRgb(imageProxy, bitmap)
 
             val matrix = Matrix().apply {
@@ -56,10 +59,11 @@ class HandsDetector(
                     postScale(-1f, 1f, bitmap.width / 2f, bitmap.height / 2f)
                 }
             }
-            val rotatedBitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
+
+            val rotatedBitmap =
+                Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
 
             val mpImage = BitmapImageBuilder(rotatedBitmap).build()
-
             handLandmarker.detectAsync(mpImage, System.currentTimeMillis())
 
         } catch (e: Exception) {
@@ -69,25 +73,34 @@ class HandsDetector(
         }
     }
 
-
     private fun handleLandmarkResult(allHands: List<List<NormalizedLandmark>?>?) {
-        if (allHands.isNullOrEmpty()) {
+        handCount = allHands?.count { !it.isNullOrEmpty() } ?: 0
+
+        if (handCount == 0) {
             mainHandler.post { onGestureDetected("No Hand", 0f) }
             return
         }
 
-        val keypoints = extractTwoHandsKeypoints(allHands)
-        val label = signClassifier.predict(keypoints)
-        val confidence = calculateConfidence(keypoints)
+        Log.d("HandsDetector", "Jumlah tangan terdeteksi: $handCount")
 
-        mainHandler.post { onGestureDetected(label, confidence) }
+        val keypoints = extractTwoHandsKeypoints(allHands!!)
 
-        // Optional: log landmarks
-        allHands.forEachIndexed { handIndex, hand ->
-            Log.d("HandsDetector", "Hand $handIndex:")
-            hand?.forEachIndexed { i, lm ->
-                Log.d("HandsDetector", "  [$i] x=${lm.x()}, y=${lm.y()}, z=${lm.z()}")
-            }
+        val (label, confidence) = signClassifier.predict(keypoints)
+
+        val isTwoHandGesture = when (label) {
+            "A", "B", "D", "G", "H", "T", "K", "M", "N", "P", "Q", "S", "W", "X", "Y" -> true
+            else -> false
+        }
+
+        if (isTwoHandGesture && handCount < 2) {
+            Log.d("HandsDetector", "Gesture $label diabaikan karena butuh dua tangan (terdeteksi $handCount).")
+            return
+        }
+
+        if (confidence > 0.6f) {
+            mainHandler.post { onGestureDetected(label, confidence) }
+        } else {
+            Log.d("HandsDetector", "Gesture diabaikan karena confidence rendah: $confidence ($label)")
         }
     }
 
@@ -112,10 +125,5 @@ class HandsDetector(
             }
         }
         return result
-    }
-
-    private fun calculateConfidence(keypoints: FloatArray): Float {
-        val mean = keypoints.average().toFloat()
-        return (0.5f + (mean % 0.5f))
     }
 }

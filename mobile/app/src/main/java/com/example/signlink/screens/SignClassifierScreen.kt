@@ -2,7 +2,9 @@ package com.example.signlink.screens
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.content.Context
 import android.content.pm.PackageManager
+import android.speech.tts.TextToSpeech
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.*
@@ -13,22 +15,40 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Cameraswitch // Import ikon baru
+import androidx.compose.material.icons.filled.VolumeUp // Import ikon baru
+import androidx.compose.material.icons.filled.Clear // Import ikon baru
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.navigation.NavController
 import com.example.signlink.data.signclassifier.HandsDetector
 import java.util.concurrent.Executors
+import android.util.Log
 import android.util.Size
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.sp
-import androidx.lifecycle.compose.LocalLifecycleOwner
+import java.util.Locale
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+
+private fun checkCameraAvailability(context: Context): Pair<Boolean, Boolean> {
+    return try {
+        val cameraProvider = ProcessCameraProvider.getInstance(context).get()
+        val frontAvailable = cameraProvider.hasCamera(CameraSelector.DEFAULT_FRONT_CAMERA)
+        val backAvailable = cameraProvider.hasCamera(CameraSelector.DEFAULT_BACK_CAMERA)
+        Pair(frontAvailable, backAvailable)
+    } catch (_: Exception) {
+        Pair(false, false)
+    }
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -37,7 +57,8 @@ fun SignClassifierScreen(navController: NavController) {
 
     var hasCameraPermission by remember {
         mutableStateOf(
-            ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED
+            ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) ==
+                    PackageManager.PERMISSION_GRANTED
         )
     }
 
@@ -55,120 +76,254 @@ fun SignClassifierScreen(navController: NavController) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Penerjemah Gerakan") },
+                title = { Text("Penerjemah Bahasa Isyarat") },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Kembali")
                     }
                 }
             )
-        },
-        content = { paddingValues ->
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-                    .background(Color.White),
-                contentAlignment = Alignment.Center
-            ) {
-                if (hasCameraPermission) {
-                    CameraContent()
-                } else {
-                    PermissionDeniedView(cameraPermissionLauncher)
-                }
+        }
+    ) { paddingValues ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .background(Color.White),
+            contentAlignment = Alignment.Center
+        ) {
+            if (hasCameraPermission) {
+                CameraContent()
+            } else {
+                PermissionDeniedView(cameraPermissionLauncher)
             }
         }
-    )
+    }
 }
 
+@Suppress("DEPRECATION")
 @SuppressLint("DefaultLocale")
 @Composable
 fun CameraContent() {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
+    val coroutineScope = rememberCoroutineScope()
+
     var label by remember { mutableStateOf("Menunggu gesture...") }
     var confidence by remember { mutableFloatStateOf(0f) }
+    var detectedWord by remember { mutableStateOf("") }
+
+    var lastLabel by remember { mutableStateOf("") }
+    var stableCount by remember { mutableIntStateOf(0) }
+    val stabilityThreshold = 5
+
+    var isCooldownActive by remember { mutableStateOf(false) }
+    val cooldownDuration = 800L
 
     val cameraExecutor = remember { Executors.newSingleThreadExecutor() }
+    var isFrontCameraActive by remember { mutableStateOf(true) }
+    var isSwitchButtonVisible by remember { mutableStateOf(false) }
 
     var detector by remember { mutableStateOf<HandsDetector?>(null) }
+    var cameraProviderInstance by remember { mutableStateOf<ProcessCameraProvider?>(null) }
 
-    AndroidView(
-        factory = { ctx ->
-            val previewView = PreviewView(ctx)
-            val cameraProviderFuture = ProcessCameraProvider.getInstance(ctx)
+    var tts: TextToSpeech? by remember { mutableStateOf(null) }
 
-            cameraProviderFuture.addListener({
-                val cameraProvider = cameraProviderFuture.get()
+    DisposableEffect(lifecycleOwner) {
+        onDispose {
+            cameraProviderInstance?.unbindAll()
+            cameraExecutor.shutdown()
+            tts?.stop()
+            tts?.shutdown()
+        }
+    }
 
-                // Pilih kamera yang tersedia
-                val cameraSelector = when {
-                    cameraProvider.hasCamera(CameraSelector.DEFAULT_FRONT_CAMERA) ->
-                        CameraSelector.DEFAULT_FRONT_CAMERA
-                    cameraProvider.hasCamera(CameraSelector.DEFAULT_BACK_CAMERA) ->
-                        CameraSelector.DEFAULT_BACK_CAMERA
-                    else -> throw IllegalStateException("No camera available")
+    LaunchedEffect(Unit) {
+        tts = TextToSpeech(context) { status ->
+            if (status == TextToSpeech.SUCCESS) {
+                val result = tts?.setLanguage(Locale("id", "ID"))
+                if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
+                    Log.e("TTS", "Bahasa tidak didukung.")
                 }
+            } else {
+                Log.e("TTS", "Inisialisasi TTS gagal.")
+            }
+        }
+    }
 
-                val isFront = cameraSelector == CameraSelector.DEFAULT_FRONT_CAMERA
+    LaunchedEffect(Unit) {
+        val (front, back) = checkCameraAvailability(context)
+        when {
+            front && back -> {
+                isSwitchButtonVisible = true
+                isFrontCameraActive = true
+            }
+            back -> isFrontCameraActive = false
+            front -> isFrontCameraActive = true
+            else -> Log.e("CameraContent", "No usable camera found!")
+        }
+    }
 
-                detector = HandsDetector(
-                    context = context,
-                    onGestureDetected = { gesture, conf ->
+    val previewView = remember { PreviewView(context) }
+    val cameraProviderFuture = remember { ProcessCameraProvider.getInstance(context) }
+
+    LaunchedEffect(isFrontCameraActive) {
+        cameraProviderFuture.addListener({
+            val provider = cameraProviderFuture.get()
+            cameraProviderInstance = provider
+            val selector = if (isFrontCameraActive) CameraSelector.DEFAULT_FRONT_CAMERA
+            else CameraSelector.DEFAULT_BACK_CAMERA
+
+            provider.unbindAll()
+
+            detector = HandsDetector(
+                context = context,
+                onGestureDetected = { gesture, conf ->
+                    if (!isCooldownActive) {
                         label = gesture
                         confidence = conf
-                    },
-                    isFrontCamera = isFront
-                )
 
-                val preview = Preview.Builder().build().apply {
-                    setSurfaceProvider(previewView.surfaceProvider)
-                }
+                        if (gesture != "No Hand" && gesture.length == 1) {
+                            if (gesture == lastLabel) {
+                                stableCount++
+                                if (stableCount >= stabilityThreshold) {
+                                    detectedWord += gesture
 
-                val analyzer = ImageAnalysis.Builder()
-                    .setTargetResolution(Size(640, 480))
-                    .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-                    .setOutputImageFormat(ImageAnalysis.OUTPUT_IMAGE_FORMAT_YUV_420_888)
-                    .build()
-                    .also { analysis ->
-                        analysis.setAnalyzer(cameraExecutor) { imageProxy ->
-                            detector?.detect(imageProxy)
+                                    isCooldownActive = true
+                                    stableCount = 0
+                                    lastLabel = ""
+
+                                    coroutineScope.launch {
+                                        delay(cooldownDuration)
+                                        isCooldownActive = false
+                                    }
+                                }
+                            } else {
+                                lastLabel = gesture
+                                stableCount = 1
+                            }
+                        } else {
+                            lastLabel = ""
+                            stableCount = 0
                         }
                     }
+                },
+                isFrontCamera = isFrontCameraActive
+            )
 
-                cameraProvider.unbindAll()
-                cameraProvider.bindToLifecycle(
-                    lifecycleOwner,
-                    cameraSelector,
-                    preview,
-                    analyzer
-                )
+            val preview = Preview.Builder().build().apply {
+                setSurfaceProvider(previewView.surfaceProvider)
+            }
+            val analyzer = ImageAnalysis.Builder()
+                .setTargetResolution(Size(640, 480))
+                .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                .build()
+                .also { analysis ->
+                    analysis.setAnalyzer(cameraExecutor) { imageProxy ->
+                        detector?.detect(imageProxy)
+                    }
+                }
 
-            }, ContextCompat.getMainExecutor(ctx))
+            try {
+                provider.bindToLifecycle(lifecycleOwner, selector, preview, analyzer)
+            } catch (e: Exception) {
+                Log.e("CameraX", "Binding failed", e)
+            }
+        }, ContextCompat.getMainExecutor(context))
+    }
 
-            previewView
-        },
-        modifier = Modifier.fillMaxSize()
-    )
+    AndroidView(factory = { previewView }, modifier = Modifier.fillMaxSize())
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp),
-        contentAlignment = Alignment.BottomCenter
+            .padding(16.dp)
     ) {
-        Text(
-            text = if (label == "No Hand") "Tidak ada tangan"
-            else "$label (${String.format("%.2f", confidence)})",
-            color = Color.White,
-            fontSize = 22.sp,
-            fontWeight = FontWeight.Bold,
+        Box(modifier = Modifier.align(Alignment.TopCenter)) {
+            Text(
+                text = if (label == "No Hand") "Tidak ada tangan"
+                else "$label (${String.format("%.2f", confidence)})",
+                color = Color.White,
+                fontSize = 22.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier
+                    .background(Color.Black.copy(alpha = 0.7f), RoundedCornerShape(8.dp))
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
+            )
+        }
+
+        Card(
             modifier = Modifier
-                .background(Color.Black.copy(alpha = 0.6f), RoundedCornerShape(8.dp))
-                .padding(horizontal = 12.dp, vertical = 8.dp)
-        )
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth()
+                .padding(12.dp),
+            colors = CardDefaults.cardColors(containerColor = Color(0xFF2E7D32)),
+            shape = RoundedCornerShape(16.dp)
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.padding(16.dp)
+            ) {
+                Text("Hasil Kata:", color = Color.White.copy(alpha = 0.8f), fontSize = 16.sp)
+                Text(
+                    text = if (detectedWord.isEmpty()) "Belum ada huruf terdeteksi" else detectedWord,
+                    color = Color.White,
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.Bold
+                )
+
+                Spacer(Modifier.height(8.dp))
+
+                if (detectedWord.isNotEmpty()) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Button(
+                            onClick = {
+                                tts?.speak(detectedWord, TextToSpeech.QUEUE_FLUSH, null, null)
+                            },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color.White,
+                                contentColor = Color(0xFF2E7D32)
+                            ),
+                            shape = RoundedCornerShape(50)
+                        ) {
+                            Icon(Icons.Default.VolumeUp, contentDescription = "Baca Kata")
+                            Spacer(Modifier.width(4.dp))
+                            Text("Baca", fontWeight = FontWeight.Bold)
+                        }
+
+                        Button(
+                            onClick = { detectedWord = "" },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color.White.copy(alpha = 0.9f),
+                                contentColor = Color(0xFFB71C1C)
+                            ),
+                            shape = RoundedCornerShape(50)
+                        ) {
+                            Icon(Icons.Default.Clear, contentDescription = "Hapus Kata")
+                            Spacer(Modifier.width(4.dp))
+                            Text("Hapus", fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+            }
+        }
+
+        if (isSwitchButtonVisible) {
+            FloatingActionButton(
+                onClick = { isFrontCameraActive = !isFrontCameraActive },
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .offset(y = (-100).dp)
+            ) {
+                Icon(Icons.Default.Cameraswitch, contentDescription = "Ganti Kamera")
+            }
+        }
     }
 }
+
 
 @Composable
 fun PermissionDeniedView(launcher: androidx.activity.compose.ManagedActivityResultLauncher<String, Boolean>) {

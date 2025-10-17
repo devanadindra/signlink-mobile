@@ -31,14 +31,17 @@ class SignClassifier(context: Context) {
         return channel.map(FileChannel.MapMode.READ_ONLY, fileDescriptor.startOffset, fileDescriptor.declaredLength)
     }
 
-    fun predict(inputArray: FloatArray): String {
+    fun predict(inputArray: FloatArray): Pair<String, Float> {
         val input = arrayOf(inputArray)
         val output = Array(1) { FloatArray(labels.size) }
+
         interpreter.run(input, output)
+
         val maxIndex = output[0].indices.maxByOrNull { output[0][it] } ?: -1
         val confidence = if (maxIndex >= 0) output[0][maxIndex] else 0f
         val label = if (maxIndex >= 0) labels[maxIndex] else "Unknown"
+
         Log.d("SignClassifier", "Predicted gesture: $label (confidence=$confidence)")
-        return label
+        return Pair(label, confidence)
     }
 }
