@@ -1,27 +1,30 @@
-// HandsDetector.kt
 package com.example.signlink.data.signclassifier
 
 import android.content.Context
 import android.graphics.Bitmap
+import android.graphics.Matrix
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
+import androidx.camera.core.ImageProxy
 import com.google.mediapipe.framework.image.BitmapImageBuilder
 import com.google.mediapipe.tasks.components.containers.NormalizedLandmark
 import com.google.mediapipe.tasks.core.BaseOptions
+import com.google.mediapipe.tasks.vision.core.RunningMode
 import com.google.mediapipe.tasks.vision.handlandmarker.HandLandmarker
 import com.google.mediapipe.tasks.vision.handlandmarker.HandLandmarker.HandLandmarkerOptions
-import com.google.mediapipe.tasks.vision.core.RunningMode
 
 class HandsDetector(
-    context: Context,
-    private val signClassifier: SignClassifier,
-    private val onGestureDetected: (String) -> Unit
+    private val context: Context,
+    private val onGestureDetected: (String, Float) -> Unit,
+    private val isFrontCamera: Boolean = false
 ) {
-    private val handLandmarker: HandLandmarker
-    private val mainHandler = Handler(Looper.getMainLooper())
 
-    init {
+    private val mainHandler = Handler(Looper.getMainLooper())
+    private val signClassifier = SignClassifier(context)
+    private val yuvConverter = YuvToRgbConverter()
+
+    private val handLandmarker: HandLandmarker by lazy {
         val baseOptions = BaseOptions.builder()
             .setModelAssetPath("hand_landmarker.task")
             .build()
@@ -30,51 +33,89 @@ class HandsDetector(
             .setBaseOptions(baseOptions)
             .setNumHands(2)
             .setRunningMode(RunningMode.LIVE_STREAM)
-            .setResultListener { result, _ ->
-                val handLandmarks = result.landmarks()
-                if (!handLandmarks.isNullOrEmpty()) {
-                    val keypoints = extractKeypoints(handLandmarks[0])
-                    val prediction = signClassifier.predict(keypoints)
-                    Log.i("HandsDetector", "Gesture detected: $prediction")
-
-                    // update UI di main thread
-                    mainHandler.post {
-                        onGestureDetected(prediction)
-                    }
-                }
+            .setResultListener { result, mpImage ->
+                handleLandmarkResult(result.landmarks())
+            }
+            .setErrorListener { error ->
+                Log.e("HandsDetector", "LiveStream error: ${error.message}")
             }
             .build()
 
-        handLandmarker = HandLandmarker.createFromOptions(context, options)
-        Log.d("HandsDetector", "HandLandmarker initialized")
+        HandLandmarker.createFromOptions(context, options)
     }
 
-    private fun bitmapToMPImage(bitmap: Bitmap) = BitmapImageBuilder(bitmap).build()
+    fun detect(imageProxy: ImageProxy) {
+        try {
+            val bitmap = Bitmap.createBitmap(imageProxy.width, imageProxy.height, Bitmap.Config.ARGB_8888)
 
-    fun detect(bitmap: Bitmap) {
-        val mpImage = bitmapToMPImage(bitmap)
-        handLandmarker.detectAsync(mpImage, System.currentTimeMillis())
+            yuvConverter.yuvToRgb(imageProxy, bitmap)
+
+            val matrix = Matrix().apply {
+                postRotate(imageProxy.imageInfo.rotationDegrees.toFloat())
+                if (isFrontCamera) {
+                    postScale(-1f, 1f, bitmap.width / 2f, bitmap.height / 2f)
+                }
+            }
+            val rotatedBitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
+
+            val mpImage = BitmapImageBuilder(rotatedBitmap).build()
+
+            handLandmarker.detectAsync(mpImage, System.currentTimeMillis())
+
+        } catch (e: Exception) {
+            Log.e("HandsDetector", "Detect error: ${e.message}", e)
+        } finally {
+            imageProxy.close()
+        }
     }
 
-    fun close() {
-        handLandmarker.close()
-        Log.d("HandsDetector", "HandLandmarker closed")
+
+    private fun handleLandmarkResult(allHands: List<List<NormalizedLandmark>?>?) {
+        if (allHands.isNullOrEmpty()) {
+            mainHandler.post { onGestureDetected("No Hand", 0f) }
+            return
+        }
+
+        val keypoints = extractTwoHandsKeypoints(allHands)
+        val label = signClassifier.predict(keypoints)
+        val confidence = calculateConfidence(keypoints)
+
+        mainHandler.post { onGestureDetected(label, confidence) }
+
+        // Optional: log landmarks
+        allHands.forEachIndexed { handIndex, hand ->
+            Log.d("HandsDetector", "Hand $handIndex:")
+            hand?.forEachIndexed { i, lm ->
+                Log.d("HandsDetector", "  [$i] x=${lm.x()}, y=${lm.y()}, z=${lm.z()}")
+            }
+        }
     }
 
-    private fun extractKeypoints(landmarks: List<NormalizedLandmark?>?): FloatArray {
-        val maxLen = 126
-        val keypoints = FloatArray(maxLen)
+    private fun extractTwoHandsKeypoints(allHands: List<List<NormalizedLandmark>?>): FloatArray {
+        val maxHands = 2
+        val landmarksPerHand = 21
+        val coordsPerLandmark = 3
+        val totalSize = maxHands * landmarksPerHand * coordsPerLandmark
+        val result = FloatArray(totalSize)
 
-        if (!landmarks.isNullOrEmpty()) {
-            landmarks.forEachIndexed { i, lm ->
-                if (lm != null && i * 3 + 2 < maxLen) {
-                    keypoints[i * 3] = lm.x()
-                    keypoints[i * 3 + 1] = lm.y()
-                    keypoints[i * 3 + 2] = lm.z()
+        for (i in 0 until maxHands) {
+            val hand = allHands.getOrNull(i)
+            if (!hand.isNullOrEmpty()) {
+                for (j in hand.indices) {
+                    val lm = hand[j]
+                    val base = i * landmarksPerHand * coordsPerLandmark + j * coordsPerLandmark
+                    val x = if (isFrontCamera) 1f - lm.x() else lm.x()
+                    result[base] = x
+                    result[base + 1] = lm.y()
+                    result[base + 2] = lm.z()
                 }
             }
         }
+        return result
+    }
 
-        return keypoints
+    private fun calculateConfidence(keypoints: FloatArray): Float {
+        val mean = keypoints.average().toFloat()
+        return (0.5f + (mean % 0.5f))
     }
 }
