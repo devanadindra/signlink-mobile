@@ -4,10 +4,12 @@ import numpy as np
 import tensorflow as tf
 import string
 import time
+import os
 
 # === Load TFLite model ===
 model_name = 'sign_classifier'
-interpreter = tf.lite.Interpreter(model_path=f"{model_name}.tflite")
+tflite_path = os.path.join("models", f"{model_name}.tflite")
+interpreter = tf.lite.Interpreter(model_path=tflite_path)
 interpreter.allocate_tensors()
 
 input_details = interpreter.get_input_details()
