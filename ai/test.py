@@ -3,22 +3,27 @@ import mediapipe as mp
 import numpy as np
 import tensorflow as tf
 import string
-import time
 import os
+from collections import deque
 
 # === Load TFLite model ===
-model_name = 'sign_classifier'
-tflite_path = os.path.join("models", f"{model_name}.tflite")
-interpreter = tf.lite.Interpreter(model_path=tflite_path)
-interpreter.allocate_tensors()
+model_letter_path = os.path.join("models", "sign_letter.tflite")
+interpreter_letter = tf.lite.Interpreter(model_path=model_letter_path)
+interpreter_letter.allocate_tensors()
+input_details_letter = interpreter_letter.get_input_details()
+output_details_letter = interpreter_letter.get_output_details()
 
-input_details = interpreter.get_input_details()
-output_details = interpreter.get_output_details()
+model_word_path = os.path.join("models", "sign_word.tflite")
+interpreter_word = tf.lite.Interpreter(model_path=model_word_path)
+interpreter_word.allocate_tensors()
+input_details_word = interpreter_word.get_input_details()
+output_details_word = interpreter_word.get_output_details()
 
-# === Label huruf A-Z ===
-labels = list(string.ascii_uppercase)
+# === Label ===
+labels_letter = list(string.ascii_uppercase)
+labels_word = [line.strip() for line in open("models/labels_word.txt")]
 
-# === Inisialisasi MediaPipe Hands ===
+# === MediaPipe Hands ===
 mp_hands = mp.solutions.hands
 mp_drawing = mp.solutions.drawing_utils
 
@@ -32,13 +37,15 @@ hands = mp_hands.Hands(
 # === Kamera ===
 cap = cv2.VideoCapture(0)
 
+# --- Buffer untuk kata (sequence 30 frame) ---
+seq_buffer = deque(maxlen=30)
+
 try:
     while True:
         ret, frame = cap.read()
         if not ret:
             break
 
-        # Flip supaya tampil natural seperti cermin
         frame = cv2.flip(frame, 1)
         img_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         results = hands.process(img_rgb)
@@ -46,41 +53,46 @@ try:
         keypoints = []
 
         if results.multi_hand_landmarks:
+            hand_keypoints = []
+            for hand_landmarks in results.multi_hand_landmarks[:2]:
+                hand = [lm_coord for lm in hand_landmarks.landmark for lm_coord in (lm.x, lm.y, lm.z)]
+                hand_keypoints.append(hand)
+            while len(hand_keypoints) < 2:
+                hand_keypoints.append([0.0]*63)
+            keypoints = np.concatenate(hand_keypoints)
             for hand_landmarks in results.multi_hand_landmarks:
-                for lm in hand_landmarks.landmark:
-                    keypoints.extend([lm.x, lm.y, lm.z])  # ambil koordinat xyz
-                mp_drawing.draw_landmarks(
-                    frame, hand_landmarks, mp_hands.HAND_CONNECTIONS)
-
-        # Jika ada tangan terdeteksi
-        if keypoints:
-            # Normalisasi panjang input sesuai model
-            max_len = input_details[0]['shape'][1]  # misalnya 126 (2 tangan * 21 * 3)
-            keypoints = np.array(keypoints, dtype=np.float32)
-            if len(keypoints) < max_len:
-                # isi sisa dengan nol kalau cuma 1 tangan
-                keypoints = np.pad(keypoints, (0, max_len - len(keypoints)))
-            elif len(keypoints) > max_len:
-                # potong kalau lebih dari yang dibutuhkan
-                keypoints = keypoints[:max_len]
-
-            input_data = np.expand_dims(keypoints, axis=0)
-
-            # Inference ke model
-            interpreter.set_tensor(input_details[0]['index'], input_data)
-            interpreter.invoke()
-            output = interpreter.get_tensor(output_details[0]['index'])
-            pred = np.argmax(output)
-            confidence = np.max(output)
-
-            letter = labels[pred] if pred < len(labels) else "?"
-            cv2.putText(frame, f"{letter} ({confidence:.2f})",
-                        (10, 40), cv2.FONT_HERSHEY_SIMPLEX, 1.2, (0, 255, 0), 2)
+                mp_drawing.draw_landmarks(frame, hand_landmarks, mp_hands.HAND_CONNECTIONS)
         else:
-            cv2.putText(frame, "No Hand", (10, 40),
-                        cv2.FONT_HERSHEY_SIMPLEX, 1.2, (0, 0, 255), 2)
+            keypoints = np.zeros(126)
 
-        cv2.imshow("Sign Detection (TFLite + MediaPipe)", frame)
+        seq_buffer.append(keypoints)
+
+        # === Prediksi Letter (per frame) ===
+        input_letter = np.expand_dims(keypoints.astype(np.float32), axis=0)
+        interpreter_letter.set_tensor(input_details_letter[0]['index'], input_letter)
+        interpreter_letter.invoke()
+        output_letter = interpreter_letter.get_tensor(output_details_letter[0]['index'])
+        pred_letter = np.argmax(output_letter)
+        conf_letter = np.max(output_letter)
+        letter_text = f"Letter: {labels_letter[pred_letter]} ({conf_letter:.2f})"
+
+        # === Prediksi Word (sequence 30 frame) ===
+        if len(seq_buffer) == 30:
+            input_word = np.expand_dims(np.array(seq_buffer, dtype=np.float32), axis=0)
+            interpreter_word.set_tensor(input_details_word[0]['index'], input_word)
+            interpreter_word.invoke()
+            output_word = interpreter_word.get_tensor(output_details_word[0]['index'])
+            pred_word = np.argmax(output_word)
+            conf_word = np.max(output_word)
+            word_text = f"Word: {labels_word[pred_word]} ({conf_word:.2f})"
+        else:
+            word_text = "Word: waiting..."
+
+        # === Tampilkan ===
+        cv2.putText(frame, letter_text, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,255,0), 2)
+        cv2.putText(frame, word_text, (10, 70), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,255), 2)
+
+        cv2.imshow("Sign Detection (Letter + Word)", frame)
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
 
