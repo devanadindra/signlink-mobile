@@ -17,6 +17,4 @@ labels.txt
 bisindo-40-kata-mp4.zip
 raw_video
 dataset_word/*
-X_word.npy
-y_word.npy
 label_encoder_word.pkl
