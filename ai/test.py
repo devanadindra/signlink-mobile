@@ -2,22 +2,21 @@ import cv2
 import mediapipe as mp
 import numpy as np
 import tensorflow as tf
+from tensorflow.keras.models import load_model
 import string
 import os
 from collections import deque
 
-# === Load TFLite model ===
-model_letter_path = os.path.join("models", "sign_letter.tflite")
+# === Load TFLite model untuk Letter ===
+model_letter_path = os.path.join("models", "sign_classifier.tflite")
 interpreter_letter = tf.lite.Interpreter(model_path=model_letter_path)
 interpreter_letter.allocate_tensors()
 input_details_letter = interpreter_letter.get_input_details()
 output_details_letter = interpreter_letter.get_output_details()
 
-model_word_path = os.path.join("models", "sign_word.tflite")
-interpreter_word = tf.lite.Interpreter(model_path=model_word_path)
-interpreter_word.allocate_tensors()
-input_details_word = interpreter_word.get_input_details()
-output_details_word = interpreter_word.get_output_details()
+# === Load Keras model untuk Word ===
+model_word_path = os.path.join("models", "sign_classifier_word.keras")
+model_word = load_model(model_word_path)
 
 # === Label ===
 labels_letter = list(string.ascii_uppercase)
@@ -62,29 +61,34 @@ try:
             keypoints = np.concatenate(hand_keypoints)
             for hand_landmarks in results.multi_hand_landmarks:
                 mp_drawing.draw_landmarks(frame, hand_landmarks, mp_hands.HAND_CONNECTIONS)
+            hand_detected = True
         else:
             keypoints = np.zeros(126)
+            hand_detected = False  # <-- Tidak ada tangan
 
         seq_buffer.append(keypoints)
 
         # === Prediksi Letter (per frame) ===
-        input_letter = np.expand_dims(keypoints.astype(np.float32), axis=0)
-        interpreter_letter.set_tensor(input_details_letter[0]['index'], input_letter)
-        interpreter_letter.invoke()
-        output_letter = interpreter_letter.get_tensor(output_details_letter[0]['index'])
-        pred_letter = np.argmax(output_letter)
-        conf_letter = np.max(output_letter)
-        letter_text = f"Letter: {labels_letter[pred_letter]} ({conf_letter:.2f})"
+        if hand_detected:
+            input_letter = np.expand_dims(keypoints.astype(np.float32), axis=0)
+            interpreter_letter.set_tensor(input_details_letter[0]['index'], input_letter)
+            interpreter_letter.invoke()
+            output_letter = interpreter_letter.get_tensor(output_details_letter[0]['index'])
+            pred_letter = np.argmax(output_letter)
+            conf_letter = np.max(output_letter)
+            letter_text = f"Letter: {labels_letter[pred_letter]} ({conf_letter:.2f})"
+        else:
+            letter_text = "Letter: No Hand"
 
         # === Prediksi Word (sequence 30 frame) ===
-        if len(seq_buffer) == 30:
+        if hand_detected and len(seq_buffer) == 30:
             input_word = np.expand_dims(np.array(seq_buffer, dtype=np.float32), axis=0)
-            interpreter_word.set_tensor(input_details_word[0]['index'], input_word)
-            interpreter_word.invoke()
-            output_word = interpreter_word.get_tensor(output_details_word[0]['index'])
+            output_word = model_word.predict(input_word)
             pred_word = np.argmax(output_word)
             conf_word = np.max(output_word)
             word_text = f"Word: {labels_word[pred_word]} ({conf_word:.2f})"
+        elif not hand_detected:
+            word_text = "Word: No Hand"
         else:
             word_text = "Word: waiting..."
 

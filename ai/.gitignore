@@ -11,9 +11,7 @@ BISINDO - Dataset
 bisindo
 Citra BISINDO
 bisindo_final
-sign_classifier_label.pkl
 hand_keypoints.csv
-labels.txt
 bisindo-40-kata-mp4.zip
 raw_video
 dataset_word/*
