@@ -14,15 +14,12 @@ interpreter_letter.allocate_tensors()
 input_details_letter = interpreter_letter.get_input_details()
 output_details_letter = interpreter_letter.get_output_details()
 
-# === Load Keras model untuk Word ===
 model_word_path = os.path.join("models", "sign_classifier_word.keras")
 model_word = load_model(model_word_path)
 
-# === Label ===
 labels_letter = list(string.ascii_uppercase)
 labels_word = [line.strip() for line in open("models/labels_word.txt")]
 
-# === MediaPipe Hands ===
 mp_hands = mp.solutions.hands
 mp_drawing = mp.solutions.drawing_utils
 
@@ -33,11 +30,15 @@ hands = mp_hands.Hands(
     min_tracking_confidence=0.5
 )
 
-# === Kamera ===
 cap = cv2.VideoCapture(0)
 
-# --- Buffer untuk kata (sequence 30 frame) ---
 seq_buffer = deque(maxlen=30)
+prev_keypoints = None
+
+state = "idle"
+motion_threshold = 0.015
+word_result = "waiting..."
+cooldown_counter = 0 
 
 try:
     while True:
@@ -64,11 +65,15 @@ try:
             hand_detected = True
         else:
             keypoints = np.zeros(126)
-            hand_detected = False  # <-- Tidak ada tangan
+            hand_detected = False
 
-        seq_buffer.append(keypoints)
+        motion_detected = False
+        if prev_keypoints is not None and hand_detected:
+            diff = np.linalg.norm(np.array(keypoints) - np.array(prev_keypoints))
+            if diff > motion_threshold:
+                motion_detected = True
+        prev_keypoints = keypoints.copy()
 
-        # === Prediksi Letter (per frame) ===
         if hand_detected:
             input_letter = np.expand_dims(keypoints.astype(np.float32), axis=0)
             interpreter_letter.set_tensor(input_details_letter[0]['index'], input_letter)
@@ -80,21 +85,45 @@ try:
         else:
             letter_text = "Letter: No Hand"
 
-        # === Prediksi Word (sequence 30 frame) ===
-        if hand_detected and len(seq_buffer) == 30:
-            input_word = np.expand_dims(np.array(seq_buffer, dtype=np.float32), axis=0)
+        if state == "idle" and motion_detected:
+            state = "recording"
+            seq_buffer.clear()
+            print("[INFO] Gesture start detected.")
+
+        elif state == "recording":
+            seq_buffer.append(keypoints)
+            if not motion_detected and len(seq_buffer) > 10:
+                state = "end"
+                print("[INFO] Gesture end detected.")
+
+        elif state == "end":
+            gesture_seq = list(seq_buffer)
+            seq_len = len(gesture_seq)
+
+            if seq_len < 30:
+                padding = [gesture_seq[-1]] * (30 - seq_len) if seq_len > 0 else [np.zeros(126)] * 30
+                gesture_seq.extend(padding)
+            elif seq_len > 30:
+                gesture_seq = gesture_seq[-30:]
+
+            input_word = np.expand_dims(np.array(gesture_seq, dtype=np.float32), axis=0)
             output_word = model_word.predict(input_word)
             pred_word = np.argmax(output_word)
             conf_word = np.max(output_word)
-            word_text = f"Word: {labels_word[pred_word]} ({conf_word:.2f})"
-        elif not hand_detected:
-            word_text = "Word: No Hand"
-        else:
-            word_text = "Word: waiting..."
+            word_result = f"{labels_word[pred_word]} ({conf_word:.2f})"
+            print(f"[RESULT] Word: {word_result}")
 
-        # === Tampilkan ===
+            state = "idle"
+            cooldown_counter = 30
+
+        # === Kurangi cooldown ===
+        if cooldown_counter > 0:
+            cooldown_counter -= 1
+
+        # === Tampilkan hasil di layar ===
         cv2.putText(frame, letter_text, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,255,0), 2)
-        cv2.putText(frame, word_text, (10, 70), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,255), 2)
+        cv2.putText(frame, f"Word: {word_result}", (10, 70), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,255), 2)
+        cv2.putText(frame, f"State: {state}", (10, 110), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255,255,0), 2)
 
         cv2.imshow("Sign Detection (Letter + Word)", frame)
         if cv2.waitKey(1) & 0xFF == ord('q'):

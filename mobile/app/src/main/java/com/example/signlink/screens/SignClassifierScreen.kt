@@ -15,9 +15,9 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Cameraswitch // Import ikon baru
-import androidx.compose.material.icons.filled.VolumeUp // Import ikon baru
-import androidx.compose.material.icons.filled.Clear // Import ikon baru
+import androidx.compose.material.icons.filled.Cameraswitch
+import androidx.compose.material.icons.filled.VolumeUp
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -122,7 +122,6 @@ fun CameraContent() {
 
     var lastDetectedGesture by remember { mutableStateOf<String?>(null) }
     var noHandDetectionStartTime by remember { mutableStateOf<Long?>(null) }
-    val spaceDelayMillis = 2000L
 
     val cameraExecutor = remember { Executors.newSingleThreadExecutor() }
     var isFrontCameraActive by remember { mutableStateOf(true) }
@@ -168,30 +167,32 @@ fun CameraContent() {
         }
     }
 
-    LaunchedEffect(lastDetectedGesture, detectedWord) {
-        if (detectedWord.isEmpty()) {
-            noHandDetectionStartTime = null
-            return@LaunchedEffect
-        }
+    LaunchedEffect(Unit) {
+        while (true) {
+            delay(100)
 
-        if (lastDetectedGesture == "No Hand") {
-            if (noHandDetectionStartTime == null) {
-                noHandDetectionStartTime = System.currentTimeMillis()
-            } else {
-                delay(spaceDelayMillis)
+            if (detectedWord.isEmpty()) {
+                noHandDetectionStartTime = null
+                continue
+            }
 
-                if (lastDetectedGesture == "No Hand") {
+            if (lastDetectedGesture == "No Hand") {
+                val now = System.currentTimeMillis()
+                if (noHandDetectionStartTime == null) {
+                    noHandDetectionStartTime = now
+                } else if (now - noHandDetectionStartTime!! >= 1000) {
                     if (!detectedWord.endsWith(" ")) {
                         detectedWord += " "
-                        Log.d("SignClassifier", "Space added after 2s 'No Hand'")
+                        Log.i("SignClassifier", "Space added after 1s 'No Hand'")
                     }
                     noHandDetectionStartTime = null
                 }
+            } else {
+                noHandDetectionStartTime = null
             }
-        } else {
-            noHandDetectionStartTime = null
         }
     }
+
 
     val previewView = remember { PreviewView(context) }
     val cameraProviderFuture = remember { ProcessCameraProvider.getInstance(context) }
@@ -218,9 +219,6 @@ fun CameraContent() {
                             if (gesture == lastLabel) {
                                 stableCount++
                                 if (stableCount >= stabilityThreshold) {
-                                    if (detectedWord.endsWith(" ")) {
-                                        detectedWord = detectedWord.trimEnd()
-                                    }
                                     detectedWord += gesture
 
                                     isCooldownActive = true
@@ -300,7 +298,9 @@ fun CameraContent() {
             ) {
                 Text("Hasil Kata:", color = Color.White.copy(alpha = 0.8f), fontSize = 16.sp)
                 Text(
-                    text = if (detectedWord.isEmpty()) "Belum ada huruf terdeteksi" else detectedWord,
+                    text = if (detectedWord.isEmpty())
+                        "Belum ada huruf terdeteksi"
+                    else detectedWord + "\uFEFF",
                     color = Color.White,
                     fontSize = 22.sp,
                     fontWeight = FontWeight.Bold
