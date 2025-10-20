@@ -120,6 +120,10 @@ fun CameraContent() {
     var isCooldownActive by remember { mutableStateOf(false) }
     val cooldownDuration = 800L
 
+    var lastDetectedGesture by remember { mutableStateOf<String?>(null) }
+    var noHandDetectionStartTime by remember { mutableStateOf<Long?>(null) }
+    val spaceDelayMillis = 2000L
+
     val cameraExecutor = remember { Executors.newSingleThreadExecutor() }
     var isFrontCameraActive by remember { mutableStateOf(true) }
     var isSwitchButtonVisible by remember { mutableStateOf(false) }
@@ -164,6 +168,31 @@ fun CameraContent() {
         }
     }
 
+    LaunchedEffect(lastDetectedGesture, detectedWord) {
+        if (detectedWord.isEmpty()) {
+            noHandDetectionStartTime = null
+            return@LaunchedEffect
+        }
+
+        if (lastDetectedGesture == "No Hand") {
+            if (noHandDetectionStartTime == null) {
+                noHandDetectionStartTime = System.currentTimeMillis()
+            } else {
+                delay(spaceDelayMillis)
+
+                if (lastDetectedGesture == "No Hand") {
+                    if (!detectedWord.endsWith(" ")) {
+                        detectedWord += " "
+                        Log.d("SignClassifier", "Space added after 2s 'No Hand'")
+                    }
+                    noHandDetectionStartTime = null
+                }
+            }
+        } else {
+            noHandDetectionStartTime = null
+        }
+    }
+
     val previewView = remember { PreviewView(context) }
     val cameraProviderFuture = remember { ProcessCameraProvider.getInstance(context) }
 
@@ -179,6 +208,8 @@ fun CameraContent() {
             detector = HandsDetector(
                 context = context,
                 onGestureDetected = { gesture, conf ->
+                    lastDetectedGesture = gesture
+
                     if (!isCooldownActive) {
                         label = gesture
                         confidence = conf
@@ -187,6 +218,9 @@ fun CameraContent() {
                             if (gesture == lastLabel) {
                                 stableCount++
                                 if (stableCount >= stabilityThreshold) {
+                                    if (detectedWord.endsWith(" ")) {
+                                        detectedWord = detectedWord.trimEnd()
+                                    }
                                     detectedWord += gesture
 
                                     isCooldownActive = true
