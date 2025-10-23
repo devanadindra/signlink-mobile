@@ -31,7 +31,7 @@ class KamusViewModel @Inject constructor(
                 try {
                     val data = repository.getKamus(token, kategori)
                     _kamusList.value = data ?: emptyList()
-                } catch (e: Exception) {
+                } catch (_: Exception) {
                     _kamusList.value = emptyList()
                 }
             } else {

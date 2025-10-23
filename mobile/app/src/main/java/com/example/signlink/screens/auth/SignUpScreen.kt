@@ -41,7 +41,6 @@ fun SignUpScreen(
     onLoginFailed: () -> Unit,
     onLoginClicked: () -> Unit
 ) {
-    // State Input
     var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -49,7 +48,6 @@ fun SignUpScreen(
     var passwordVisible by remember { mutableStateOf(false) }
     var confirmPasswordVisible by remember { mutableStateOf(false) }
 
-    // State Error Per Field
     var nameError by remember { mutableStateOf<String?>(null) }
     var emailError by remember { mutableStateOf<String?>(null) }
     var passwordError by remember { mutableStateOf<String?>(null) }
@@ -59,10 +57,7 @@ fun SignUpScreen(
     val loginResult by viewModel.loginResult.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
 
-    // State untuk mengontrol pesan sukses/status
     var statusMessage by remember { mutableStateOf<String?>(null) }
-    // State internal untuk menunjukkan bahwa login otomatis sedang berjalan,
-    // agar spinner tetap aktif setelah register sukses
     var isAutoLoggingIn by remember { mutableStateOf(false) }
 
     LaunchedEffect(password, confirmPassword) {
@@ -73,8 +68,6 @@ fun SignUpScreen(
 
     fun validateForm(): Boolean {
         var isValid = true
-
-        // ... (Logika Validasi yang sudah ada)
 
         if (name.isBlank()) {
             nameError = "Nama lengkap tidak boleh kosong."
@@ -116,10 +109,8 @@ fun SignUpScreen(
         return isValid
     }
 
-    // --- Logic Status Pesan Error Umum ---
     val generalErrorMessage = if (passwordError == null && confirmPasswordError == null && statusMessage == null) {
         if (registerResult?.contains("success", true) == false || loginResult?.contains("success", true) == false) {
-            // Tampilkan pesan error jika register/login gagal, dan tidak ada pesan sukses yang sedang ditampilkan
             registerResult ?: loginResult
         } else {
             null
@@ -130,14 +121,12 @@ fun SignUpScreen(
 
     val context = LocalContext.current
 
-    // Logic untuk Register dan Login Otomatis
     LaunchedEffect(registerResult) {
         registerResult?.let {
             if (it.contains("success", true)) {
-                // Register Sukses: Tampilkan pesan, set status login, dan mulai login
                 statusMessage = "Pendaftaran berhasil! Mencoba masuk..."
-                delay(500L) // Delay singkat untuk melihat pesan register
-                isAutoLoggingIn = true // Aktifkan spinner
+                delay(500L)
+                isAutoLoggingIn = true
                 viewModel.login(context, email, password)
             }
         }
@@ -145,21 +134,18 @@ fun SignUpScreen(
 
     LaunchedEffect(loginResult) {
         loginResult?.let {
-            isAutoLoggingIn = false // Matikan status login otomatis
+            isAutoLoggingIn = false
             if (it.contains("success", true)) {
-                // Login Sukses: Tampilkan pesan final dan navigasi
                 statusMessage = "Berhasil masuk! Selamat datang."
-                delay(1500L) // Delay untuk melihat pesan sukses final
+                delay(1500L)
                 onSignUpSuccess()
             } else if (it.isNotBlank() && !it.contains("success", true)) {
-                // Login Gagal setelah Register Sukses
                 statusMessage = null
                 onLoginFailed()
             }
         }
     }
 
-    // Kombinasi state loading
     val showLoading = isLoading || isAutoLoggingIn
 
     Column(
@@ -185,7 +171,6 @@ fun SignUpScreen(
         )
         Spacer(modifier = Modifier.height(40.dp))
 
-        // --- Nama Lengkap ---
         Text(
             text = "Nama Lengkap",
             modifier = Modifier.fillMaxWidth(),
@@ -250,7 +235,6 @@ fun SignUpScreen(
 
         Spacer(modifier = Modifier.height(4.dp))
 
-        // --- Password ---
         Text(
             text = "Password",
             modifier = Modifier.fillMaxWidth(),
@@ -290,7 +274,6 @@ fun SignUpScreen(
 
         Spacer(modifier = Modifier.height(4.dp))
 
-        // --- Konfirmasi Password ---
         Text(
             text = "Konfirmasi Password",
             modifier = Modifier.fillMaxWidth(),
@@ -329,7 +312,6 @@ fun SignUpScreen(
                 textAlign = TextAlign.Start)
         }
 
-        // --- PESAN KESELURUHAN (Sukses/Status/Error) ---
         if (statusMessage != null) {
             Text(
                 text = statusMessage!!,
@@ -344,7 +326,7 @@ fun SignUpScreen(
             generalErrorMessage?.let {
                 Text(
                     text = it,
-                    color = Color.Red, // Warna merah untuk error
+                    color = Color.Red,
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(top = 8.dp, start = 2.dp),
@@ -356,10 +338,9 @@ fun SignUpScreen(
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        // --- TOMBOL DAFTAR ---
         Button(
             onClick = {
-                if (!showLoading && validateForm()) { // Mencegah klik saat loading
+                if (!showLoading && validateForm()) {
                     viewModel.register(name, email, password)
                 }
             },
@@ -368,10 +349,9 @@ fun SignUpScreen(
                 .height(56.dp),
             colors = ButtonDefaults.buttonColors(containerColor = SignLinkTeal),
             shape = RoundedCornerShape(50),
-            enabled = !showLoading // Nonaktifkan tombol saat loading/auto-login
+            enabled = !showLoading
         ) {
             if (showLoading) {
-                // Tampilkan CircularProgressIndicator saat loading
                 CircularProgressIndicator(
                     color = Color.White,
                     modifier = Modifier.size(24.dp)

@@ -27,13 +27,12 @@ type ActivityRes struct {
 }
 
 type PersonalRes struct {
-	ID        uuid.UUID
-	Name      string
-	Password  string
-	Email     string
-	AvatarUrl string
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	ID        uuid.UUID `json:"id"`
+	Name      string    `json:"name"`
+	Email     string    `json:"email"`
+	AvatarUrl string    `json:"url"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 type ResetPasswordRes struct {
