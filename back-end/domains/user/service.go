@@ -60,6 +60,8 @@ func (s *service) GetPersonal(ctx context.Context) (*PersonalRes, error) {
 		return nil, err
 	}
 
+	fmt.Println("user id: ", token.Claims.UserID)
+
 	db, err := s.dbSelector.GetDBByRole(ctx)
 	if err != nil {
 		return nil, err
@@ -79,7 +81,6 @@ func (s *service) GetPersonal(ctx context.Context) (*PersonalRes, error) {
 
 		res.ID = admin.ID
 		res.Name = admin.Name
-		res.Password = admin.Password
 		res.Email = admin.Email
 		res.AvatarUrl = admin.AvatarUrl
 		res.CreatedAt = admin.CreatedAt
@@ -89,10 +90,7 @@ func (s *service) GetPersonal(ctx context.Context) (*PersonalRes, error) {
 
 	case constants.CUSTOMER:
 		var customer Customer
-
-		// Preload alamat utama
 		err = db.WithContext(ctx).
-			Preload("Addresses", "main = ?", true).
 			Where("id = ?", token.Claims.UserID).
 			First(&customer).Error
 		if err != nil {
@@ -101,7 +99,6 @@ func (s *service) GetPersonal(ctx context.Context) (*PersonalRes, error) {
 
 		res.ID = customer.ID
 		res.Name = customer.Name
-		res.Password = customer.Password
 		res.Email = customer.Email
 		res.AvatarUrl = customer.AvatarUrl
 		res.CreatedAt = customer.CreatedAt

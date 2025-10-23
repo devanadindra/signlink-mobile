@@ -12,14 +12,14 @@ interface CustomerService {
     @POST("user/login")
     suspend fun login(
         @Header("Authorization") authHeader: String,
-        @Body req: LoginRequest
-    ): Response<ApiResponse<LoginData>>
+        @Body req: LoginReq
+    ): Response<ApiResponse<LoginRes>>
 
     @POST("user/register")
     suspend fun register(
         @Header("Authorization") authHeader: String,
-        @Body req: RegisterRequest
-    ): Response<ApiResponse<RegisterResponse>>
+        @Body req: RegisterReq
+    ): Response<ApiResponse<RegisterRes>>
 
     @GET("user/check-jwt")
     suspend fun checkjwt(
@@ -29,5 +29,10 @@ interface CustomerService {
     @POST("user/logout")
     suspend fun logout(
         @Header("Authorization") authHeader: String,
-    ): Response<ApiResponse<LogoutResponse>>
+    ): Response<ApiResponse<LogoutRes>>
+
+    @GET("user/get-personal")
+    suspend fun getPersonal(
+        @Header("Authorization") authHeader: String,
+    ): Response<ApiResponse<PersonalRes>>
 }

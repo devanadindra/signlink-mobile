@@ -24,6 +24,7 @@ import com.example.signlink.screens.kuis.KuisScreen
 import com.example.signlink.screens.kuis.KuisDetailScreen
 import com.example.signlink.screens.kuis.KuisResultScreen
 import com.example.signlink.viewmodel.AuthViewModel
+import com.example.signlink.viewmodel.CustomerViewModel
 import com.google.accompanist.navigation.animation.composable
 
 object Destinations {
@@ -54,7 +55,7 @@ fun AppNavHost() {
 
     LaunchedEffect(Unit) {
         viewModel.checkJwt(context) { isValid ->
-            startDestination = if (isValid) Destinations.HOME_SCREEN else Destinations.HOME_SCREEN
+            startDestination = if (isValid) Destinations.HOME_SCREEN else Destinations.ONBOARDING
         }
     }
 
@@ -71,7 +72,7 @@ fun AppNavHost() {
                         if (startDestination == Destinations.HOME_SCREEN)
                             Destinations.HOME_SCREEN
                         else
-                            Destinations.HOME_SCREEN
+                            Destinations.ONBOARDING
                     )
                 }
             )
@@ -197,17 +198,19 @@ fun AppNavHost() {
 
         // Profile Screen
         composable(Destinations.PROFILE_SCREEN) {
+            val authViewModel: AuthViewModel = hiltViewModel()
+            val customerViewModel: CustomerViewModel = hiltViewModel()
             ProfileScreen(
-                viewModel = viewModel,
                 navController = navController,
-                onCameraClicked = { navController.navigate(Destinations.SIGN_CLASSIFIER_SCREEN)},
+                viewModel = authViewModel,
+                customerViewModel = customerViewModel,
+                onCameraClicked = { navController.navigate(Destinations.SIGN_CLASSIFIER_SCREEN) },
                 onKamusClicked = { navController.navigate(Destinations.KAMUS_SCREEN) },
                 onVTTClicked = { navController.navigate(Destinations.VTT_SCREEN) },
                 onHomeClicked = { navController.navigate(Destinations.HOME_SCREEN) },
                 onProfileClicked = { navController.navigate(Destinations.PROFILE_SCREEN) }
             )
         }
-
         composable(
             route = "kamus_list/{letter}"
         ) { backStackEntry ->
