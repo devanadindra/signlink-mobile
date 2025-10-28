@@ -87,10 +87,10 @@ fun KuisDetailScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(quizTitle, fontWeight = FontWeight.SemiBold) },
+                title = { Text(quizTitle, fontWeight = FontWeight.SemiBold, color = Color.Black) },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Kembali")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Kembali", tint = Color.Black)
                     }
                 },
                 actions = {
@@ -111,7 +111,7 @@ fun KuisDetailScreen(
     ) { paddingValues ->
         if (questions.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize().padding(paddingValues), contentAlignment = Alignment.Center) {
-                Text("Soal kuis untuk $quizTitle tidak ditemukan. Cek QuizRepository.kt.", color = DarkText)
+                Text("Soal kuis untuk $quizTitle tidak ditemukan. Cek QuizRepository.kt.", color = Color.Black)
             }
             return@Scaffold
         }
