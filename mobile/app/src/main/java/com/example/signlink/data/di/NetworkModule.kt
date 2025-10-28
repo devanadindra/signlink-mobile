@@ -1,5 +1,6 @@
 package com.example.signlink.data.di
 
+import android.os.Build
 import com.example.signlink.data.services.CustomerService
 import com.example.signlink.data.repository.AuthRepository
 import com.example.signlink.data.repository.CustomerRepository
@@ -19,7 +20,24 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 object NetworkModule {
 
-    private const val BASE_URL = "http://10.0.2.2:7777/api/"
+    private const val LOCAL_IP = "10.39.49.67:7777"
+
+    private val BASE_URL: String
+        get() {
+            return if (isEmulator()) {
+                "http://10.0.2.2:7777/api/"
+            } else {
+                "http://$LOCAL_IP/api/"
+            }
+        }
+
+    private fun isEmulator(): Boolean {
+        return (Build.FINGERPRINT.startsWith("generic")
+                || Build.FINGERPRINT.lowercase().contains("vbox")
+                || Build.FINGERPRINT.lowercase().contains("test-keys")
+                || Build.MODEL.contains("Emulator")
+                || Build.MODEL.contains("Android SDK built for x86"))
+    }
 
     @Provides
     @Singleton
@@ -76,3 +94,4 @@ object NetworkModule {
         return CustomerRepository(service)
     }
 }
+

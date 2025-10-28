@@ -2,6 +2,7 @@ package com.example.signlink
 
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.runtime.*
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavType
@@ -26,6 +27,7 @@ import com.example.signlink.screens.kuis.KuisResultScreen
 import com.example.signlink.viewmodel.AuthViewModel
 import com.example.signlink.viewmodel.CustomerViewModel
 import com.google.accompanist.navigation.animation.composable
+import com.google.accompanist.systemuicontroller.rememberSystemUiController
 
 object Destinations {
     const val SPLASH_SCREEN = "splash_screen"
@@ -52,6 +54,16 @@ fun AppNavHost() {
     val context = LocalContext.current
     var startDestination by remember { mutableStateOf(Destinations.SPLASH_SCREEN) }
     val viewModel: AuthViewModel = hiltViewModel()
+
+    val systemUiController = rememberSystemUiController()
+    val statusBarColor = Color.White
+
+    SideEffect {
+        systemUiController.setStatusBarColor(
+            color = statusBarColor,
+            darkIcons = true
+        )
+    }
 
     LaunchedEffect(Unit) {
         viewModel.checkJwt(context) { isValid ->
