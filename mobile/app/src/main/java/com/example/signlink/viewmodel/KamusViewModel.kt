@@ -5,7 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.signlink.data.models.kamus.KamusData
 import com.example.signlink.data.models.kamus.KamusReq
-import com.example.signlink.data.utils.FileUtil.parseErrorMessage
+import com.example.signlink.data.utils.utils.parseErrorMessage
 import com.example.signlink.data.repository.KamusRepository
 import com.example.signlink.data.utils.AuthUtil
 import dagger.hilt.android.lifecycle.HiltViewModel

@@ -142,7 +142,7 @@ func (s *service) Login(ctx context.Context, input LoginReq, w http.ResponseWrit
 
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
-			return nil, apierror.NewWarn(http.StatusUnauthorized, ErrInvalidCredentials)
+			return nil, apierror.NewWarn(http.StatusUnauthorized, ErrEmailNotFound)
 		}
 		return nil, apierror.FromErr(err)
 	}

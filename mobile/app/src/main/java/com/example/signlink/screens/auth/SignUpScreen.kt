@@ -62,7 +62,10 @@ fun SignUpScreen(
     var isAutoLoggingIn by remember { mutableStateOf(false) }
 
     LaunchedEffect(password, confirmPassword) {
-        if (password != confirmPassword) {
+        // Reset confirmPasswordError agar input tidak selalu merah saat mengetik password baru
+        if (password != confirmPassword && password.isNotBlank() && confirmPassword.isNotBlank()) {
+            // Biarkan error muncul saat validasi form
+        } else if (password == confirmPassword && confirmPasswordError != null) {
             confirmPasswordError = null
         }
     }
@@ -70,6 +73,11 @@ fun SignUpScreen(
     fun validateForm(): Boolean {
         var isValid = true
 
+        viewModel.clearRegisterResult()
+        viewModel.clearLoginResult()
+        statusMessage = null
+
+        // Cek Nama
         if (name.isBlank()) {
             nameError = "Nama lengkap tidak boleh kosong."
             isValid = false
@@ -77,6 +85,7 @@ fun SignUpScreen(
             nameError = null
         }
 
+        // Cek Email
         if (email.isBlank()) {
             emailError = "Email tidak boleh kosong."
             isValid = false
@@ -87,6 +96,7 @@ fun SignUpScreen(
             emailError = null
         }
 
+        // Cek Password
         if (password.isBlank()) {
             passwordError = "Password tidak boleh kosong."
             isValid = false
@@ -97,6 +107,7 @@ fun SignUpScreen(
             passwordError = null
         }
 
+        // Cek Konfirmasi Password
         if (confirmPassword.isBlank()) {
             confirmPasswordError = "Konfirmasi password tidak boleh kosong."
             isValid = false
@@ -110,9 +121,9 @@ fun SignUpScreen(
         return isValid
     }
 
-    val generalErrorMessage = if (passwordError == null && confirmPasswordError == null && statusMessage == null) {
+    val generalErrorMessage = if (nameError == null && emailError == null && passwordError == null && confirmPasswordError == null && statusMessage == null) {
         if (registerResult?.contains("success", true) == false || loginResult?.contains("success", true) == false) {
-            registerResult ?: loginResult
+            (registerResult ?: loginResult)?.replace("\"", "")
         } else {
             null
         }
@@ -141,6 +152,8 @@ fun SignUpScreen(
                 delay(1500L)
                 onSignUpSuccess()
             } else if (it.isNotBlank() && !it.contains("success", true)) {
+                statusMessage = "Gagal masuk otomatis: ${it.replace("\"", "")}"
+                delay(2000L)
                 statusMessage = null
                 onLoginFailed()
             }
@@ -172,6 +185,7 @@ fun SignUpScreen(
         )
         Spacer(modifier = Modifier.height(40.dp))
 
+        // --- Nama Lengkap ---
         Text(
             text = "Nama Lengkap",
             modifier = Modifier.fillMaxWidth(),
@@ -196,14 +210,20 @@ fun SignUpScreen(
             )
         )
         if (nameError != null) {
-            Text(text = nameError!!, color = Color.Red, style = MaterialTheme.typography.bodySmall,                 modifier = Modifier
-                .fillMaxWidth()
-                .padding(start = 16.dp),
-                textAlign = TextAlign.Start)
+            Text(
+                text = nameError!!,
+                color = Color.Red,
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 16.dp, top = 4.dp),
+                textAlign = TextAlign.Start
+            )
         }
 
-        Spacer(modifier = Modifier.height(4.dp))
+        Spacer(modifier = Modifier.height(14.dp))
 
+        // --- Email ---
         Text(
             text = "Email",
             modifier = Modifier.fillMaxWidth(),
@@ -228,14 +248,20 @@ fun SignUpScreen(
             )
         )
         if (emailError != null) {
-            Text(text = emailError!!, color = Color.Red, style = MaterialTheme.typography.bodySmall,                 modifier = Modifier
-                .fillMaxWidth()
-                .padding(start = 16.dp),
-                textAlign = TextAlign.Start)
+            Text(
+                text = emailError!!,
+                color = Color.Red,
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 16.dp, top = 4.dp),
+                textAlign = TextAlign.Start
+            )
         }
 
-        Spacer(modifier = Modifier.height(4.dp))
+        Spacer(modifier = Modifier.height(14.dp))
 
+        // --- Password ---
         Text(
             text = "Password",
             modifier = Modifier.fillMaxWidth(),
@@ -267,14 +293,20 @@ fun SignUpScreen(
             )
         )
         if (passwordError != null) {
-            Text(text = passwordError!!, color = Color.Red, style = MaterialTheme.typography.bodySmall,                 modifier = Modifier
-                .fillMaxWidth()
-                .padding(start = 16.dp),
-                textAlign = TextAlign.Start)
+            Text(
+                text = passwordError!!,
+                color = Color.Red,
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 16.dp, top = 4.dp),
+                textAlign = TextAlign.Start
+            )
         }
 
-        Spacer(modifier = Modifier.height(4.dp))
+        Spacer(modifier = Modifier.height(14.dp))
 
+        // --- Konfirmasi Password ---
         Text(
             text = "Konfirmasi Password",
             modifier = Modifier.fillMaxWidth(),
@@ -307,33 +339,44 @@ fun SignUpScreen(
             )
         )
         if (confirmPasswordError != null) {
-            Text(text = confirmPasswordError!!, color = Color.Red, style = MaterialTheme.typography.bodySmall,                 modifier = Modifier
-                .fillMaxWidth()
-                .padding(start = 16.dp),
-                textAlign = TextAlign.Start)
+            Text(
+                text = confirmPasswordError!!,
+                color = Color.Red,
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 16.dp, top = 4.dp),
+                textAlign = TextAlign.Start
+            )
         }
 
+        // --- Notifikasi Status (Sukses/Gagal Login Otomatis) ---
         if (statusMessage != null) {
+            val isSuccess = statusMessage!!.contains("berhasil", ignoreCase = true) || statusMessage!!.contains("sukses", ignoreCase = true)
             Text(
-                text = statusMessage!!,
-                color = if (statusMessage!!.contains("sukses") || statusMessage!!.contains("berhasil")) Color(0xFF4CAF50) else Color.DarkGray,
+                text = statusMessage!!.replace("\"", ""),
+                color = if (isSuccess) Color(0xFF4CAF50) else Color.Red,
                 fontWeight = FontWeight.SemiBold,
+                style = MaterialTheme.typography.bodySmall,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 10.dp),
                 textAlign = TextAlign.Center
             )
-        } else {
-            generalErrorMessage?.let {
-                Text(
-                    text = it,
-                    color = Color.Red,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 8.dp, start = 2.dp),
-                    textAlign = TextAlign.Start
-                )
-            }
+        }
+
+        // --- Notifikasi Error API General ---
+        generalErrorMessage?.let {
+            Text(
+                text = it.replace("\"", ""),
+                color = Color.Red,
+                fontWeight = FontWeight.SemiBold,
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 10.dp),
+                textAlign = TextAlign.Center
+            )
         }
 
 
@@ -362,7 +405,7 @@ fun SignUpScreen(
             }
         }
 
-        Spacer(modifier = Modifier.height(4.dp))
+        Spacer(modifier = Modifier.height(24.dp))
 
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -381,7 +424,7 @@ fun SignUpScreen(
             )
         }
 
-        Spacer(modifier = Modifier.height(14.dp))
+        Spacer(modifier = Modifier.height(24.dp))
 
         OutlinedButton(
             onClick = { /* Handle Google Login */ },

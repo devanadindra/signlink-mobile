@@ -7,7 +7,7 @@ import java.io.File
 import java.io.FileOutputStream
 import java.io.InputStream
 
-object FileUtil {
+object utils {
     fun uriToFile(uri: Uri, context: Context): File {
         val inputStream: InputStream? = context.contentResolver.openInputStream(uri)
         val file = File.createTempFile("upload_", ".mp4", context.cacheDir)
@@ -34,6 +34,5 @@ object FileUtil {
             e.message
         }
     }
-
 
 }

@@ -55,7 +55,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import com.example.signlink.data.utils.FileUtil.uriToFile
+import com.example.signlink.data.utils.utils.uriToFile
 import com.example.signlink.ui.theme.DarkText
 import com.example.signlink.ui.theme.SignLinkTeal
 import com.example.signlink.viewmodel.KamusViewModel
