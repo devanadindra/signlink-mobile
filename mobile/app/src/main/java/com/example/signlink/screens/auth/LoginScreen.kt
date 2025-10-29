@@ -68,6 +68,7 @@ fun LoginScreen(
 
     val loginResult by viewModel.loginResult.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
+    val context = LocalContext.current
 
     fun validateForm(): Boolean {
         var isValid = true
@@ -75,7 +76,6 @@ fun LoginScreen(
         emailError = null
         passwordError = null
         successMessage = null
-        roleChangeMessage = null
 
         if (email.isBlank()) {
             emailError = "Email tidak boleh kosong."
@@ -199,10 +199,15 @@ fun LoginScreen(
             )
         )
         if (emailError != null) {
-            Text(text = emailError!!, color = Color.Red, style = MaterialTheme.typography.bodySmall,                 modifier = Modifier
-                .fillMaxWidth()
-                .padding(start = 16.dp),
-                textAlign = TextAlign.Start)
+            Text(
+                text = emailError!!,
+                color = Color.Red,
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 16.dp, top = 4.dp),
+                textAlign = TextAlign.Start
+            )
         }
 
         Spacer(modifier = Modifier.height(14.dp))
@@ -236,17 +241,23 @@ fun LoginScreen(
             )
         )
         if (passwordError != null) {
-            Text(text = passwordError!!, color = Color.Red, style = MaterialTheme.typography.bodySmall,                 modifier = Modifier
-                .fillMaxWidth()
-                .padding(start = 16.dp),
-                textAlign = TextAlign.Start)
+            Text(
+                text = passwordError!!,
+                color = Color.Red,
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 16.dp, top = 4.dp),
+                textAlign = TextAlign.Start
+            )
         }
 
         if (successMessage != null) {
             Text(
-                text = successMessage!!,
+                text = successMessage!!.replace("\"", ""),
                 color = Color(0xFF4CAF50),
                 fontWeight = FontWeight.SemiBold,
+                style = MaterialTheme.typography.bodySmall,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 10.dp),
@@ -257,9 +268,10 @@ fun LoginScreen(
         loginResult?.let {
             if (!it.contains("success", true) && successMessage == null) {
                 Text(
-                    text = it,
+                    text = it.replace("\"", ""),
                     color = Color.Red,
                     fontWeight = FontWeight.SemiBold,
+                    style = MaterialTheme.typography.bodySmall,
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(top = 10.dp),
@@ -294,8 +306,6 @@ fun LoginScreen(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        val context = LocalContext.current
-
         val showLoading = isLoading || (loginResult?.contains("success", true) == true && successMessage != null)
 
         Button(
@@ -309,6 +319,7 @@ fun LoginScreen(
                 .height(56.dp),
             colors = ButtonDefaults.buttonColors(containerColor = SignLinkTeal),
             shape = RoundedCornerShape(50),
+            enabled = !showLoading
         ) {
             if (showLoading) {
                 CircularProgressIndicator(

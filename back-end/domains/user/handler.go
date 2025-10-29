@@ -2,6 +2,7 @@ package user
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
@@ -212,6 +213,11 @@ func (h *handler) Register(ctx *gin.Context) {
 
 	res, err := h.service.Register(ctx, input)
 	if err != nil {
+		if strings.Contains(err.Error(), "customer_email_key") {
+			respond.Error(ctx, apierror.DuplicateEmail(input.Email))
+			return
+		}
+
 		respond.Error(ctx, apierror.FromErr(err))
 		return
 	}

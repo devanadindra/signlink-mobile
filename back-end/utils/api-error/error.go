@@ -108,3 +108,7 @@ func InvalidCategory() error {
 func DuplicateArti(arti string) error {
 	return NewWarn(http.StatusConflict, fmt.Sprintf("arti '%s' sudah ada dalam database", arti))
 }
+
+func DuplicateEmail(email string) error {
+	return NewWarn(http.StatusConflict, fmt.Sprintf("email '%s' sudah digunakan", email))
+}

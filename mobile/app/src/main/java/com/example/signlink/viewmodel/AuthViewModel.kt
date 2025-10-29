@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import com.example.signlink.data.utils.AuthUtil
 import android.content.Context
+import com.example.signlink.data.utils.utils.parseErrorMessage
 
 
 @HiltViewModel
@@ -26,6 +27,14 @@ class AuthViewModel @Inject constructor(
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading
 
+    fun clearRegisterResult() {
+        _registerResult.value = null
+    }
+
+    fun clearLoginResult() {
+        _loginResult.value = null
+    }
+
     fun login(context: Context, role: String, email: String, password: String) {
         viewModelScope.launch {
             try {
@@ -41,7 +50,8 @@ class AuthViewModel @Inject constructor(
                         _loginResult.value = "Invalid token"
                     }
                 } else {
-                    _loginResult.value = "Login failed"
+                    val errorJson = response.errorBody()?.string()
+                    _loginResult.value = parseErrorMessage(errorJson) ?: "Login failed"
                 }
             } catch (e: Exception) {
                 _loginResult.value = e.message
@@ -60,7 +70,8 @@ class AuthViewModel @Inject constructor(
                 if (response.isSuccessful) {
                     _registerResult.value = "Registration success"
                 } else {
-                    _registerResult.value = "Registration failed: ${response.message()}"
+                    val errorJson = response.errorBody()?.string()
+                    _registerResult.value = parseErrorMessage(errorJson) ?: "Registration failed"
                 }
             } catch (e: Exception) {
                 _registerResult.value = "Error: ${e.localizedMessage ?: "unknown error"}"
