@@ -1,7 +1,7 @@
 CREATE TABLE
     IF NOT EXISTS kamus (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid (),
-        arti VARCHAR NOT NULL,
+        arti VARCHAR NOT NULL UNIQUE,
         kategori VARCHAR NOT NULL,
         video_url VARCHAR,
         updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW (),

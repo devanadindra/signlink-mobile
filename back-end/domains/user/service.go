@@ -164,6 +164,7 @@ func (s *service) Login(ctx context.Context, input LoginReq, w http.ResponseWrit
 	}
 
 	return &LoginRes{
+		Role:    input.Role,
 		Token:   tokenString,
 		Expires: expirationTime,
 	}, nil

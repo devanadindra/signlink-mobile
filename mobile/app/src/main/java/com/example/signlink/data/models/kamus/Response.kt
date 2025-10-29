@@ -6,3 +6,7 @@ data class KamusData(
     val kategori: String,
     val url: String,
 )
+
+data class AddKamusRes(
+    val message: String
+)

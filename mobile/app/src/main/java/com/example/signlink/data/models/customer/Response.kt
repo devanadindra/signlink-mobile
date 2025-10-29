@@ -9,6 +9,7 @@ data class LogoutRes(
 )
 
 data class LoginRes(
+    val role: String,
     val token: String,
     val expires: String,
 )

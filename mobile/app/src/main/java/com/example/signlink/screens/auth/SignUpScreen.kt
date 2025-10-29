@@ -41,6 +41,7 @@ fun SignUpScreen(
     onLoginFailed: () -> Unit,
     onLoginClicked: () -> Unit
 ) {
+    var role by remember { mutableStateOf("CUSTOMER") }
     var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -127,7 +128,7 @@ fun SignUpScreen(
                 statusMessage = "Pendaftaran berhasil! Mencoba masuk..."
                 delay(500L)
                 isAutoLoggingIn = true
-                viewModel.login(context, email, password)
+                viewModel.login(context, role, email, password)
             }
         }
     }

@@ -8,8 +8,8 @@ import com.example.signlink.data.services.CustomerService
 import com.example.signlink.data.utils.AuthUtil
 
 class AuthRepository(private val service: CustomerService) {
-    suspend fun login(email: String, password: String) =
-        service.login(AuthUtil.basicAuth(), LoginReq(email, password))
+    suspend fun login(role: String, email: String, password: String) =
+        service.login(AuthUtil.basicAuth(), LoginReq(role, email, password))
 
     suspend fun register(name: String, email: String, password: String) =
         service.register(AuthUtil.basicAuth(), RegisterReq(name, email, password))
