@@ -26,14 +26,16 @@ class AuthViewModel @Inject constructor(
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading
 
-    fun login(context: Context, email: String, password: String) {
+    fun login(context: Context, role: String, email: String, password: String) {
         viewModelScope.launch {
             try {
-                val response = repository.login(email, password)
+                val response = repository.login(role, email, password)
                 if (response.isSuccessful) {
                     val token = response.body()?.data?.token
+                    val role = response.body()?.data?.role
                     if (!token.isNullOrEmpty()) {
                         AuthUtil.saveToken(context, token)
+                        AuthUtil.saveRole(context, role.toString())
                         _loginResult.value = "success"
                     } else {
                         _loginResult.value = "Invalid token"

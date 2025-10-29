@@ -8,7 +8,7 @@ import (
 
 type Kamus struct {
 	ID        uuid.UUID `gorm:"type:uuid;default:gen_random_uuid();primaryKey"`
-	Arti      string
+	Arti      string    `gorm:"unique"`
 	Kategori  string
 	VideoUrl  string
 	CreatedAt time.Time `gorm:"autoCreateTime"`

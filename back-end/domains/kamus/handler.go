@@ -1,8 +1,8 @@
 package kamus
 
 import (
-	"errors"
 	"net/http"
+	"strings"
 
 	apierror "github.com/devanadindraa/NTTH-Store/back-end/utils/api-error"
 	"github.com/devanadindraa/NTTH-Store/back-end/utils/respond"
@@ -12,6 +12,7 @@ import (
 
 type Handler interface {
 	GetKamus(ctx *gin.Context)
+	AddKamus(ctx *gin.Context)
 }
 
 type handler struct {
@@ -29,7 +30,7 @@ func NewHandler(service Service, validate *validator.Validate) Handler {
 func (h *handler) GetKamus(ctx *gin.Context) {
 	kategori := ctx.Query("kategori")
 	if kategori == "" {
-		respond.Error(ctx, apierror.FromErr(errors.New("kategori tidak boleh kosong")))
+		respond.Error(ctx, apierror.InvalidCategory())
 		return
 	}
 
@@ -40,4 +41,25 @@ func (h *handler) GetKamus(ctx *gin.Context) {
 	}
 
 	respond.Success(ctx, http.StatusOK, res)
+}
+
+func (h *handler) AddKamus(ctx *gin.Context) {
+	var req KamusReq
+
+	if err := ctx.ShouldBind(&req); err != nil {
+		respond.Error(ctx, apierror.FromErr(err))
+		return
+	}
+
+	if err := h.service.AddKamus(ctx, req); err != nil {
+		if strings.Contains(err.Error(), "kamus_arti_key") {
+			respond.Error(ctx, apierror.DuplicateArti(req.Arti))
+			return
+		}
+
+		respond.Error(ctx, apierror.FromErr(err))
+		return
+	}
+
+	respond.Success(ctx, http.StatusCreated, gin.H{"message": "kamus and video added successfully"})
 }

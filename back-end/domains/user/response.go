@@ -3,12 +3,14 @@ package user
 import (
 	"time"
 
+	"github.com/devanadindraa/NTTH-Store/back-end/utils/constants"
 	"github.com/google/uuid"
 )
 
 type LoginRes struct {
-	Token   string    `json:"token"`
-	Expires time.Time `json:"expires"`
+	Role    constants.ROLE `json:"role"`
+	Token   string         `json:"token"`
+	Expires time.Time      `json:"expires"`
 }
 
 type VerifyTokenRes struct {
