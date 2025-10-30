@@ -10,3 +10,7 @@ data class KamusData(
 data class AddKamusRes(
     val message: String
 )
+
+data class DeleteKamusRes(
+    val message: String
+)

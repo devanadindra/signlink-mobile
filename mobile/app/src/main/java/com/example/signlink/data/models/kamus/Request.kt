@@ -7,3 +7,7 @@ data class KamusReq(
     val kategori: String,
     val video: File
 )
+
+data class DeleteReq(
+    val id: String
+)

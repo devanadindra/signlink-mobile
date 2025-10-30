@@ -112,16 +112,18 @@ fun AddKamusScreen(
         videoError = null
         var isValid = true
 
+        val artiTrimmed = arti.trim()
+
         if (selectedCategory == null) {
             categoryError = "Kategori harus dipilih."
             isValid = false
         }
 
-        if (arti.isBlank()) {
+        if (artiTrimmed.isBlank()) {
             artiError = "Arti (Kata Isyarat) tidak boleh kosong."
             isValid = false
         } else if (selectedCategory != null) {
-            val firstLetterOfArti = arti.trim().uppercase().firstOrNull()
+            val firstLetterOfArti = artiTrimmed.uppercase().firstOrNull()
             if (firstLetterOfArti != null && firstLetterOfArti != selectedCategory) {
                 artiError = "Huruf awal kata isyarat ('$firstLetterOfArti') harus sesuai dengan Kategori ('$selectedCategory')."
                 isValid = false
@@ -147,9 +149,18 @@ fun AddKamusScreen(
         try {
             val file = uriToFile(videoUri!!, context)
 
+            val artiTitleCase = arti.trim().toTitleCase()
+
+            val firstLetterOfArtiAfterFormat = artiTitleCase.trim().uppercase().firstOrNull()
+
+            if (firstLetterOfArtiAfterFormat != selectedCategory) {
+                Toast.makeText(context, "Terjadi kesalahan format: Huruf awal kata isyarat tidak sesuai kategori.", Toast.LENGTH_LONG).show()
+                return
+            }
+
             viewmodel.addKamus(
                 context = context,
-                arti = arti.trim(),
+                arti = artiTitleCase,
                 kategori = selectedCategory.toString(),
                 videoFile = file
             )
@@ -377,4 +388,19 @@ fun VideoUploadButton(
             overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
         )
     }
+}
+
+fun String.toTitleCase(): String {
+    if (this.isBlank()) return this
+
+    return this.split(" ")
+        .joinToString(" ") { word ->
+            if (word.isNotEmpty()) {
+                word.replaceFirstChar {
+                    if (it.isLowerCase()) it.titlecase() else it.toString()
+                }
+            } else {
+                word
+            }
+        }
 }

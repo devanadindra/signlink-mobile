@@ -13,6 +13,7 @@ import (
 type Handler interface {
 	GetKamus(ctx *gin.Context)
 	AddKamus(ctx *gin.Context)
+	DeleteKamus(ctx *gin.Context)
 }
 
 type handler struct {
@@ -62,4 +63,15 @@ func (h *handler) AddKamus(ctx *gin.Context) {
 	}
 
 	respond.Success(ctx, http.StatusCreated, gin.H{"message": "kamus and video added successfully"})
+}
+
+func (h *handler) DeleteKamus(ctx *gin.Context) {
+	id := ctx.Param("id")
+
+	if err := h.service.DeleteKamus(ctx, id); err != nil {
+		respond.Error(ctx, apierror.FromErr(err))
+		return
+	}
+
+	respond.Success(ctx, http.StatusCreated, gin.H{"message": "kamus and video deleted successfully"})
 }

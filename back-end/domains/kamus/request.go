@@ -7,3 +7,7 @@ type KamusReq struct {
 	Kategori string                `form:"kategori" binding:"required"`
 	Video    *multipart.FileHeader `form:"video" binding:"required"`
 }
+
+type DeleteKamusReq struct {
+	ID string `json:"id" binding:"required"`
+}

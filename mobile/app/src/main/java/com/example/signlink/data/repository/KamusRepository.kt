@@ -1,6 +1,8 @@
 package com.example.signlink.data.repository
 import com.example.signlink.data.models.ApiResponse
 import com.example.signlink.data.models.kamus.AddKamusRes
+import com.example.signlink.data.models.kamus.DeleteKamusRes
+import com.example.signlink.data.models.kamus.DeleteReq
 import com.example.signlink.data.models.kamus.KamusData
 import com.example.signlink.data.models.kamus.KamusReq
 import com.example.signlink.data.services.KamusService
@@ -30,5 +32,9 @@ class KamusRepository @Inject constructor(private val service: KamusService) {
             kategori = kategoriBody,
             video = videoPart
         )
+    }
+
+    suspend fun deleteKamus(token: String, id: String): Response<ApiResponse<DeleteKamusRes>>{
+        return service.deleteKamus(token, id)
     }
 }

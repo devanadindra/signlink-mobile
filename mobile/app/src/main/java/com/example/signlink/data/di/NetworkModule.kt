@@ -27,7 +27,8 @@ object NetworkModule {
             return if (isEmulator()) {
                 "http://10.0.2.2:7777/api/"
             } else {
-                "http://$LOCAL_IP/api/"
+//                "http://$LOCAL_IP/api/"
+                "http://10.0.2.2:7777/api/"
             }
         }
 
