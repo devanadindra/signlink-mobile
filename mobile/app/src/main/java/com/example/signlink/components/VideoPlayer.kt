@@ -31,7 +31,8 @@ fun VideoPlayer(
         if (isEmulator()) {
             "http://10.0.2.2:7777/api/"
         } else {
-            "http://192.168.1.7:7777/api/"
+//            "http://192.168.1.7:7777/api/"
+            "http://10.0.2.2:7777/api/"
         }
     }
 

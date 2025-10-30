@@ -69,6 +69,7 @@ func NewDependency(
 	{
 		kamus.GET("/", mw.JWT(constants.ADMIN, constants.CUSTOMER), kamusHandler.GetKamus)
 		kamus.POST("/", mw.JWT(constants.ADMIN), kamusHandler.AddKamus)
+		kamus.DELETE("/:id", mw.JWT(constants.ADMIN), kamusHandler.DeleteKamus)
 	}
 
 	router.NoRoute(func(ctx *gin.Context) {

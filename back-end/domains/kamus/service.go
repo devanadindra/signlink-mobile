@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/devanadindraa/NTTH-Store/back-end/database"
@@ -17,6 +18,7 @@ import (
 type Service interface {
 	GetKamus(ctx context.Context, kategori string) (*[]KamusRes, error)
 	AddKamus(ctx context.Context, req KamusReq) error
+	DeleteKamus(ctx context.Context, kamusId string) error
 }
 
 type service struct {
@@ -124,4 +126,29 @@ func (s *service) AddKamus(ctx context.Context, req KamusReq) error {
 	}
 
 	return tx.Commit().Error
+}
+
+func (s *service) DeleteKamus(ctx context.Context, kamusId string) error {
+	db, err := s.dbSelector.GetDBByRole(ctx)
+	if err != nil {
+		return err
+	}
+
+	var kamus Kamus
+	if err := db.WithContext(ctx).First(&kamus, "id = ?", kamusId).Error; err != nil {
+		return fmt.Errorf("kamus not found: %v", err)
+	}
+
+	cleanFilePath := strings.TrimPrefix(kamus.VideoUrl, "/")
+	if err := os.Remove(cleanFilePath); err != nil {
+		if !os.IsNotExist(err) {
+			return fmt.Errorf("failed to delete video file %s: %v", cleanFilePath, err)
+		}
+	}
+
+	if err := db.WithContext(ctx).Delete(&kamus).Error; err != nil {
+		return fmt.Errorf("error deleting kamus: %v", err)
+	}
+
+	return nil
 }

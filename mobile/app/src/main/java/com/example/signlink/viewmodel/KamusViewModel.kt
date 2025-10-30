@@ -89,5 +89,35 @@ class KamusViewModel @Inject constructor(
         }
     }
 
+    fun deleteKamus(context: Context, id: String, kategori: String) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            val token = AuthUtil.jwtAuth(context)
+
+            if (token.isNullOrEmpty()) {
+                _errorMessage.value = "Token not found"
+                _isLoading.value = false
+                return@launch
+            }
+
+            try {
+                val response = repository.deleteKamus(token, id)
+
+                if (response.isSuccessful) {
+                    val body = response.body()
+                    _successMessage.value = body?.data?.message ?: "Delete successful"
+                    getKamus(context, kategori)
+                } else {
+                    val errorJson = response.errorBody()?.string()
+                    _errorMessage.value = parseErrorMessage(errorJson) ?: "Delete failed"
+                }
+            } catch (e: Exception) {
+                _errorMessage.value = e.message
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+
 }
 
