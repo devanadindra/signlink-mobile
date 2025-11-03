@@ -24,6 +24,12 @@ class AuthViewModel @Inject constructor(
     private val _registerResult = MutableStateFlow<String?>(null)
     val registerResult: StateFlow<String?> = _registerResult
 
+    private val _resetPasswordReqResult = MutableStateFlow<String?>(null)
+    val resetPasswordReqResult: StateFlow<String?> = _resetPasswordReqResult
+
+    private val _resetPasswordSubmitResult = MutableStateFlow<String?>(null)
+    val resetPasswordSubmitResult: StateFlow<String?> = _resetPasswordSubmitResult
+
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading
 
@@ -119,6 +125,39 @@ class AuthViewModel @Inject constructor(
             }
         }
     }
+
+    fun resetPasswordReq(role: String, email: String) {
+        viewModelScope.launch {
+            try {
+                val response = repository.resetPasswordReq(email, role)
+                if (response != null) {
+                    _resetPasswordReqResult.value = "Reset password link sent to $email"
+                } else {
+                    _resetPasswordReqResult.value = "Failed to send reset request. Please try again."
+                }
+            } catch (e: Exception) {
+                _resetPasswordReqResult.value = "Error: ${e.localizedMessage ?: "Unknown error"}"
+            }
+        }
+    }
+
+    fun resetPasswordSubmit(role: String, email: String, newPassword: String) {
+        viewModelScope.launch {
+            try {
+                val response = repository.resetPasswordSubmit(email, newPassword, role)
+
+                if (response != null && response.data?.message != null) {
+                    _resetPasswordSubmitResult.value = response.data.message
+                } else {
+                    _resetPasswordSubmitResult.value = "Failed to reset password. Please try again."
+                }
+
+            } catch (e: Exception) {
+                _resetPasswordSubmitResult.value = "Error: ${e.localizedMessage ?: "Unknown error"}"
+            }
+        }
+    }
+
 
 
 }

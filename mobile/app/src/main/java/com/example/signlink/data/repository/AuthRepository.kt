@@ -4,6 +4,10 @@ import com.example.signlink.data.models.ApiResponse
 import com.example.signlink.data.models.customer.LoginReq
 import com.example.signlink.data.models.customer.LogoutRes
 import com.example.signlink.data.models.customer.RegisterReq
+import com.example.signlink.data.models.customer.ResetPasswordReq
+import com.example.signlink.data.models.customer.ResetPasswordRes
+import com.example.signlink.data.models.customer.ResetPasswordSubmit
+import com.example.signlink.data.models.customer.ResetPasswordSubmitRes
 import com.example.signlink.data.services.CustomerService
 import com.example.signlink.data.utils.AuthUtil
 
@@ -21,6 +25,16 @@ class AuthRepository(private val service: CustomerService) {
 
     suspend fun logout(token: String): ApiResponse<LogoutRes>? {
         val response = service.logout(token)
+        return if (response.isSuccessful) response.body() else null
+    }
+
+    suspend fun resetPasswordReq(email: String, role: String): ApiResponse<ResetPasswordRes>? {
+        val response = service.resetPasswordReq(AuthUtil.basicAuth(), ResetPasswordReq(email, role))
+        return if (response.isSuccessful) response.body() else null
+    }
+
+    suspend fun resetPasswordSubmit(email: String, newPassword: String ,role: String): ApiResponse<ResetPasswordSubmitRes>? {
+        val response = service.resetPasswordSubmit(AuthUtil.basicAuth(), ResetPasswordSubmit(email, newPassword, role))
         return if (response.isSuccessful) response.body() else null
     }
 

@@ -20,3 +20,10 @@ data class PersonalRes(
     val email: String,
     val url: String
 )
+
+data class ResetPasswordRes(
+    val email: String,
+)
+data class ResetPasswordSubmitRes(
+    val message: String,
+)
