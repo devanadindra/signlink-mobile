@@ -6,6 +6,7 @@ import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.Header
+import retrofit2.http.PATCH
 import retrofit2.http.POST
 
 interface CustomerService {
@@ -14,6 +15,18 @@ interface CustomerService {
         @Header("Authorization") authHeader: String,
         @Body req: LoginReq
     ): Response<ApiResponse<LoginRes>>
+
+    @POST("user/reset-req")
+    suspend fun resetPasswordReq(
+        @Header("Authorization") authHeader: String,
+        @Body req: ResetPasswordReq
+    ): Response<ApiResponse<ResetPasswordRes>>
+
+    @PATCH("user/reset-submit")
+    suspend fun resetPasswordSubmit(
+        @Header("Authorization") authHeader: String,
+        @Body req: ResetPasswordSubmit
+    ): Response<ApiResponse<ResetPasswordSubmitRes>>
 
     @POST("user/register")
     suspend fun register(

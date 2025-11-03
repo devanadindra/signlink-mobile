@@ -19,8 +19,10 @@ import com.example.signlink.screens.VoiceToTextScreen
 import com.example.signlink.screens.SplashScreen
 import com.example.signlink.screens.OpeningScreen
 import com.example.signlink.screens.SignClassifierScreen
+import com.example.signlink.screens.auth.ForgotPasswordScreen
 import com.example.signlink.screens.onboarding.OnboardingScreen
 import com.example.signlink.screens.auth.LoginScreen
+import com.example.signlink.screens.auth.ResetPasswordSubmitScreen
 import com.example.signlink.screens.auth.SignUpScreen
 import com.example.signlink.screens.kuis.KuisScreen
 import com.example.signlink.screens.kuis.KuisDetailScreen
@@ -46,6 +48,7 @@ object Destinations {
     const val KAMUS_DETAIL_SCREEN = "kamus_detail_screen"
     const val PROFILE_SCREEN = "profile_screen"
     const val SIGN_CLASSIFIER_SCREEN = "sign_classifier_screen"
+    const val FORGOT_PASSWORD_SCREEN = "forgot_password_screen"
 }
 
 @OptIn(ExperimentalAnimationApi::class)
@@ -124,7 +127,7 @@ fun AppNavHost() {
                     navController.navigate(Destinations.HOME_SCREEN)
                 },
                 onSignUpClicked = { navController.navigate(Destinations.SIGNUP_SCREEN) },
-                onForgotPasswordClicked = { }
+                onForgotPasswordClicked = { navController.navigate(Destinations.FORGOT_PASSWORD_SCREEN) }
             )
         }
 
@@ -262,6 +265,40 @@ fun AppNavHost() {
         composable(Destinations.ADD_KAMUS_SCREEN) {
             AddKamusScreen(
                 navController = navController,
+            )
+        }
+
+        // Forgot Password Req
+        composable(Destinations.FORGOT_PASSWORD_SCREEN) {
+            val viewModel: AuthViewModel = hiltViewModel()
+            ForgotPasswordScreen(
+                viewModel = viewModel,
+                onBackToLogin = { navController.popBackStack() },
+                onResetEmailSent = { email, role ->
+                    navController.navigate("reset_password_submit/$email/$role")
+                }
+            )
+        }
+
+        // Reset Password Submit
+        composable(
+            route = "reset_password_submit/{email}/{role}",
+            arguments = listOf(
+                navArgument("email") { type = NavType.StringType },
+                navArgument("role") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val viewModel: AuthViewModel = hiltViewModel()
+            val email = backStackEntry.arguments?.getString("email") ?: ""
+            val role = backStackEntry.arguments?.getString("role") ?: "CUSTOMER"
+
+            ResetPasswordSubmitScreen(
+                viewModel = viewModel,
+                email = email,
+                role = role,
+                onPasswordResetSuccess = {
+                    navController.popBackStack(Destinations.LOGIN_SCREEN, inclusive = false)
+                }
             )
         }
     }

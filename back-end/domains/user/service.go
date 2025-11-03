@@ -32,7 +32,6 @@ type Service interface {
 	ChangePassword(ctx context.Context, input ChangePasswordReq) error
 	GetPersonal(ctx context.Context) (*PersonalRes, error)
 	UpdateProfile(ctx context.Context, input UpdateProfileReq) (res *PersonalRes, err error)
-	GetAdminActivity(ctx context.Context) ([]ActivityRes, error)
 	AddAvatar(ctx context.Context, req AvatarReq) (string, error)
 	ResetPassword(ctx context.Context, req ResetPasswordReq) (res *ResetPasswordRes, err error)
 	ResetPasswordSubmit(ctx context.Context, req ResetPasswordSubmitReq) error
@@ -322,38 +321,6 @@ func (s *service) ChangePassword(ctx context.Context, input ChangePasswordReq) e
 	return nil
 }
 
-func (s *service) GetAdminActivity(ctx context.Context) ([]ActivityRes, error) {
-	token, err := contextUtil.GetTokenClaims(ctx)
-	if err != nil {
-		return nil, err
-	}
-	db, err := s.dbSelector.GetDBByRole(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	username := token.Claims.Email
-	userID := token.Claims.UserID
-
-	var results []ActivityRes
-
-	query := db.WithContext(ctx).
-		Table("admin_activity AS a").
-		Select("a.admin_id AS user_id, u.name, a.description, a.created_at").
-		Joins("JOIN admin u ON a.admin_id = u.id").
-		Order("a.created_at DESC")
-
-	if username != "owner" {
-		query = query.Where("a.admin_id = ?", userID)
-	}
-
-	if err := query.Scan(&results).Error; err != nil {
-		return nil, fmt.Errorf("failed to get admin activities: %w", err)
-	}
-
-	return results, nil
-}
-
 func (s *service) UpdateProfile(ctx context.Context, input UpdateProfileReq) (*PersonalRes, error) {
 	token, err := contextUtil.GetTokenClaims(ctx)
 	if err != nil {
@@ -568,7 +535,7 @@ func (s *service) ResetPasswordSubmit(ctx context.Context, req ResetPasswordSubm
 	case constants.CUSTOMER:
 		var customer Customer
 		err = db.WithContext(ctx).
-			Where("username = ?", req.Email).
+			Where("email = ?", req.Email).
 			First(&customer).Error
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return err

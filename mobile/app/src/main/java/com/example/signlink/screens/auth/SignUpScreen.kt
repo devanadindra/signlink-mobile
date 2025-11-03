@@ -62,7 +62,6 @@ fun SignUpScreen(
     var isAutoLoggingIn by remember { mutableStateOf(false) }
 
     LaunchedEffect(password, confirmPassword) {
-        // Reset confirmPasswordError agar input tidak selalu merah saat mengetik password baru
         if (password != confirmPassword && password.isNotBlank() && confirmPassword.isNotBlank()) {
             // Biarkan error muncul saat validasi form
         } else if (password == confirmPassword && confirmPasswordError != null) {
