@@ -3,12 +3,14 @@ package user
 import (
 	"time"
 
+	"github.com/devanadindraa/NTTH-Store/back-end/utils/constants"
 	"github.com/google/uuid"
 )
 
 type LoginRes struct {
-	Token   string    `json:"token"`
-	Expires time.Time `json:"expires"`
+	Role    constants.ROLE `json:"role"`
+	Token   string         `json:"token"`
+	Expires time.Time      `json:"expires"`
 }
 
 type VerifyTokenRes struct {
@@ -27,13 +29,12 @@ type ActivityRes struct {
 }
 
 type PersonalRes struct {
-	ID        uuid.UUID
-	Name      string
-	Password  string
-	Email     string
-	AvatarUrl string
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	ID        uuid.UUID `json:"id"`
+	Name      string    `json:"name"`
+	Email     string    `json:"email"`
+	AvatarUrl string    `json:"url"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 type ResetPasswordRes struct {

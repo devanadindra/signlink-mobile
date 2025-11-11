@@ -1,6 +1,7 @@
 package apierror
 
 import (
+	"fmt"
 	"net/http"
 )
 
@@ -98,4 +99,16 @@ func FileNotFound() error {
 
 func InvalidFileId() error {
 	return NewWarn(http.StatusBadRequest, "fileId must be UUID!")
+}
+
+func InvalidCategory() error {
+	return NewWarn(http.StatusBadRequest, "kategori tidak boleh kosong")
+}
+
+func DuplicateArti(arti string) error {
+	return NewWarn(http.StatusConflict, fmt.Sprintf("arti '%s' sudah ada dalam database", arti))
+}
+
+func DuplicateEmail(email string) error {
+	return NewWarn(http.StatusConflict, fmt.Sprintf("email '%s' sudah digunakan", email))
 }

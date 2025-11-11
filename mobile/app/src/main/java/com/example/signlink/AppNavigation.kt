@@ -2,6 +2,7 @@ package com.example.signlink
 
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.runtime.*
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavType
@@ -12,18 +13,24 @@ import com.example.signlink.screens.HomeScreen
 import com.example.signlink.screens.kamus.KamusScreen
 import com.example.signlink.screens.kamus.KamusListScreen
 import com.example.signlink.screens.kamus.KamusDetailScreen
+import com.example.signlink.screens.kamus.AddKamusScreen
 import com.example.signlink.screens.ProfileScreen
 import com.example.signlink.screens.VoiceToTextScreen
 import com.example.signlink.screens.SplashScreen
 import com.example.signlink.screens.OpeningScreen
+import com.example.signlink.screens.SignClassifierScreen
+import com.example.signlink.screens.auth.ForgotPasswordScreen
 import com.example.signlink.screens.onboarding.OnboardingScreen
 import com.example.signlink.screens.auth.LoginScreen
+import com.example.signlink.screens.auth.ResetPasswordSubmitScreen
 import com.example.signlink.screens.auth.SignUpScreen
 import com.example.signlink.screens.kuis.KuisScreen
 import com.example.signlink.screens.kuis.KuisDetailScreen
 import com.example.signlink.screens.kuis.KuisResultScreen
 import com.example.signlink.viewmodel.AuthViewModel
+import com.example.signlink.viewmodel.CustomerViewModel
 import com.google.accompanist.navigation.animation.composable
+import com.google.accompanist.systemuicontroller.rememberSystemUiController
 
 object Destinations {
     const val SPLASH_SCREEN = "splash_screen"
@@ -34,11 +41,14 @@ object Destinations {
     const val HOME_SCREEN = "home_screen"
     const val VTT_SCREEN = "vtt_screen"
     const val KAMUS_SCREEN = "kamus_screen"
+    const val ADD_KAMUS_SCREEN = "add_kamus_screen"
     const val KUIS_SCREEN = "kuis_screen"
     const val KUIS_DETAIL_SCREEN = "kuis_detail_screen"
     const val KUIS_RESULT_SCREEN = "kuis_result_screen"
     const val KAMUS_DETAIL_SCREEN = "kamus_detail_screen"
     const val PROFILE_SCREEN = "profile_screen"
+    const val SIGN_CLASSIFIER_SCREEN = "sign_classifier_screen"
+    const val FORGOT_PASSWORD_SCREEN = "forgot_password_screen"
 }
 
 @OptIn(ExperimentalAnimationApi::class)
@@ -49,6 +59,16 @@ fun AppNavHost() {
     val context = LocalContext.current
     var startDestination by remember { mutableStateOf(Destinations.SPLASH_SCREEN) }
     val viewModel: AuthViewModel = hiltViewModel()
+
+    val systemUiController = rememberSystemUiController()
+    val statusBarColor = Color.White
+
+    SideEffect {
+        systemUiController.setStatusBarColor(
+            color = statusBarColor,
+            darkIcons = true
+        )
+    }
 
     LaunchedEffect(Unit) {
         viewModel.checkJwt(context) { isValid ->
@@ -107,7 +127,7 @@ fun AppNavHost() {
                     navController.navigate(Destinations.HOME_SCREEN)
                 },
                 onSignUpClicked = { navController.navigate(Destinations.SIGNUP_SCREEN) },
-                onForgotPasswordClicked = { }
+                onForgotPasswordClicked = { navController.navigate(Destinations.FORGOT_PASSWORD_SCREEN) }
             )
         }
 
@@ -128,6 +148,7 @@ fun AppNavHost() {
         // Home Screen
         composable(Destinations.HOME_SCREEN) {
             HomeScreen(
+                onCameraClicked = { navController.navigate(Destinations.SIGN_CLASSIFIER_SCREEN)},
                 onKuisClicked = { navController.navigate(Destinations.KUIS_SCREEN)},
                 onKamusClicked = { navController.navigate(Destinations.KAMUS_SCREEN) },
                 onVTTClicked = { navController.navigate(Destinations.VTT_SCREEN) },
@@ -172,6 +193,7 @@ fun AppNavHost() {
         // Voice to Texts
         composable(Destinations.VTT_SCREEN) {
             VoiceToTextScreen(
+                onCameraClicked = { navController.navigate(Destinations.SIGN_CLASSIFIER_SCREEN)},
                 onKamusClicked = { navController.navigate(Destinations.KAMUS_SCREEN) },
                 onVTTClicked = { navController.navigate(Destinations.VTT_SCREEN) },
                 onHomeClicked = { navController.navigate(Destinations.HOME_SCREEN) },
@@ -183,25 +205,30 @@ fun AppNavHost() {
         composable(Destinations.KAMUS_SCREEN) {
             KamusScreen(
                 navController = navController,
+                onCameraClicked = { navController.navigate(Destinations.SIGN_CLASSIFIER_SCREEN)},
                 onKamusClicked = { navController.navigate(Destinations.KAMUS_SCREEN) },
                 onVTTClicked = { navController.navigate(Destinations.VTT_SCREEN) },
                 onHomeClicked = { navController.navigate(Destinations.HOME_SCREEN) },
-                onProfileClicked = { navController.navigate(Destinations.PROFILE_SCREEN) }
+                onProfileClicked = { navController.navigate(Destinations.PROFILE_SCREEN) },
+                onAddKamusClicked = { navController.navigate(Destinations.ADD_KAMUS_SCREEN) }
             )
         }
 
         // Profile Screen
         composable(Destinations.PROFILE_SCREEN) {
+            val authViewModel: AuthViewModel = hiltViewModel()
+            val customerViewModel: CustomerViewModel = hiltViewModel()
             ProfileScreen(
-                viewModel = viewModel,
                 navController = navController,
+                viewModel = authViewModel,
+                customerViewModel = customerViewModel,
+                onCameraClicked = { navController.navigate(Destinations.SIGN_CLASSIFIER_SCREEN) },
                 onKamusClicked = { navController.navigate(Destinations.KAMUS_SCREEN) },
                 onVTTClicked = { navController.navigate(Destinations.VTT_SCREEN) },
                 onHomeClicked = { navController.navigate(Destinations.HOME_SCREEN) },
                 onProfileClicked = { navController.navigate(Destinations.PROFILE_SCREEN) }
             )
         }
-
         composable(
             route = "kamus_list/{letter}"
         ) { backStackEntry ->
@@ -228,5 +255,51 @@ fun AppNavHost() {
             )
         }
 
+        composable(Destinations.SIGN_CLASSIFIER_SCREEN) {
+            SignClassifierScreen(
+                navController = navController,
+            )
+        }
+
+        // Add Kamus Screen
+        composable(Destinations.ADD_KAMUS_SCREEN) {
+            AddKamusScreen(
+                navController = navController,
+            )
+        }
+
+        // Forgot Password Req
+        composable(Destinations.FORGOT_PASSWORD_SCREEN) {
+            val viewModel: AuthViewModel = hiltViewModel()
+            ForgotPasswordScreen(
+                viewModel = viewModel,
+                onBackToLogin = { navController.popBackStack() },
+                onResetEmailSent = { email, role ->
+                    navController.navigate("reset_password_submit/$email/$role")
+                }
+            )
+        }
+
+        // Reset Password Submit
+        composable(
+            route = "reset_password_submit/{email}/{role}",
+            arguments = listOf(
+                navArgument("email") { type = NavType.StringType },
+                navArgument("role") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val viewModel: AuthViewModel = hiltViewModel()
+            val email = backStackEntry.arguments?.getString("email") ?: ""
+            val role = backStackEntry.arguments?.getString("role") ?: "CUSTOMER"
+
+            ResetPasswordSubmitScreen(
+                viewModel = viewModel,
+                email = email,
+                role = role,
+                onPasswordResetSuccess = {
+                    navController.popBackStack(Destinations.LOGIN_SCREEN, inclusive = false)
+                }
+            )
+        }
     }
 }

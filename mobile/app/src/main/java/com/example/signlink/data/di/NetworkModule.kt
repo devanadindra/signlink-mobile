@@ -1,10 +1,11 @@
 package com.example.signlink.data.di
 
+import android.os.Build
 import com.example.signlink.data.services.CustomerService
 import com.example.signlink.data.repository.AuthRepository
+import com.example.signlink.data.repository.CustomerRepository
 import com.example.signlink.data.repository.KamusRepository
 import com.example.signlink.data.services.KamusService
-import com.example.signlink.data.utils.AuthUtil
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -19,7 +20,25 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 object NetworkModule {
 
-    private const val BASE_URL = "http://10.0.2.2:7777/api/"
+    private const val LOCAL_IP = "192.168.1.7:7777"
+
+    private val BASE_URL: String
+        get() {
+            return if (isEmulator()) {
+                "http://10.0.2.2:7777/api/"
+            } else {
+//                "http://$LOCAL_IP/api/"
+                "http://10.0.2.2:7777/api/"
+            }
+        }
+
+    private fun isEmulator(): Boolean {
+        return (Build.FINGERPRINT.startsWith("generic")
+                || Build.FINGERPRINT.lowercase().contains("vbox")
+                || Build.FINGERPRINT.lowercase().contains("test-keys")
+                || Build.MODEL.contains("Emulator")
+                || Build.MODEL.contains("Android SDK built for x86"))
+    }
 
     @Provides
     @Singleton
@@ -48,12 +67,6 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    fun provideCustomerService(retrofit: Retrofit): CustomerService {
-        return retrofit.create(CustomerService::class.java)
-    }
-
-    @Provides
-    @Singleton
     fun provideAuthRepository(service: CustomerService): AuthRepository {
         return AuthRepository(service)
     }
@@ -69,4 +82,17 @@ object NetworkModule {
     fun provideKamusRepository(service: KamusService): KamusRepository {
         return KamusRepository(service)
     }
+
+    @Provides
+    @Singleton
+    fun provideCustomerService(retrofit: Retrofit): CustomerService {
+        return retrofit.create(CustomerService::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideCustomerRepository(service: CustomerService): CustomerRepository {
+        return CustomerRepository(service)
+    }
 }
+

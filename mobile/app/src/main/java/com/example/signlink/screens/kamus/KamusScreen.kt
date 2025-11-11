@@ -24,6 +24,8 @@ import com.example.signlink.components.BottomBarSignLink
 import com.example.signlink.components.MainFloatingActionButton
 import com.example.signlink.components.NavItem
 import com.example.signlink.ui.theme.*
+import androidx.compose.ui.platform.LocalContext
+import com.example.signlink.data.utils.AuthUtil.getRole
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -33,8 +35,16 @@ fun KamusScreen(
     onKamusClicked: () -> Unit = {},
     onVTTClicked: () -> Unit = {},
     onProfileClicked: () -> Unit = {},
-    onCameraClicked: () -> Unit = {}
+    onCameraClicked: () -> Unit = {},
+    onAddKamusClicked: () -> Unit = {}
 ) {
+    val context = LocalContext.current
+    var userRole by remember { mutableStateOf<String?>(null) }
+
+    LaunchedEffect(Unit) {
+        userRole = getRole(context)
+    }
+
     val navItems = listOf(
         NavItem("Beranda", Icons.Default.Home, false, "home"),
         NavItem("Kamus", Icons.Default.Book, true, "kamus"),
@@ -76,6 +86,33 @@ fun KamusScreen(
             )
 
             Spacer(modifier = Modifier.height(16.dp))
+
+            if (userRole == "ADMIN") {
+                Spacer(modifier = Modifier.height(8.dp))
+                Button(
+                    onClick = onAddKamusClicked,
+                    colors = ButtonDefaults.buttonColors(containerColor = SignLinkTeal),
+                    shape = RoundedCornerShape(12.dp),
+                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp),
+                    modifier = Modifier
+                        .fillMaxWidth(0.9f)
+                        .height(50.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = "Tambah Kamus",
+                        tint = Color.White
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Tambah Kata ke Kamus",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color.White
+                    )
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+            }
 
             // 2. Deskripsi Card untuk Kamus
             DictionaryHeaderCard(
@@ -143,20 +180,17 @@ fun DictionaryHeaderCard(
 fun AlphabetGrid(
     onLetterClick: (Char) -> Unit
 ) {
-    // Characters A through Z
     val alphabet = ('A'..'Z').toList()
     val columns = 4
-    val itemsPerGroup = columns * 6 // A-X (24 letters)
+    val itemsPerGroup = columns * 6
 
-    // Split A-Z into the main grid (A-X) and the centered row (Y, Z)
     val mainGridLetters = alphabet.take(itemsPerGroup)
-    val remainingLetters = alphabet.drop(itemsPerGroup) // Y and Z
+    val remainingLetters = alphabet.drop(itemsPerGroup)
 
     Column(
         modifier = Modifier.fillMaxWidth(0.9f).padding(horizontal = 8.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Main Grid (A-X) - 4 columns, semua harus square
         mainGridLetters.chunked(columns).forEach { rowLetters ->
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -167,15 +201,13 @@ fun AlphabetGrid(
                         letter = letter,
                         onClick = { onLetterClick(letter) },
                         modifier = Modifier.weight(1f),
-                        isSquare = true // Tetapkan sebagai kotak
+                        isSquare = true
                     )
                 }
             }
             Spacer(modifier = Modifier.height(16.dp))
         }
 
-        // Remaining Letters (Y, Z) - Centered dan persegi panjang
-        // MODIFIKASI: Menghapus fillMaxWidth(0.6f) agar row mengambil lebar penuh parent
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(16.dp),
@@ -185,8 +217,8 @@ fun AlphabetGrid(
                 AlphabetButton(
                     letter = letter,
                     onClick = { onLetterClick(letter) },
-                    modifier = Modifier.weight(1f).height(60.dp), // Set tinggi agar terlihat seperti persegi panjang
-                    isSquare = false // Tetapkan sebagai persegi panjang
+                    modifier = Modifier.weight(1f).height(60.dp),
+                    isSquare = false
                 )
             }
         }
@@ -201,13 +233,11 @@ fun AlphabetButton(
     letter: Char,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    isSquare: Boolean = true // Flag baru untuk mengontrol rasio aspek
+    isSquare: Boolean = true
 ) {
     val finalModifier = if (isSquare) {
-        // Untuk A-X, terapkan aspek rasio 1:1
         modifier.aspectRatio(1f)
     } else {
-        // Untuk Y dan Z, gunakan modifier yang diberikan (yang sudah memiliki weight)
         modifier
     }
 

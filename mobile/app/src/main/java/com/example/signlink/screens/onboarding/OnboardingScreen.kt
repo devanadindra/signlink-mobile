@@ -50,26 +50,30 @@ fun OnboardingScreen(
             .padding(horizontal = 24.dp)
     ) {
 
-        Spacer(modifier = Modifier.height(190.dp))
+        Spacer(modifier = Modifier.weight(0.2f))
 
         HorizontalPager(
             count = onboardingPages.size,
             state = pagerState,
-            modifier = Modifier.weight(1f)
+            modifier = Modifier
+                .weight(0.6f)
         ) { page ->
             val item = onboardingPages[page]
 
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier
+                    .fillMaxSize()
             ) {
                 Image(
                     painter = painterResource(id = item.illustrationId),
                     contentDescription = null,
                     modifier = Modifier
-                        .fillMaxWidth(0.9f)
+                        .fillMaxWidth(0.8f)
                         .aspectRatio(1f)
                 )
+
+                Spacer(modifier = Modifier.height(16.dp))
 
                 Text(
                     text = item.title,
@@ -77,10 +81,12 @@ fun OnboardingScreen(
                     fontWeight = FontWeight.Bold,
                     color = DarkText,
                     textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 8.dp)
                 )
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(8.dp))
 
                 Text(
                     text = item.description,
@@ -89,14 +95,17 @@ fun OnboardingScreen(
                     textAlign = TextAlign.Center,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 24.dp)
+                        .padding(horizontal = 8.dp)
                 )
             }
         }
 
         Row(
             horizontalArrangement = Arrangement.Center,
-            modifier = Modifier.fillMaxWidth()
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .weight(0.05f)
+                .fillMaxWidth()
         ) {
             repeat(onboardingPages.size) { iteration ->
                 DotIndicator(isActive = pagerState.currentPage == iteration)
@@ -106,7 +115,7 @@ fun OnboardingScreen(
             }
         }
 
-        Spacer(modifier = Modifier.height(110.dp))
+        Spacer(modifier = Modifier.weight(0.15f))
 
         val isLastPage = pagerState.currentPage == onboardingPages.lastIndex
 
@@ -115,8 +124,8 @@ fun OnboardingScreen(
                 onClick = onFinishClicked,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(100.dp)
-                    .padding(bottom = 52.dp)
+                    .heightIn(min = 56.dp)
+                    .navigationBarsPadding()
                     .zIndex(1f),
                 colors = ButtonDefaults.buttonColors(containerColor = SignLinkTeal),
                 shape = CircleShape
@@ -132,8 +141,7 @@ fun OnboardingScreen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(IntrinsicSize.Min)
-                    .padding(bottom = 52.dp)
+                    .navigationBarsPadding()
                     .zIndex(1f),
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -141,8 +149,7 @@ fun OnboardingScreen(
                     text = "Skip",
                     fontSize = 18.sp,
                     color = LightText,
-                    modifier = Modifier
-                        .clickable(onClick = onSkipClicked)
+                    modifier = Modifier.clickable(onClick = onSkipClicked)
                 )
 
                 Spacer(modifier = Modifier.weight(1f))
@@ -165,6 +172,6 @@ fun OnboardingScreen(
                 }
             }
         }
-
     }
 }
+

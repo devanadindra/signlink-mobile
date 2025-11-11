@@ -4,6 +4,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -37,6 +38,7 @@ import com.example.signlink.ui.theme.SignLinkTeal
 import com.example.signlink.ui.theme.DarkText
 import com.example.signlink.viewmodel.AuthViewModel
 import kotlinx.coroutines.delay
+import androidx.compose.ui.input.pointer.pointerInput
 
 private fun isValidEmail(email: String): Boolean {
     return android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()
@@ -54,13 +56,19 @@ fun LoginScreen(
     var passwordVisible by remember { mutableStateOf(false) }
     var rememberMe by remember { mutableStateOf(false) }
 
+    var role by remember { mutableStateOf("CUSTOMER") }
+    var tapCount by remember { mutableIntStateOf(0) }
+    var lastTapTime by remember { mutableLongStateOf(0L) }
+
     var emailError by remember { mutableStateOf<String?>(null) }
     var passwordError by remember { mutableStateOf<String?>(null) }
 
     var successMessage by remember { mutableStateOf<String?>(null) }
+    var roleChangeMessage by remember { mutableStateOf<String?>(null) }
 
     val loginResult by viewModel.loginResult.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
+    val context = LocalContext.current
 
     fun validateForm(): Boolean {
         var isValid = true
@@ -100,6 +108,16 @@ fun LoginScreen(
         }
     }
 
+    LaunchedEffect(tapCount) {
+        if (tapCount > 0) {
+            delay(800L)
+            val currentTime = System.currentTimeMillis()
+            if (currentTime - lastTapTime >= 800L) {
+                tapCount = 0
+            }
+        }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -114,7 +132,26 @@ fun LoginScreen(
         Image(
             painter = painterResource(id = R.drawable.signlink_logo),
             contentDescription = "SignLink Logo",
-            modifier = Modifier.size(80.dp)
+            modifier = Modifier
+                .size(80.dp)
+                .pointerInput(Unit) {
+                    detectTapGestures(
+                        onTap = {
+                            val currentTime = System.currentTimeMillis()
+                            if (currentTime - lastTapTime < 800L) {
+                                tapCount++
+                                if (tapCount == 6) {
+                                    role = if (role == "CUSTOMER") "ADMIN" else "CUSTOMER"
+                                    roleChangeMessage = "Mode: $role diaktifkan! (Tersembunyi)"
+                                    tapCount = 0
+                                }
+                            } else {
+                                tapCount = 1
+                            }
+                            lastTapTime = currentTime
+                        }
+                    )
+                }
         )
 
         Text(
@@ -124,6 +161,19 @@ fun LoginScreen(
             color = DarkText,
             textAlign = TextAlign.Center
         )
+
+        if (roleChangeMessage != null) {
+            Text(
+                text = roleChangeMessage!!,
+                color = if (role == "ADMIN") SignLinkTeal else Color.Gray,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp),
+                textAlign = TextAlign.Center
+            )
+            Spacer(modifier = Modifier.height(10.dp))
+        }
 
         Spacer(modifier = Modifier.height(40.dp))
 
@@ -149,10 +199,15 @@ fun LoginScreen(
             )
         )
         if (emailError != null) {
-            Text(text = emailError!!, color = Color.Red, style = MaterialTheme.typography.bodySmall,                 modifier = Modifier
-                .fillMaxWidth()
-                .padding(start = 16.dp),
-                textAlign = TextAlign.Start)
+            Text(
+                text = emailError!!,
+                color = Color.Red,
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 16.dp, top = 4.dp),
+                textAlign = TextAlign.Start
+            )
         }
 
         Spacer(modifier = Modifier.height(14.dp))
@@ -186,17 +241,23 @@ fun LoginScreen(
             )
         )
         if (passwordError != null) {
-            Text(text = passwordError!!, color = Color.Red, style = MaterialTheme.typography.bodySmall,                 modifier = Modifier
-                .fillMaxWidth()
-                .padding(start = 16.dp),
-                textAlign = TextAlign.Start)
+            Text(
+                text = passwordError!!,
+                color = Color.Red,
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 16.dp, top = 4.dp),
+                textAlign = TextAlign.Start
+            )
         }
 
         if (successMessage != null) {
             Text(
-                text = successMessage!!,
+                text = successMessage!!.replace("\"", ""),
                 color = Color(0xFF4CAF50),
                 fontWeight = FontWeight.SemiBold,
+                style = MaterialTheme.typography.bodySmall,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 10.dp),
@@ -207,9 +268,10 @@ fun LoginScreen(
         loginResult?.let {
             if (!it.contains("success", true) && successMessage == null) {
                 Text(
-                    text = it,
+                    text = it.replace("\"", ""),
                     color = Color.Red,
                     fontWeight = FontWeight.SemiBold,
+                    style = MaterialTheme.typography.bodySmall,
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(top = 10.dp),
@@ -244,14 +306,12 @@ fun LoginScreen(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        val context = LocalContext.current
-
         val showLoading = isLoading || (loginResult?.contains("success", true) == true && successMessage != null)
 
         Button(
             onClick = {
                 if (!showLoading && validateForm()) {
-                    viewModel.login(context, email, password)
+                    viewModel.login(context, role, email, password)
                 }
             },
             modifier = Modifier
@@ -259,6 +319,7 @@ fun LoginScreen(
                 .height(56.dp),
             colors = ButtonDefaults.buttonColors(containerColor = SignLinkTeal),
             shape = RoundedCornerShape(50),
+            enabled = !showLoading
         ) {
             if (showLoading) {
                 CircularProgressIndicator(

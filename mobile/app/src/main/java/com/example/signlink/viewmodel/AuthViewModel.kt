@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import com.example.signlink.data.utils.AuthUtil
 import android.content.Context
+import com.example.signlink.data.utils.utils.parseErrorMessage
 
 
 @HiltViewModel
@@ -23,23 +24,40 @@ class AuthViewModel @Inject constructor(
     private val _registerResult = MutableStateFlow<String?>(null)
     val registerResult: StateFlow<String?> = _registerResult
 
+    private val _resetPasswordReqResult = MutableStateFlow<String?>(null)
+    val resetPasswordReqResult: StateFlow<String?> = _resetPasswordReqResult
+
+    private val _resetPasswordSubmitResult = MutableStateFlow<String?>(null)
+    val resetPasswordSubmitResult: StateFlow<String?> = _resetPasswordSubmitResult
+
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading
 
-    fun login(context: Context, email: String, password: String) {
+    fun clearRegisterResult() {
+        _registerResult.value = null
+    }
+
+    fun clearLoginResult() {
+        _loginResult.value = null
+    }
+
+    fun login(context: Context, role: String, email: String, password: String) {
         viewModelScope.launch {
             try {
-                val response = repository.login(email, password)
+                val response = repository.login(role, email, password)
                 if (response.isSuccessful) {
                     val token = response.body()?.data?.token
+                    val role = response.body()?.data?.role
                     if (!token.isNullOrEmpty()) {
                         AuthUtil.saveToken(context, token)
+                        AuthUtil.saveRole(context, role.toString())
                         _loginResult.value = "success"
                     } else {
                         _loginResult.value = "Invalid token"
                     }
                 } else {
-                    _loginResult.value = "Login failed"
+                    val errorJson = response.errorBody()?.string()
+                    _loginResult.value = parseErrorMessage(errorJson) ?: "Login failed"
                 }
             } catch (e: Exception) {
                 _loginResult.value = e.message
@@ -58,7 +76,8 @@ class AuthViewModel @Inject constructor(
                 if (response.isSuccessful) {
                     _registerResult.value = "Registration success"
                 } else {
-                    _registerResult.value = "Registration failed: ${response.message()}"
+                    val errorJson = response.errorBody()?.string()
+                    _registerResult.value = parseErrorMessage(errorJson) ?: "Registration failed"
                 }
             } catch (e: Exception) {
                 _registerResult.value = "Error: ${e.localizedMessage ?: "unknown error"}"
@@ -106,6 +125,39 @@ class AuthViewModel @Inject constructor(
             }
         }
     }
+
+    fun resetPasswordReq(role: String, email: String) {
+        viewModelScope.launch {
+            try {
+                val response = repository.resetPasswordReq(email, role)
+                if (response != null) {
+                    _resetPasswordReqResult.value = "Reset password link sent to $email"
+                } else {
+                    _resetPasswordReqResult.value = "Failed to send reset request. Please try again."
+                }
+            } catch (e: Exception) {
+                _resetPasswordReqResult.value = "Error: ${e.localizedMessage ?: "Unknown error"}"
+            }
+        }
+    }
+
+    fun resetPasswordSubmit(role: String, email: String, newPassword: String) {
+        viewModelScope.launch {
+            try {
+                val response = repository.resetPasswordSubmit(email, newPassword, role)
+
+                if (response != null && response.data?.message != null) {
+                    _resetPasswordSubmitResult.value = response.data.message
+                } else {
+                    _resetPasswordSubmitResult.value = "Failed to reset password. Please try again."
+                }
+
+            } catch (e: Exception) {
+                _resetPasswordSubmitResult.value = "Error: ${e.localizedMessage ?: "Unknown error"}"
+            }
+        }
+    }
+
 
 
 }

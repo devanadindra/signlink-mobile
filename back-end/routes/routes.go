@@ -59,7 +59,6 @@ func NewDependency(
 		user.POST("/avatar", mw.JWT(constants.CUSTOMER, constants.ADMIN), userHandler.AddAvatar)
 		user.PATCH("/password", mw.JWT(constants.ADMIN, constants.CUSTOMER), userHandler.ChangePassword)
 		user.GET("/get-personal", mw.JWT(constants.ADMIN, constants.CUSTOMER), userHandler.GetPersonal)
-		user.GET("/adminLog", mw.JWT(constants.ADMIN), userHandler.GetAdminActivity)
 		user.GET("/check-jwt", mw.JWT(constants.ADMIN, constants.CUSTOMER), func(ctx *gin.Context) {
 			respond.Success(ctx, http.StatusOK, "JWT is valid")
 		})
@@ -68,6 +67,8 @@ func NewDependency(
 	kamus := api.Group("/kamus")
 	{
 		kamus.GET("/", mw.JWT(constants.ADMIN, constants.CUSTOMER), kamusHandler.GetKamus)
+		kamus.POST("/", mw.JWT(constants.ADMIN), kamusHandler.AddKamus)
+		kamus.DELETE("/:id", mw.JWT(constants.ADMIN), kamusHandler.DeleteKamus)
 	}
 
 	router.NoRoute(func(ctx *gin.Context) {

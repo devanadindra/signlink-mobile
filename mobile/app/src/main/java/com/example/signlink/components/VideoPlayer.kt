@@ -12,6 +12,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -26,7 +27,14 @@ fun VideoPlayer(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
-    val baseUrl = "http://10.0.2.2:7777/api/"
+    val baseUrl = remember {
+        if (isEmulator()) {
+            "http://10.0.2.2:7777/api/"
+        } else {
+//            "http://192.168.1.7:7777/api/"
+            "http://10.0.2.2:7777/api/"
+        }
+    }
 
     val exoPlayer = remember(videoUrl) {
         ExoPlayer.Builder(context).build().apply {
@@ -93,7 +101,8 @@ fun VideoPlayer(
             }) {
                 Icon(
                     imageVector = Icons.Filled.FastRewind,
-                    contentDescription = "Rewind 2s"
+                    contentDescription = "Rewind 2s",
+                    tint = Color.Black
                 )
             }
 
@@ -109,7 +118,8 @@ fun VideoPlayer(
                 Icon(
                     imageVector = if (isPlaying) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
                     contentDescription = if (isPlaying) "Pause" else "Play",
-                    modifier = Modifier.size(48.dp)
+                    modifier = Modifier.size(48.dp),
+                    tint = Color.Black
                 )
             }
 
@@ -119,10 +129,18 @@ fun VideoPlayer(
             }) {
                 Icon(
                     imageVector = Icons.Filled.FastForward,
-                    contentDescription = "Forward 2s"
+                    contentDescription = "Forward 2s",
+                    tint = Color.Black
                 )
             }
         }
     }
 }
 
+fun isEmulator(): Boolean {
+    return (android.os.Build.FINGERPRINT.startsWith("generic")
+            || android.os.Build.FINGERPRINT.lowercase().contains("vbox")
+            || android.os.Build.FINGERPRINT.lowercase().contains("test-keys")
+            || android.os.Build.MODEL.contains("Emulator")
+            || android.os.Build.MODEL.contains("Android SDK built for x86"))
+}
