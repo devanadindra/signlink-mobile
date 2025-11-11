@@ -43,12 +43,12 @@ type AvatarReq struct {
 }
 
 type ResetPasswordReq struct {
-	Email string
+	Email string         `json:"email" validate:"required"`
 	Role  constants.ROLE `json:"role" validate:"omitempty,oneof=ADMIN CUSTOMER"`
 }
 
 type ResetPasswordSubmitReq struct {
-	Email       string
-	NewPassword string
+	Email       string         `json:"email" validate:"required"`
+	NewPassword string         `json:"newPassword" validate:"required"`
 	Role        constants.ROLE `json:"role" validate:"omitempty,oneof=ADMIN CUSTOMER"`
 }

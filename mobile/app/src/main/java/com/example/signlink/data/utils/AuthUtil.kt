@@ -12,6 +12,7 @@ val Context.dataStore by preferencesDataStore("user_prefs")
 
 object AuthUtil {
     private val TOKEN_KEY = stringPreferencesKey("jwt_token")
+    val ROLE_KEY = stringPreferencesKey("user_role")
 
     fun basicAuth(): String {
         val credentials = "admin:admin"
@@ -25,10 +26,21 @@ object AuthUtil {
         }
     }
 
+    suspend fun saveRole(context: Context, role: String) {
+        context.dataStore.edit { prefs ->
+            prefs[ROLE_KEY] = role
+        }
+    }
+
     suspend fun getToken(context: Context): String? {
         return context.dataStore.data.map { prefs ->
             prefs[TOKEN_KEY]
         }.first()
+    }
+
+    suspend fun getRole(context: Context): String? {
+        val prefs = context.dataStore.data.first()
+        return prefs[ROLE_KEY]
     }
 
     suspend fun clearToken(context: Context) {

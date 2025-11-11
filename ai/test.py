@@ -2,21 +2,24 @@ import cv2
 import mediapipe as mp
 import numpy as np
 import tensorflow as tf
+from tensorflow.keras.models import load_model
 import string
-import time
+import os
+from collections import deque
 
-# === Load TFLite model ===
-model_name = 'sign_classifier'
-interpreter = tf.lite.Interpreter(model_path=f"{model_name}.tflite")
-interpreter.allocate_tensors()
+# === Load TFLite model untuk Letter ===
+model_letter_path = os.path.join("models", "sign_classifier.tflite")
+interpreter_letter = tf.lite.Interpreter(model_path=model_letter_path)
+interpreter_letter.allocate_tensors()
+input_details_letter = interpreter_letter.get_input_details()
+output_details_letter = interpreter_letter.get_output_details()
 
-input_details = interpreter.get_input_details()
-output_details = interpreter.get_output_details()
+model_word_path = os.path.join("models", "sign_classifier_word.keras")
+model_word = load_model(model_word_path)
 
-# === Label huruf A-Z ===
-labels = list(string.ascii_uppercase)
+labels_letter = list(string.ascii_uppercase)
+labels_word = [line.strip() for line in open("models/labels_word.txt")]
 
-# === Inisialisasi MediaPipe Hands ===
 mp_hands = mp.solutions.hands
 mp_drawing = mp.solutions.drawing_utils
 
@@ -27,8 +30,15 @@ hands = mp_hands.Hands(
     min_tracking_confidence=0.5
 )
 
-# === Kamera ===
 cap = cv2.VideoCapture(0)
+
+seq_buffer = deque(maxlen=30)
+prev_keypoints = None
+
+state = "idle"
+motion_threshold = 0.015
+word_result = "waiting..."
+cooldown_counter = 0 
 
 try:
     while True:
@@ -36,7 +46,6 @@ try:
         if not ret:
             break
 
-        # Flip supaya tampil natural seperti cermin
         frame = cv2.flip(frame, 1)
         img_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         results = hands.process(img_rgb)
@@ -44,41 +53,79 @@ try:
         keypoints = []
 
         if results.multi_hand_landmarks:
+            hand_keypoints = []
+            for hand_landmarks in results.multi_hand_landmarks[:2]:
+                hand = [lm_coord for lm in hand_landmarks.landmark for lm_coord in (lm.x, lm.y, lm.z)]
+                hand_keypoints.append(hand)
+            while len(hand_keypoints) < 2:
+                hand_keypoints.append([0.0]*63)
+            keypoints = np.concatenate(hand_keypoints)
             for hand_landmarks in results.multi_hand_landmarks:
-                for lm in hand_landmarks.landmark:
-                    keypoints.extend([lm.x, lm.y, lm.z])  # ambil koordinat xyz
-                mp_drawing.draw_landmarks(
-                    frame, hand_landmarks, mp_hands.HAND_CONNECTIONS)
-
-        # Jika ada tangan terdeteksi
-        if keypoints:
-            # Normalisasi panjang input sesuai model
-            max_len = input_details[0]['shape'][1]  # misalnya 126 (2 tangan * 21 * 3)
-            keypoints = np.array(keypoints, dtype=np.float32)
-            if len(keypoints) < max_len:
-                # isi sisa dengan nol kalau cuma 1 tangan
-                keypoints = np.pad(keypoints, (0, max_len - len(keypoints)))
-            elif len(keypoints) > max_len:
-                # potong kalau lebih dari yang dibutuhkan
-                keypoints = keypoints[:max_len]
-
-            input_data = np.expand_dims(keypoints, axis=0)
-
-            # Inference ke model
-            interpreter.set_tensor(input_details[0]['index'], input_data)
-            interpreter.invoke()
-            output = interpreter.get_tensor(output_details[0]['index'])
-            pred = np.argmax(output)
-            confidence = np.max(output)
-
-            letter = labels[pred] if pred < len(labels) else "?"
-            cv2.putText(frame, f"{letter} ({confidence:.2f})",
-                        (10, 40), cv2.FONT_HERSHEY_SIMPLEX, 1.2, (0, 255, 0), 2)
+                mp_drawing.draw_landmarks(frame, hand_landmarks, mp_hands.HAND_CONNECTIONS)
+            hand_detected = True
         else:
-            cv2.putText(frame, "No Hand", (10, 40),
-                        cv2.FONT_HERSHEY_SIMPLEX, 1.2, (0, 0, 255), 2)
+            keypoints = np.zeros(126)
+            hand_detected = False
 
-        cv2.imshow("Sign Detection (TFLite + MediaPipe)", frame)
+        motion_detected = False
+        if prev_keypoints is not None and hand_detected:
+            diff = np.linalg.norm(np.array(keypoints) - np.array(prev_keypoints))
+            if diff > motion_threshold:
+                motion_detected = True
+        prev_keypoints = keypoints.copy()
+
+        if hand_detected:
+            input_letter = np.expand_dims(keypoints.astype(np.float32), axis=0)
+            interpreter_letter.set_tensor(input_details_letter[0]['index'], input_letter)
+            interpreter_letter.invoke()
+            output_letter = interpreter_letter.get_tensor(output_details_letter[0]['index'])
+            pred_letter = np.argmax(output_letter)
+            conf_letter = np.max(output_letter)
+            letter_text = f"Letter: {labels_letter[pred_letter]} ({conf_letter:.2f})"
+        else:
+            letter_text = "Letter: No Hand"
+
+        if state == "idle" and motion_detected:
+            state = "recording"
+            seq_buffer.clear()
+            print("[INFO] Gesture start detected.")
+
+        elif state == "recording":
+            seq_buffer.append(keypoints)
+            if not motion_detected and len(seq_buffer) > 10:
+                state = "end"
+                print("[INFO] Gesture end detected.")
+
+        elif state == "end":
+            gesture_seq = list(seq_buffer)
+            seq_len = len(gesture_seq)
+
+            if seq_len < 30:
+                padding = [gesture_seq[-1]] * (30 - seq_len) if seq_len > 0 else [np.zeros(126)] * 30
+                gesture_seq.extend(padding)
+            elif seq_len > 30:
+                gesture_seq = gesture_seq[-30:]
+
+            input_word = np.expand_dims(np.array(gesture_seq, dtype=np.float32), axis=0)
+            output_word = model_word.predict(input_word)
+            pred_word = np.argmax(output_word)
+            conf_word = np.max(output_word)
+            word_result = f"{labels_word[pred_word]} ({conf_word:.2f})"
+            print(f"[RESULT] Word: {word_result}")
+
+            state = "idle"
+            cooldown_counter = 30
+
+        # === Kurangi cooldown ===
+        if cooldown_counter > 0:
+            cooldown_counter -= 1
+
+        # === Tampilkan hasil di layar ===
+        cv2.putText(frame, letter_text, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,255,0), 2)
+        cv2.putText(frame, f"Word: {word_result}", (10, 70), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,255), 2)
+        cv2.putText(frame, f"State: {state}", (10, 110), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255,255,0), 2)
+
+        cv2.imshow("Sign Detection (Letter + Word)", frame)
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
 

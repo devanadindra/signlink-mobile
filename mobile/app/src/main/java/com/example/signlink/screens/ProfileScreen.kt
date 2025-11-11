@@ -23,7 +23,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-// Tambahkan import NavController jika belum ada
 import androidx.navigation.NavController
 
 import com.example.signlink.Destinations
@@ -32,15 +31,16 @@ import com.example.signlink.components.MainFloatingActionButton
 import com.example.signlink.components.NavItem
 import com.example.signlink.ui.theme.*
 import com.example.signlink.viewmodel.AuthViewModel
+import com.example.signlink.viewmodel.CustomerViewModel
 import kotlinx.coroutines.launch
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(
-    // FIX: Tambahkan NavController sebagai parameter wajib untuk navigasi
     navController: NavController,
     viewModel: AuthViewModel,
+    customerViewModel: CustomerViewModel,
     onHomeClicked: () -> Unit = {},
     onKamusClicked: () -> Unit = {},
     onVTTClicked: () -> Unit = {},
@@ -56,10 +56,25 @@ fun ProfileScreen(
     )
 
     val context = LocalContext.current
-
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
 
+    // 🟢 State untuk data user
+    var userName by remember { mutableStateOf("Memuat...") }
+    var userEmail by remember { mutableStateOf("") }
+
+    // 🟢 Ambil data personal saat screen dibuka
+    LaunchedEffect(Unit) {
+        customerViewModel.getPersonal(context) { personal ->
+            if (personal != null) {
+                userName = personal.name
+                userEmail = personal.email
+            } else {
+                userName = "Tidak diketahui"
+                userEmail = "-"
+            }
+        }
+    }
 
     Scaffold(
         bottomBar = {
@@ -75,7 +90,6 @@ fun ProfileScreen(
         floatingActionButtonPosition = FabPosition.Center,
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) {
-
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -84,9 +98,10 @@ fun ProfileScreen(
         ) {
             Spacer(modifier = Modifier.height(32.dp))
 
+            // 🟢 Ganti phone jadi email
             ProfileHeader(
-                name = "User",
-                phone = "+6285935294045",
+                name = userName,
+                phone = userEmail,
                 onEditProfileClicked = { /* TODO: Navigasi ke Edit Profil */ }
             )
 
@@ -141,11 +156,11 @@ fun ProfileScreen(
                 showTrailingIcon = false
             )
 
-
             Spacer(modifier = Modifier.height(32.dp))
         }
     }
 }
+
 
 /**
  * Komponen Header Profil (Foto, Nama, Nomor HP, Edit Profil)

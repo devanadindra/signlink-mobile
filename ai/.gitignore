@@ -5,5 +5,14 @@ bisindo-dataset.zip
 sign-language-bisindo.zip
 bisindo-final.zip
 indonesian-hand-sign-language-bisindo-dataset.zip
-sign_classifier_label.pkl
+data_tambahan
+dataset_bisindo
+BISINDO - Dataset
+bisindo
+Citra BISINDO
+bisindo_final
 hand_keypoints.csv
+bisindo-40-kata-mp4.zip
+raw_video
+dataset_word/*
+label_encoder_word.pkl

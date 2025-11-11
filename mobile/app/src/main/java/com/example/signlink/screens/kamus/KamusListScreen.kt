@@ -1,8 +1,10 @@
 package com.example.signlink.screens.kamus
 
 import android.net.Uri
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -10,11 +12,9 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -31,6 +31,7 @@ import com.example.signlink.viewmodel.KamusViewModel
 import com.example.signlink.ui.theme.*
 import com.example.signlink.components.DictionaryHeaderCard
 import com.example.signlink.data.models.kamus.KamusData
+import com.example.signlink.data.utils.AuthUtil.getRole
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -40,12 +41,40 @@ fun KamusListScreen(
     navController: NavController
 ) {
     val context = LocalContext.current
+
+    var userRole by remember { mutableStateOf<String?>(null) }
+    LaunchedEffect(Unit) {
+        userRole = getRole(context)
+    }
+    val currentRole = userRole ?: "CUSTOMER"
+
     val kamusList by viewModel.kamusList.collectAsState(initial = emptyList())
     val isLoading by viewModel.isLoading.collectAsState()
+    val successMessage by viewModel.successMessage.collectAsState()
+    val errorMessage by viewModel.errorMessage.collectAsState()
 
     LaunchedEffect(letter) {
         viewModel.getKamus(context, letter.toString())
     }
+
+    LaunchedEffect(successMessage) {
+        successMessage?.let { success ->
+            if (success.isNotBlank()) {
+                Toast.makeText(context, "Berhasil: $success", Toast.LENGTH_SHORT).show()
+                viewModel.clearSuccess()
+            }
+        }
+    }
+
+    LaunchedEffect(errorMessage) {
+        errorMessage?.let { error ->
+            if (error.isNotBlank()) {
+                Toast.makeText(context, "Gagal: $error", Toast.LENGTH_LONG).show()
+                viewModel.clearError()
+            }
+        }
+    }
+
 
     Scaffold(
         topBar = {
@@ -53,7 +82,7 @@ fun KamusListScreen(
                 title = { Text(text = "Kamus Huruf: $letter", fontWeight = FontWeight.Bold, color = DarkText) },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Kembali")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Kembali", tint = Color.Black)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
@@ -110,7 +139,11 @@ fun KamusListScreen(
                     items(kamusList) { item ->
                         KamusListItem(
                             item = item,
-                            navController = navController
+                            navController = navController,
+                            userRole = currentRole,
+                            onDeleteClicked = {
+                                viewModel.deleteKamus(context, item.id, item.kategori)
+                            }
                         )
                     }
                 }
@@ -120,31 +153,72 @@ fun KamusListScreen(
 }
 
 /**
- * Komponen Tombol Item Kamus dalam Grid
+ * Komponen Tombol Item Kamus dalam Grid yang mendukung mode ADMIN
  */
 @Composable
-fun KamusListItem(item: KamusData, navController: NavController) {
-    Button(
-        onClick = {
-            val artiEncoded = Uri.encode(item.arti.replace("_", " "))
-            val videoEncoded = Uri.encode(item.url)
-            navController.navigate("${Destinations.KAMUS_DETAIL_SCREEN}/$artiEncoded/$videoEncoded")
-        },
-        colors = ButtonDefaults.buttonColors(
-            containerColor = SignLinkTeal,
-            contentColor = Color.White
-        ),
+fun KamusListItem(
+    item: KamusData,
+    navController: NavController,
+    userRole: String,
+    onDeleteClicked: () -> Unit
+) {
+    val isUserAdmin = userRole == "ADMIN"
+    val itemHeight = if (isUserAdmin) 80.dp else 60.dp
+
+    Card(
         shape = RoundedCornerShape(12.dp),
-        elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = SignLinkTeal,
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
         modifier = Modifier
             .fillMaxWidth()
-            .height(60.dp)
+            .height(itemHeight)
     ) {
-        Text(
-            text = item.arti.replace("_", " "),
-            fontSize = 18.sp,
-            fontWeight = FontWeight.SemiBold
-        )
+        Row(
+            modifier = Modifier.fillMaxSize(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Box(
+                modifier = Modifier
+                    .weight(if (isUserAdmin) 0.65f else 1f)
+                    .fillMaxHeight()
+                    .background(SignLinkTeal)
+                    .clickable {
+                        val artiEncoded = Uri.encode(item.arti.replace("_", " "))
+                        val videoEncoded = Uri.encode(item.url)
+                        navController.navigate("${Destinations.KAMUS_DETAIL_SCREEN}/$artiEncoded/$videoEncoded")
+                    },
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = item.arti.replace("_", " "),
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color.White
+                )
+            }
+
+            if (isUserAdmin) {
+                Spacer(modifier = Modifier.width(4.dp))
+
+                Box(
+                    modifier = Modifier
+                        .weight(0.35f)
+                        .fillMaxHeight()
+                        .background(Color(0xFFE57373), shape = RoundedCornerShape(topEnd = 12.dp, bottomEnd = 12.dp))
+                        .clickable(onClick = onDeleteClicked),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        Icons.Default.Delete,
+                        contentDescription = "Hapus",
+                        tint = Color.White,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+            }
+        }
     }
 }
-

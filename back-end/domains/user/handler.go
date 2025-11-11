@@ -2,6 +2,7 @@ package user
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
@@ -22,7 +23,6 @@ type Handler interface {
 	ChangePassword(ctx *gin.Context)
 	GetPersonal(ctx *gin.Context)
 	UpdateProfile(ctx *gin.Context)
-	GetAdminActivity(ctx *gin.Context)
 	AddAvatar(ctx *gin.Context)
 	ResetPassword(ctx *gin.Context)
 	ResetPasswordSubmit(ctx *gin.Context)
@@ -41,16 +41,6 @@ func NewHandler(service Service, validate *validator.Validate) Handler {
 }
 func (h *handler) GetPersonal(ctx *gin.Context) {
 	res, err := h.service.GetPersonal(ctx)
-	if err != nil {
-		respond.Error(ctx, apierror.FromErr(err))
-		return
-	}
-
-	respond.Success(ctx, http.StatusOK, res)
-}
-
-func (h *handler) GetAdminActivity(ctx *gin.Context) {
-	res, err := h.service.GetAdminActivity(ctx)
 	if err != nil {
 		respond.Error(ctx, apierror.FromErr(err))
 		return
@@ -212,6 +202,11 @@ func (h *handler) Register(ctx *gin.Context) {
 
 	res, err := h.service.Register(ctx, input)
 	if err != nil {
+		if strings.Contains(err.Error(), "customer_email_key") {
+			respond.Error(ctx, apierror.DuplicateEmail(input.Email))
+			return
+		}
+
 		respond.Error(ctx, apierror.FromErr(err))
 		return
 	}

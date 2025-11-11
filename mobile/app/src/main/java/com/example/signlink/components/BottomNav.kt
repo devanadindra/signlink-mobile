@@ -51,7 +51,6 @@ fun BottomBarSignLink(
     onVTTClicked: () -> Unit,
     onProfileClicked: () -> Unit
 ) {
-    // Mengatur warna indikator menjadi transparan untuk menghilangkan background saat terpilih
     val navItemColors = NavigationBarItemDefaults.colors(
         indicatorColor = Color.Transparent,
         selectedIconColor = SignLinkTeal,
@@ -60,13 +59,11 @@ fun BottomBarSignLink(
 
     BottomAppBar(
         containerColor = Color.White,
-        modifier = Modifier.height(72.dp)
+        modifier = Modifier.height(72.dp).navigationBarsPadding()
     ) {
-        // Filter item yang bukan 'Penerjemah' karena itu diwakili oleh FAB
         val navItemsFiltered = items.filter { it.icon != Icons.Default.Camera }
 
         navItemsFiltered.forEachIndexed { index, item ->
-            // Menempatkan spacer di tengah (setelah item kedua) untuk menyeimbangkan FAB
             if (index == 2) {
                 Spacer(Modifier.weight(1f))
             }

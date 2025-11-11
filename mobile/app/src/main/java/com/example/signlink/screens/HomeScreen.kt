@@ -12,6 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
@@ -41,39 +42,51 @@ fun HomeScreen(
         NavItem("VTT", Icons.Default.Mic, false, "vtt"),
         NavItem("Profil", Icons.Default.Person, false, "profil")
     )
-
-    Scaffold(
-        bottomBar = {
-            BottomBarSignLink(
-                items = navItems,
-                onHomeClicked = onHomeClicked,
-                onKamusClicked = onKamusClicked,
-                onVTTClicked = onVTTClicked,
-                onProfileClicked = onProfileClicked
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                brush = Brush.verticalGradient(
+                    colors = listOf(
+                        SignLinkTeal,
+                        Color.White
+                    )
+                )
             )
-        },
-        floatingActionButton = { MainFloatingActionButton(onCameraClicked) },
-        floatingActionButtonPosition = FabPosition.Center,
-        containerColor = SignLinkTeal
-    ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .background(Color.White)
-        ) {
-
-            HeaderWithTranslatorSection(onCameraClicked)
-
+    ) {
+        Scaffold(
+            bottomBar = {
+                BottomBarSignLink(
+                    items = navItems,
+                    onHomeClicked = onHomeClicked,
+                    onKamusClicked = onKamusClicked,
+                    onVTTClicked = onVTTClicked,
+                    onProfileClicked = onProfileClicked
+                )
+            },
+            floatingActionButton = { MainFloatingActionButton(onCameraClicked) },
+            floatingActionButtonPosition = FabPosition.Center,
+            containerColor = Color.Transparent
+        ) { paddingValues ->
             Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .background(Color.White)
             ) {
-                Spacer(modifier = Modifier.height(32.dp))
-                QuickAccessSection(onKamusClicked, onVTTClicked, onKuisClicked)
-                Spacer(modifier = Modifier.height(16.dp))
+
+                HeaderWithTranslatorSection(onCameraClicked)
+
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Spacer(modifier = Modifier.height(32.dp))
+                    QuickAccessSection(onKamusClicked, onVTTClicked, onKuisClicked)
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
             }
         }
     }
