@@ -3,11 +3,38 @@ package com.example.signlink.screens
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
+import androidx.compose.material.icons.filled.Book
+import androidx.compose.material.icons.filled.Camera
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.PhotoCamera
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FabPosition
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -20,10 +47,17 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.signlink.R
-import com.example.signlink.ui.theme.*
-import com.example.signlink.components.NavItem
 import com.example.signlink.components.BottomBarSignLink
 import com.example.signlink.components.MainFloatingActionButton
+import com.example.signlink.components.NavItem
+import com.example.signlink.ui.theme.CardBackground
+import com.example.signlink.ui.theme.DarkText
+import com.example.signlink.ui.theme.LightTealBackground
+import com.example.signlink.ui.theme.SignLinkTeal
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.signlink.viewmodel.HomeViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -33,69 +67,77 @@ fun HomeScreen(
     onKuisClicked: () -> Unit = {},
     onCameraClicked: () -> Unit = {},
     onHomeClicked: () -> Unit = {},
-    onProfileClicked: () -> Unit = {}
+    onLatihanClicked: () -> Unit = {},
+    onProfileClicked: () -> Unit = {},
+    viewModel: HomeViewModel = viewModel()
 ) {
-    val navItems = listOf(
-        NavItem("Beranda", Icons.Default.Home, true, "home"),
-        NavItem("Kamus", Icons.Default.Book, false, "kamus"),
-        NavItem("Penerjemah", Icons.Default.Camera, false, "penerjemah"),
-        NavItem("VTT", Icons.Default.Mic, false, "vtt"),
-        NavItem("Profil", Icons.Default.Person, false, "profil")
-    )
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(
-                brush = Brush.verticalGradient(
-                    colors = listOf(
-                        SignLinkTeal,
-                        Color.White
+
+    val isLoading = viewModel.isLoading
+
+    if (isLoading) {
+        HomeScreenSkeleton()
+    } else {
+        val navItems = listOf(
+            NavItem("Beranda", Icons.Default.Home, true, "home"),
+            NavItem("Kamus", Icons.Default.Book, false, "kamus"),
+            NavItem("Penerjemah", Icons.Default.Camera, false, "penerjemah"),
+            NavItem("VTT", Icons.Default.Mic, false, "vtt"),
+            NavItem("Profil", Icons.Default.Person, false, "profil")
+        )
+
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    brush = Brush.verticalGradient(
+                        colors = listOf(
+                            SignLinkTeal,
+                            Color.White
+                        )
                     )
                 )
-            )
-    ) {
-        Scaffold(
-            bottomBar = {
-                BottomBarSignLink(
-                    items = navItems,
-                    onHomeClicked = onHomeClicked,
-                    onKamusClicked = onKamusClicked,
-                    onVTTClicked = onVTTClicked,
-                    onProfileClicked = onProfileClicked
-                )
-            },
-            floatingActionButton = { MainFloatingActionButton(onCameraClicked) },
-            floatingActionButtonPosition = FabPosition.Center,
-            containerColor = Color.Transparent
-        ) { paddingValues ->
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-                    .background(Color.White)
-            ) {
-
-                HeaderWithTranslatorSection(onCameraClicked)
-
+        ) {
+            Scaffold(
+                bottomBar = {
+                    BottomBarSignLink(
+                        items = navItems,
+                        onHomeClicked = onHomeClicked,
+                        onKamusClicked = onKamusClicked,
+                        onVTTClicked = onVTTClicked,
+                        onProfileClicked = onProfileClicked
+                    )
+                },
+                floatingActionButton = { MainFloatingActionButton(onCameraClicked) },
+                floatingActionButtonPosition = FabPosition.Center,
+                containerColor = Color.Transparent
+            ) { paddingValues ->
                 Column(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 24.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                        .fillMaxSize()
+                        .padding(paddingValues)
+                        .background(Color.White)
                 ) {
-                    Spacer(modifier = Modifier.height(32.dp))
-                    QuickAccessSection(onKamusClicked, onVTTClicked, onKuisClicked)
-                    Spacer(modifier = Modifier.height(16.dp))
+
+                    HeaderWithTranslatorSection(onCameraClicked)
+
+                    val scrollState = rememberScrollState()
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .verticalScroll(scrollState)
+                            .padding(horizontal = 24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Spacer(modifier = Modifier.height(32.dp))
+                        QuickAccessSection(onKamusClicked, onVTTClicked, onKuisClicked, onLatihanClicked)
+                        Spacer(modifier = Modifier.height(16.dp))
+                    }
                 }
             }
         }
     }
 }
 
-/**
- * Komponen Gabungan: Header Aplikasi (TopBar) dan Kartu Tombol Penerjemah Utama (MainTranslatorButton).
- * Menggunakan Box untuk menumpuk elemen.
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HeaderWithTranslatorSection(onCameraClicked: () -> Unit) {
@@ -143,7 +185,7 @@ fun HeaderWithTranslatorSection(onCameraClicked: () -> Unit) {
 }
 
 /**
- * Komponen Tombol Penerjemah Utama (Hero Section) yang sekarang menerima Modifier.
+ * Komponen Tombol Penerjemah Utama yang sekarang menerima Modifier.
  */
 @Composable
 fun MainTranslatorButton(modifier: Modifier = Modifier, onClick: () -> Unit) {
@@ -179,14 +221,12 @@ fun MainTranslatorButton(modifier: Modifier = Modifier, onClick: () -> Unit) {
     }
 }
 
-/**
- * Komponen Bagian Akses Cepat (Quick Access)
- */
 @Composable
 fun QuickAccessSection(
     onKamusClicked: () -> Unit,
     onVTTClicked: () -> Unit,
-    onKuisClicked: () -> Unit
+    onKuisClicked: () -> Unit,
+    onLatihanClicked: () -> Unit
 ) {
     Column(
         modifier = Modifier.fillMaxWidth()
@@ -218,6 +258,18 @@ fun QuickAccessSection(
             modifier = Modifier.fillMaxWidth().height(120.dp),
             onClick = onKuisClicked
         )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        QuickAccessCard(
+            title = "Latihan Bahasa Isyarat",
+            subtitle = "Latih kemampuan bahasa isyarat Anda melalui praktik interaktif",
+            icon = R.drawable.orang2,
+            modifier = Modifier.fillMaxWidth().height(120.dp),
+            onClick = onLatihanClicked
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
     }
 }
 

@@ -1,7 +1,5 @@
 package com.example.signlink.screens
 
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -19,19 +17,11 @@ import kotlinx.coroutines.delay
 
 @Composable
 fun SplashScreen(onTimeout: () -> Unit) {
-    var startAnimation by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
-        startAnimation = true
         delay(3000L)
         onTimeout()
     }
-
-    val revealProgress by animateFloatAsState(
-        targetValue = if (startAnimation) 1f else 0.3f,
-        animationSpec = tween(durationMillis = 1500),
-        label = "revealProgress"
-    )
 
     Box(
         modifier = Modifier
@@ -49,10 +39,9 @@ fun SplashScreen(onTimeout: () -> Unit) {
                 }
         ) {
             Image(
-                painter = painterResource(id = R.drawable.putih_logo),
+                painter = painterResource(id = R.drawable.signlink_logo),
                 contentDescription = "Logo",
                 modifier = Modifier
-                    .fillMaxWidth(revealProgress)
                     .align(Alignment.Center)
             )
         }
