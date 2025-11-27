@@ -79,7 +79,7 @@ fun KuisScreen(
                         .fillMaxWidth(0.9f)
                         .padding(horizontal = 8.dp),
                     title = "Kuis Singkat SignLink",
-                    description = "Uji kemampuan Anda dalam Bahasa Isyarat SIBI"
+                    description = "Uji kemampuan Anda dalam Bahasa Isyarat BISINDO"
                 )
                 Spacer(modifier = Modifier.height(24.dp))
             }

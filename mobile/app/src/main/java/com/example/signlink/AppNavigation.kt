@@ -27,6 +27,9 @@ import com.example.signlink.screens.auth.SignUpScreen
 import com.example.signlink.screens.kuis.KuisScreen
 import com.example.signlink.screens.kuis.KuisDetailScreen
 import com.example.signlink.screens.kuis.KuisResultScreen
+import com.example.signlink.screens.latihan.LatihanScreen
+import com.example.signlink.screens.latihan.LatihanDetailScreen
+import com.example.signlink.screens.latihan.LatihanResultScreen
 import com.example.signlink.viewmodel.AuthViewModel
 import com.example.signlink.viewmodel.CustomerViewModel
 import com.google.accompanist.navigation.animation.composable
@@ -47,6 +50,9 @@ object Destinations {
     const val KUIS_RESULT_SCREEN = "kuis_result_screen"
     const val KAMUS_DETAIL_SCREEN = "kamus_detail_screen"
     const val PROFILE_SCREEN = "profile_screen"
+    const val LATIHAN_SCREEN = "latihan_screen"
+    const val LATIHAN_DETAIL_SCREEN = "latihan_detail_screen/{charactersJson}"
+    const val LATIHAN_RESULT_SCREEN = "latihan_result_screen"
     const val SIGN_CLASSIFIER_SCREEN = "sign_classifier_screen"
     const val FORGOT_PASSWORD_SCREEN = "forgot_password_screen"
 }
@@ -151,8 +157,9 @@ fun AppNavHost() {
                 onCameraClicked = { navController.navigate(Destinations.SIGN_CLASSIFIER_SCREEN)},
                 onKuisClicked = { navController.navigate(Destinations.KUIS_SCREEN)},
                 onKamusClicked = { navController.navigate(Destinations.KAMUS_SCREEN) },
+                onLatihanClicked = { navController.navigate(Destinations.LATIHAN_SCREEN) },
                 onVTTClicked = { navController.navigate(Destinations.VTT_SCREEN) },
-                onHomeClicked = { navController.navigate(Destinations.HOME_SCREEN) },
+                onHomeClicked = { navController.popBackStack() },
                 onProfileClicked = { navController.navigate(Destinations.PROFILE_SCREEN) }
             )
         }
@@ -195,8 +202,8 @@ fun AppNavHost() {
             VoiceToTextScreen(
                 onCameraClicked = { navController.navigate(Destinations.SIGN_CLASSIFIER_SCREEN)},
                 onKamusClicked = { navController.navigate(Destinations.KAMUS_SCREEN) },
-                onVTTClicked = { navController.navigate(Destinations.VTT_SCREEN) },
-                onHomeClicked = { navController.navigate(Destinations.HOME_SCREEN) },
+                onVTTClicked = { navController.popBackStack() },
+                onHomeClicked = { navController.popBackStack(Destinations.HOME_SCREEN, inclusive = false) },
                 onProfileClicked = { navController.navigate(Destinations.PROFILE_SCREEN) }
             )
         }
@@ -206,9 +213,9 @@ fun AppNavHost() {
             KamusScreen(
                 navController = navController,
                 onCameraClicked = { navController.navigate(Destinations.SIGN_CLASSIFIER_SCREEN)},
-                onKamusClicked = { navController.navigate(Destinations.KAMUS_SCREEN) },
+                onKamusClicked = { navController.popBackStack() },
                 onVTTClicked = { navController.navigate(Destinations.VTT_SCREEN) },
-                onHomeClicked = { navController.navigate(Destinations.HOME_SCREEN) },
+                onHomeClicked = { navController.popBackStack(Destinations.HOME_SCREEN, inclusive = false) },
                 onProfileClicked = { navController.navigate(Destinations.PROFILE_SCREEN) },
                 onAddKamusClicked = { navController.navigate(Destinations.ADD_KAMUS_SCREEN) }
             )
@@ -225,7 +232,7 @@ fun AppNavHost() {
                 onCameraClicked = { navController.navigate(Destinations.SIGN_CLASSIFIER_SCREEN) },
                 onKamusClicked = { navController.navigate(Destinations.KAMUS_SCREEN) },
                 onVTTClicked = { navController.navigate(Destinations.VTT_SCREEN) },
-                onHomeClicked = { navController.navigate(Destinations.HOME_SCREEN) },
+                onHomeClicked = { navController.popBackStack(Destinations.HOME_SCREEN, inclusive = false) },
                 onProfileClicked = { navController.navigate(Destinations.PROFILE_SCREEN) }
             )
         }
@@ -301,5 +308,39 @@ fun AppNavHost() {
                 }
             )
         }
+
+        // Latihan
+        composable(Destinations.LATIHAN_SCREEN) {
+            LatihanScreen(
+                navController = navController,
+            )
+        }
+
+        composable(
+            route = "${Destinations.LATIHAN_DETAIL_SCREEN}/{charactersJson}",
+            arguments = listOf(
+                navArgument("charactersJson") {
+                    type = NavType.StringType
+                }
+            )
+        ) { backStackEntry ->
+            val charactersJson = backStackEntry.arguments?.getString("charactersJson") ?: ""
+            LatihanDetailScreen(navController, charactersJson)
+        }
+
+        composable(
+            route = "${Destinations.LATIHAN_RESULT_SCREEN}/{resultJson}",
+            arguments = listOf(
+                navArgument("resultJson") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val resultJson = backStackEntry.arguments?.getString("resultJson") ?: ""
+
+            LatihanResultScreen(
+                navController = navController,
+                resultJson = resultJson
+            )
+        }
+
     }
 }
