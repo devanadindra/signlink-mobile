@@ -27,3 +27,7 @@ data class ResetPasswordRes(
 data class ResetPasswordSubmitRes(
     val message: String,
 )
+
+data class ChangePasswordRes(
+    val message: String,
+)

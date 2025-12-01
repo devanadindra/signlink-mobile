@@ -19,6 +19,7 @@ import com.example.signlink.screens.VoiceToTextScreen
 import com.example.signlink.screens.SplashScreen
 import com.example.signlink.screens.OpeningScreen
 import com.example.signlink.screens.SignClassifierScreen
+import com.example.signlink.screens.auth.ChangePasswordScreen
 import com.example.signlink.screens.auth.ForgotPasswordScreen
 import com.example.signlink.screens.onboarding.OnboardingScreen
 import com.example.signlink.screens.auth.LoginScreen
@@ -55,16 +56,18 @@ object Destinations {
     const val LATIHAN_RESULT_SCREEN = "latihan_result_screen"
     const val SIGN_CLASSIFIER_SCREEN = "sign_classifier_screen"
     const val FORGOT_PASSWORD_SCREEN = "forgot_password_screen"
+    const val CHANGE_PASSWORD_SCREEN = "change_password_screen"
 }
 
 @OptIn(ExperimentalAnimationApi::class)
 @Suppress("DEPRECATION")
 @Composable
 fun AppNavHost() {
+    val authViewModel: AuthViewModel = hiltViewModel()
+    val customerViewModel: CustomerViewModel = hiltViewModel()
     val navController = rememberNavController()
     val context = LocalContext.current
     var startDestination by remember { mutableStateOf(Destinations.SPLASH_SCREEN) }
-    val viewModel: AuthViewModel = hiltViewModel()
 
     val systemUiController = rememberSystemUiController()
     val statusBarColor = Color.White
@@ -77,7 +80,7 @@ fun AppNavHost() {
     }
 
     LaunchedEffect(Unit) {
-        viewModel.checkJwt(context) { isValid ->
+        authViewModel.checkJwt(context) { isValid ->
             startDestination = if (isValid) Destinations.HOME_SCREEN else Destinations.ONBOARDING
         }
     }
@@ -125,9 +128,8 @@ fun AppNavHost() {
 
         // Login Screen
         composable(Destinations.LOGIN_SCREEN) {
-            val viewModel: AuthViewModel = hiltViewModel()
             LoginScreen(
-                viewModel = viewModel,
+                viewModel = authViewModel,
                 onLoginSuccess = {
                     navController.popBackStack(Destinations.OPENING_SCREEN, inclusive = true)
                     navController.navigate(Destinations.HOME_SCREEN)
@@ -139,9 +141,8 @@ fun AppNavHost() {
 
         // SignUp Screen
         composable(Destinations.SIGNUP_SCREEN) {
-            val viewModel: AuthViewModel = hiltViewModel()
             SignUpScreen(
-                viewModel = viewModel,
+                viewModel = authViewModel,
                 onSignUpSuccess = {
                     navController.popBackStack(Destinations.OPENING_SCREEN, inclusive = true)
                     navController.navigate(Destinations.HOME_SCREEN)
@@ -223,8 +224,6 @@ fun AppNavHost() {
 
         // Profile Screen
         composable(Destinations.PROFILE_SCREEN) {
-            val authViewModel: AuthViewModel = hiltViewModel()
-            val customerViewModel: CustomerViewModel = hiltViewModel()
             ProfileScreen(
                 navController = navController,
                 viewModel = authViewModel,
@@ -277,9 +276,8 @@ fun AppNavHost() {
 
         // Forgot Password Req
         composable(Destinations.FORGOT_PASSWORD_SCREEN) {
-            val viewModel: AuthViewModel = hiltViewModel()
             ForgotPasswordScreen(
-                viewModel = viewModel,
+                viewModel = authViewModel,
                 onBackToLogin = { navController.popBackStack() },
                 onResetEmailSent = { email, role ->
                     navController.navigate("reset_password_submit/$email/$role")
@@ -295,12 +293,11 @@ fun AppNavHost() {
                 navArgument("role") { type = NavType.StringType }
             )
         ) { backStackEntry ->
-            val viewModel: AuthViewModel = hiltViewModel()
             val email = backStackEntry.arguments?.getString("email") ?: ""
             val role = backStackEntry.arguments?.getString("role") ?: "CUSTOMER"
 
             ResetPasswordSubmitScreen(
-                viewModel = viewModel,
+                viewModel = authViewModel,
                 email = email,
                 role = role,
                 onPasswordResetSuccess = {
@@ -339,6 +336,14 @@ fun AppNavHost() {
             LatihanResultScreen(
                 navController = navController,
                 resultJson = resultJson
+            )
+        }
+
+        composable(Destinations.CHANGE_PASSWORD_SCREEN) {
+            ChangePasswordScreen(
+                viewModel = authViewModel,
+                navController = navController,
+                onChangePasswordSuccess = { navController.navigate(Destinations.PROFILE_SCREEN) }
             )
         }
 
