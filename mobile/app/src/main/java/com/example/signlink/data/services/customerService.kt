@@ -48,4 +48,10 @@ interface CustomerService {
     suspend fun getPersonal(
         @Header("Authorization") authHeader: String,
     ): Response<ApiResponse<PersonalRes>>
+
+    @PATCH("user/password")
+    suspend fun changePassword(
+        @Header("Authorization") authHeader: String,
+        @Body req: ChangePaswordReq
+    ): Response<ApiResponse<ChangePasswordRes>>
 }

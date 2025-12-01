@@ -108,7 +108,7 @@ fun ProfileScreen(
             ProfileSection(title = "Keamanan") {
                 ProfileOptionItem(
                     text = "Ubah Password",
-                    onClick = { /* TODO: Navigasi Ubah Password */ }
+                    onClick = { navController.navigate(Destinations.CHANGE_PASSWORD_SCREEN) }
                 )
                 ProfileOptionItem(
                     text = "Ubah Nomor Handphone",

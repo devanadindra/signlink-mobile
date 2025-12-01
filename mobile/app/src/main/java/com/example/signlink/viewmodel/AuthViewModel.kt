@@ -30,6 +30,9 @@ class AuthViewModel @Inject constructor(
     private val _resetPasswordSubmitResult = MutableStateFlow<String?>(null)
     val resetPasswordSubmitResult: StateFlow<String?> = _resetPasswordSubmitResult
 
+    private val _changePasswordResult = MutableStateFlow<String?>(null)
+    val changePasswordSubmitResult: StateFlow<String?> = _changePasswordResult
+
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading
 
@@ -40,6 +43,12 @@ class AuthViewModel @Inject constructor(
     fun clearLoginResult() {
         _loginResult.value = null
     }
+
+    fun clearChangePasswordResult() {
+        _changePasswordResult.value = null
+        _isLoading.value = false
+    }
+
 
     fun login(context: Context, role: String, email: String, password: String) {
         viewModelScope.launch {
@@ -158,6 +167,28 @@ class AuthViewModel @Inject constructor(
         }
     }
 
+    fun changePassword(context: Context, currentPassword: String, newPassword: String) {
+        viewModelScope.launch {
+            val token = AuthUtil.jwtAuth(context)
+            if (token != null) {
+                try {
+                    val response = repository.changePassword(token, currentPassword, newPassword)
 
+                    if (response != null && response.data?.message != null) {
+                        _changePasswordResult.value = response.data.message
+                    } else {
+                        if (response?.errors != null) {
+                            _changePasswordResult.value = response.errors.first()
+                        } else {
+                            _changePasswordResult.value = "Failed to reset password. Please try again."
+                        }
+                    }
+
+                } catch (e: Exception) {
+                    _changePasswordResult.value = "Error: ${e.localizedMessage ?: "Unknown error"}"
+                }
+            }
+        }
+    }
 
 }
