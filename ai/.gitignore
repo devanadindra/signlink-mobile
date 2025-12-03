@@ -16,3 +16,12 @@ bisindo-40-kata-mp4.zip
 raw_video
 dataset_word/*
 label_encoder_word.pkl
+dataset_pose/*
+dataset_final.csv
+sign_word_to_animation.ipynb
+dataset_bvh/*
+assets
+output_json/*
+output_gif/*
+output_gif1/*
+output_rotations/*
