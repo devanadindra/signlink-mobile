@@ -67,6 +67,7 @@ func NewDependency(
 	kamus := api.Group("/kamus")
 	{
 		kamus.GET("/", mw.JWT(constants.ADMIN, constants.CUSTOMER), kamusHandler.GetKamus)
+		kamus.GET("/all", mw.JWT(constants.ADMIN, constants.CUSTOMER), kamusHandler.GetAllKamus)
 		kamus.POST("/", mw.JWT(constants.ADMIN), kamusHandler.AddKamus)
 		kamus.DELETE("/:id", mw.JWT(constants.ADMIN), kamusHandler.DeleteKamus)
 	}

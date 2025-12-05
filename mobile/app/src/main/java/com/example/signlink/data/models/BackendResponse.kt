@@ -4,3 +4,10 @@ data class ApiResponse<T>(
     val data: T?,
     val errors: List<String>?
 )
+
+data class PaginatedData<T>(
+    val data: List<T>?,
+    val total: Int,
+    val page: Int,
+    val limit: Int,
+)

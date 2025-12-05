@@ -9,6 +9,7 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.example.signlink.data.models.kamus.KamusData
 import com.example.signlink.screens.HomeScreen
 import com.example.signlink.screens.kamus.KamusScreen
 import com.example.signlink.screens.kamus.KamusListScreen
@@ -31,6 +32,8 @@ import com.example.signlink.screens.kuis.KuisResultScreen
 import com.example.signlink.screens.latihan.LatihanScreen
 import com.example.signlink.screens.latihan.LatihanDetailScreen
 import com.example.signlink.screens.latihan.LatihanResultScreen
+import com.example.signlink.screens.tti.TTIResultScreen
+import com.example.signlink.screens.tti.TextToIsyaratScreen
 import com.example.signlink.viewmodel.AuthViewModel
 import com.example.signlink.viewmodel.CustomerViewModel
 import com.google.accompanist.navigation.animation.composable
@@ -50,6 +53,7 @@ object Destinations {
     const val KUIS_DETAIL_SCREEN = "kuis_detail_screen"
     const val KUIS_RESULT_SCREEN = "kuis_result_screen"
     const val KAMUS_DETAIL_SCREEN = "kamus_detail_screen"
+    const val TTI_SCREEN = "tti_screen"
     const val PROFILE_SCREEN = "profile_screen"
     const val LATIHAN_SCREEN = "latihan_screen"
     const val LATIHAN_DETAIL_SCREEN = "latihan_detail_screen/{charactersJson}"
@@ -160,8 +164,10 @@ fun AppNavHost() {
                 onKamusClicked = { navController.navigate(Destinations.KAMUS_SCREEN) },
                 onLatihanClicked = { navController.navigate(Destinations.LATIHAN_SCREEN) },
                 onVTTClicked = { navController.navigate(Destinations.VTT_SCREEN) },
+                onTTIClicked = { navController.navigate(Destinations.TTI_SCREEN)} ,
                 onHomeClicked = { navController.popBackStack() },
-                onProfileClicked = { navController.navigate(Destinations.PROFILE_SCREEN) }
+                onProfileClicked = { navController.navigate(Destinations.PROFILE_SCREEN) },
+                customerViewModel = customerViewModel
             )
         }
 
@@ -347,5 +353,22 @@ fun AppNavHost() {
             )
         }
 
+        // Texts to Isyarat
+        composable(Destinations.TTI_SCREEN) {
+            TextToIsyaratScreen(
+                navController = navController,
+            )
+        }
+
+        composable("tti_result_screen") { backStackEntry ->
+            val kamusData = navController.previousBackStackEntry
+                ?.savedStateHandle
+                ?.get<List<KamusData>>("kamus_items") ?: emptyList()
+
+            TTIResultScreen(
+                navController = navController,
+                data = kamusData
+            )
+        }
     }
 }

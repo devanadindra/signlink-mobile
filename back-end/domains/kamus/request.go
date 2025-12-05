@@ -11,3 +11,9 @@ type KamusReq struct {
 type DeleteKamusReq struct {
 	ID string `json:"id" binding:"required"`
 }
+
+type GetAllKamusReq struct {
+	Keyword string
+	Page    int
+	Limit   int
+}

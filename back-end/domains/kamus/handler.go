@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	apierror "github.com/devanadindraa/NTTH-Store/back-end/utils/api-error"
+	"github.com/devanadindraa/NTTH-Store/back-end/utils/common"
 	"github.com/devanadindraa/NTTH-Store/back-end/utils/respond"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
@@ -14,6 +15,7 @@ type Handler interface {
 	GetKamus(ctx *gin.Context)
 	AddKamus(ctx *gin.Context)
 	DeleteKamus(ctx *gin.Context)
+	GetAllKamus(ctx *gin.Context)
 }
 
 type handler struct {
@@ -74,4 +76,29 @@ func (h *handler) DeleteKamus(ctx *gin.Context) {
 	}
 
 	respond.Success(ctx, http.StatusCreated, gin.H{"message": "kamus and video deleted successfully"})
+}
+
+func (h *handler) GetAllKamus(ctx *gin.Context) {
+	filter, err := common.GetMetaData(ctx, h.validate, "created_at", "arti", "kategori")
+	if err != nil {
+		respond.Error(ctx, apierror.FromErr(err))
+		return
+	}
+
+	input := GetAllKamusReq{
+		Keyword: ctx.Query("keyword"),
+	}
+
+	kamusList, total, err := h.service.GetAllKamus(ctx, input, *filter)
+	if err != nil {
+		respond.Error(ctx, apierror.FromErr(err))
+		return
+	}
+
+	respond.Success(ctx, http.StatusOK, gin.H{
+		"data":  kamusList,
+		"total": total,
+		"page":  filter.Page,
+		"limit": filter.Limit,
+	})
 }
