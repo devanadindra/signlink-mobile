@@ -1,6 +1,7 @@
 package com.example.signlink.data.services
 
 import com.example.signlink.data.models.ApiResponse
+import com.example.signlink.data.models.PaginatedData
 import com.example.signlink.data.models.kamus.AddKamusRes
 import com.example.signlink.data.models.kamus.DeleteKamusRes
 import com.example.signlink.data.models.kamus.KamusData
@@ -16,6 +17,14 @@ interface KamusService {
         @Header("Authorization") authHeader: String,
         @Query("kategori") kategori: String
     ): Response<ApiResponse<List<KamusData>>>
+
+    @GET("kamus/all")
+    suspend fun getAllKamus(
+        @Header("Authorization") authHeader: String,
+        @Query("keyword") keyword: String = "",
+        @Query("page") page: Int = 1,
+        @Query("limit") limit: Int = 20
+    ): Response<ApiResponse<PaginatedData<KamusData>>>
 
     @Multipart
     @POST("kamus/")

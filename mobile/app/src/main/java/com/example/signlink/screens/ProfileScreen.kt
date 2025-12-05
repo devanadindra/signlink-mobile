@@ -59,11 +59,9 @@ fun ProfileScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
 
-    // 🟢 State untuk data user
     var userName by remember { mutableStateOf("Memuat...") }
     var userEmail by remember { mutableStateOf("") }
 
-    // 🟢 Ambil data personal saat screen dibuka
     LaunchedEffect(Unit) {
         customerViewModel.getPersonal(context) { personal ->
             if (personal != null) {

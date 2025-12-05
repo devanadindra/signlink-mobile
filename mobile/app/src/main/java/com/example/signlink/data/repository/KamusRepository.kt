@@ -20,6 +20,25 @@ class KamusRepository @Inject constructor(private val service: KamusService) {
         return if (response.isSuccessful) response.body()?.data else null
     }
 
+    suspend fun getAllKamus(
+        token: String,
+        keyword: String = "",
+        page: Int,
+        limit: Int
+    ): List<KamusData>? {
+
+        val response = service.getAllKamus(
+            authHeader = token,
+            keyword = keyword,
+            page = page,
+            limit = limit
+        )
+
+        return if (response.isSuccessful)
+            response.body()?.data?.data
+        else null
+    }
+
     suspend fun addKamus(token: String, req: KamusReq): Response<ApiResponse<AddKamusRes>> {
         val artiBody = req.arti.toRequestBody("text/plain".toMediaTypeOrNull())
         val kategoriBody = req.kategori.toRequestBody("text/plain".toMediaTypeOrNull())

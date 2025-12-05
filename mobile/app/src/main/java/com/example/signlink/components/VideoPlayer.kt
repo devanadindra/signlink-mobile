@@ -24,7 +24,8 @@ import androidx.media3.ui.PlayerView
 @Composable
 fun VideoPlayer(
     videoUrl: String,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onPlayerReady: (ExoPlayer) -> Unit = {}
 ) {
     val context = LocalContext.current
     val baseUrl = remember {
@@ -46,6 +47,7 @@ fun VideoPlayer(
         }
     }
 
+    onPlayerReady(exoPlayer)
 
     var isPlaying by remember { mutableStateOf(false) }
 

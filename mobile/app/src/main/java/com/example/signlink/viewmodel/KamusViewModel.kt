@@ -119,5 +119,26 @@ class KamusViewModel @Inject constructor(
         }
     }
 
+    fun getAllKamus(context: Context, keyword: String, page: Int, limit: Int) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            val token = AuthUtil.jwtAuth(context)
+            try {
+                val result = repository.getAllKamus(token.toString(), keyword, page, limit)
+
+                if (result != null) {
+                    _kamusList.value = result
+                    _successMessage.value = "Data berhasil dimuat"
+                } else {
+                    _errorMessage.value = "Data gagal dimuat"
+                }
+            } catch (e: Exception) {
+                _errorMessage.value = "Terjadi kesalahan: ${e.message}"
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+
 }
 

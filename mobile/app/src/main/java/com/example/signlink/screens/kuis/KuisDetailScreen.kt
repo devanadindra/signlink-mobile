@@ -49,6 +49,8 @@ fun KuisDetailScreen(
         }
     }
 
+    var showVideo by remember { mutableStateOf(true) }
+
     val timeLimitMinutes = remember(quizId) {
         QuizRepository.getTimeLimit(quizId) ?: 10
     }
@@ -89,7 +91,9 @@ fun KuisDetailScreen(
             TopAppBar(
                 title = { Text(quizTitle, fontWeight = FontWeight.SemiBold, color = Color.Black) },
                 navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
+                    IconButton(onClick = {
+                        showVideo = false
+                        navController.popBackStack() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Kembali", tint = Color.Black)
                     }
                 },
@@ -132,71 +136,72 @@ fun KuisDetailScreen(
                     modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp)
                 )
 
-                Column(
-                    modifier = Modifier
-                        .weight(1f)
-                        .padding(horizontal = 24.dp)
-                ) {
-                    VideoPlayer(
-                        videoUrl = question.videoUrl,
-                        modifier = Modifier.fillMaxWidth().width(300.dp).clip(RoundedCornerShape(8.dp))
-                    )
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    Text(text = question.questionText, fontSize = 18.sp, color = DarkText, modifier = Modifier.padding(bottom = 16.dp))
-
-                    question.options.forEach { option ->
-                        QuizOption(
-                            option = option,
-                            isSelected = userAnswers[question.id] == option.answerText,
-                            onSelect = { selectedAnswer ->
-                                userAnswers[question.id] = selectedAnswer
-                                QuizResultHolder.userAnswers = userAnswers.toMap()
-                                QuizResultHolder.quizId = quizId
-                            }
+                if (showVideo) {
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(horizontal = 24.dp)
+                    ) {
+                        VideoPlayer(
+                            videoUrl = question.videoUrl,
+                            modifier = Modifier.fillMaxWidth().width(300.dp).clip(RoundedCornerShape(8.dp))
                         )
-                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        Text(text = question.questionText, fontSize = 18.sp, color = DarkText, modifier = Modifier.padding(bottom = 16.dp))
+
+                        question.options.forEach { option ->
+                            QuizOption(
+                                option = option,
+                                isSelected = userAnswers[question.id] == option.answerText,
+                                onSelect = { selectedAnswer ->
+                                    userAnswers[question.id] = selectedAnswer
+                                    QuizResultHolder.userAnswers = userAnswers.toMap()
+                                    QuizResultHolder.quizId = quizId
+                                }
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                        }
                     }
-                }
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(24.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        IconButton(
+                            onClick = { if (currentQuestionIndex > 0) currentQuestionIndex-- },
+                            enabled = currentQuestionIndex > 0,
+                            colors = IconButtonDefaults.iconButtonColors(containerColor = Color.LightGray.copy(alpha = 0.5f), contentColor = DarkText, disabledContentColor = Color.LightGray),
+                            modifier = Modifier.size(48.dp)
+                        ) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Sebelumnya") }
 
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(24.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    IconButton(
-                        onClick = { if (currentQuestionIndex > 0) currentQuestionIndex-- },
-                        enabled = currentQuestionIndex > 0,
-                        colors = IconButtonDefaults.iconButtonColors(containerColor = Color.LightGray.copy(alpha = 0.5f), contentColor = DarkText, disabledContentColor = Color.LightGray),
-                        modifier = Modifier.size(48.dp)
-                    ) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Sebelumnya") }
+                        if (currentQuestionIndex == totalQuestions - 1) {
+                            Button(
+                                onClick = {
+                                    navController.navigate("kuis_result_screen/$quizId")
+                                },
+                                enabled = isQuizComplete,
+                                shape = RoundedCornerShape(8.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = SignLinkTeal, disabledContainerColor = SignLinkTeal.copy(alpha = 0.4f)),
+                                modifier = Modifier.weight(1f).height(48.dp).padding(horizontal = 16.dp)
+                            ) { Text("Submit Quiz", fontSize = 16.sp, fontWeight = FontWeight.Bold) }
+                        } else {
+                            Spacer(modifier = Modifier.weight(1f))
+                        }
 
-                    if (currentQuestionIndex == totalQuestions - 1) {
-                        Button(
+                        IconButton(
                             onClick = {
-                                navController.navigate("kuis_result_screen/$quizId")
+                                if (currentQuestionIndex < totalQuestions - 1) currentQuestionIndex++
+                                else if (currentQuestionIndex == totalQuestions - 1 && isQuizComplete) {
+                                    navController.navigate("kuis_result_screen/$quizId")
+                                }
                             },
-                            enabled = isQuizComplete,
-                            shape = RoundedCornerShape(8.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = SignLinkTeal, disabledContainerColor = SignLinkTeal.copy(alpha = 0.4f)),
-                            modifier = Modifier.weight(1f).height(48.dp).padding(horizontal = 16.dp)
-                        ) { Text("Submit Quiz", fontSize = 16.sp, fontWeight = FontWeight.Bold) }
-                    } else {
-                        Spacer(modifier = Modifier.weight(1f))
+                            enabled = currentQuestionIndex < totalQuestions - 1,
+                            colors = IconButtonDefaults.iconButtonColors(containerColor = SignLinkTeal, contentColor = Color.White, disabledContainerColor = SignLinkTeal.copy(alpha = 0.5f)),
+                            modifier = Modifier.size(48.dp)
+                        ) { Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = "Selanjutnya") }
                     }
-
-                    IconButton(
-                        onClick = {
-                            if (currentQuestionIndex < totalQuestions - 1) currentQuestionIndex++
-                            else if (currentQuestionIndex == totalQuestions - 1 && isQuizComplete) {
-                                navController.navigate("kuis_result_screen/$quizId")
-                            }
-                        },
-                        enabled = currentQuestionIndex < totalQuestions - 1,
-                        colors = IconButtonDefaults.iconButtonColors(containerColor = SignLinkTeal, contentColor = Color.White, disabledContainerColor = SignLinkTeal.copy(alpha = 0.5f)),
-                        modifier = Modifier.size(48.dp)
-                    ) { Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = "Selanjutnya") }
                 }
             }
         }

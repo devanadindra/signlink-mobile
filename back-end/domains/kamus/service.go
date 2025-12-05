@@ -10,6 +10,7 @@ import (
 
 	"github.com/devanadindraa/NTTH-Store/back-end/database"
 	"github.com/devanadindraa/NTTH-Store/back-end/utils/config"
+	"github.com/devanadindraa/NTTH-Store/back-end/utils/constants"
 	"github.com/devanadindraa/NTTH-Store/back-end/utils/dbselector"
 	fileutils "github.com/devanadindraa/NTTH-Store/back-end/utils/file"
 	"github.com/google/uuid"
@@ -19,6 +20,7 @@ type Service interface {
 	GetKamus(ctx context.Context, kategori string) (*[]KamusRes, error)
 	AddKamus(ctx context.Context, req KamusReq) error
 	DeleteKamus(ctx context.Context, kamusId string) error
+	GetAllKamus(ctx context.Context, input GetAllKamusReq, filter constants.FilterReq) (*[]KamusRes, int64, error)
 }
 
 type service struct {
@@ -151,4 +153,53 @@ func (s *service) DeleteKamus(ctx context.Context, kamusId string) error {
 	}
 
 	return nil
+}
+
+func (s *service) GetAllKamus(ctx context.Context, input GetAllKamusReq, filter constants.FilterReq) (*[]KamusRes, int64, error) {
+	var total int64
+	var kamusList []Kamus
+
+	db, err := s.dbSelector.GetDBByRole(ctx)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	query := db.WithContext(ctx).Model(&Kamus{})
+
+	// Filtering keyword
+	if input.Keyword != "" {
+		query = query.Where(
+			"arti ILIKE ? OR kategori ILIKE ? ",
+			"%"+input.Keyword+"%",
+			"%"+input.Keyword+"%",
+		)
+	}
+
+	// Hitung total data sebelum limit & offset
+	if err := query.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	// Pagination
+	offset := (filter.Page - 1) * filter.Limit
+
+	if err := query.
+		Order(fmt.Sprintf("%s %s", filter.OrderBy, filter.SortOrder)).
+		Limit(int(filter.Limit)).
+		Offset(int(offset)).
+		Find(&kamusList).Error; err != nil {
+		return nil, 0, err
+	}
+
+	res := make([]KamusRes, len(kamusList))
+	for i, k := range kamusList {
+		res[i] = KamusRes{
+			ID:       k.ID.String(),
+			Arti:     k.Arti,
+			Kategori: k.Kategori,
+			VideoUrl: k.VideoUrl,
+		}
+	}
+
+	return &res, total, nil
 }
