@@ -97,7 +97,7 @@ fun HomeScreen(
     }
 
     if (isLoading) {
-        HomeScreenSkeleton(userName)
+         HomeScreenSkeleton(userName)
     } else {
         val navItems = listOf(
             NavItem("Beranda", Icons.Default.Home, true, "home"),
@@ -139,7 +139,7 @@ fun HomeScreen(
                             .background(Color.White)
                     ) {
 
-                        HeaderWithTranslatorSection(userName,onCameraClicked)
+                        HeaderWithTranslatorSection(userName, onCameraClicked)
 
                         val scrollState = rememberScrollState()
                         Column(
@@ -150,7 +150,14 @@ fun HomeScreen(
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             Spacer(modifier = Modifier.height(32.dp))
-                            QuickAccessSection(onKamusClicked, onVTTClicked, onKuisClicked, onTTIClicked, onLatihanClicked)
+
+                            QuickAccessSection(onKamusClicked, onVTTClicked, onTTIClicked, onLatihanClicked)
+
+                            QuizButton(
+                                modifier = Modifier.fillMaxWidth(),
+                                onClick = onKuisClicked
+                            )
+
                             Spacer(modifier = Modifier.height(16.dp))
                         }
                     }
@@ -287,10 +294,52 @@ fun MainTranslatorButton(modifier: Modifier = Modifier, onClick: () -> Unit) {
 }
 
 @Composable
+fun QuizButton(modifier: Modifier = Modifier, onClick: () -> Unit) {
+
+    Card(
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFFFFCC80)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+        modifier = modifier
+            .height(120.dp)
+            .padding(vertical = 8.dp)
+            .clickable { onClick() }
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp).fillMaxSize(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(
+                verticalArrangement = Arrangement.Center
+            ) {
+                Text(
+                    text = "Kuis Singkat SignLink",
+                    color = DarkText,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "Asah kemampuan isyaratmu sekarang!",
+                    color = DarkText.copy(alpha = 0.7f),
+                    fontSize = 14.sp,
+                )
+            }
+
+            Image(
+                painter = painterResource(id = R.drawable.signlink_logo),
+                contentDescription = "Ikon Kuis",
+                modifier = Modifier.size(76.dp)
+            )
+        }
+    }
+}
+
+@Composable
 fun QuickAccessSection(
     onKamusClicked: () -> Unit,
     onVTTClicked: () -> Unit,
-    onKuisClicked: () -> Unit,
     onTTIClicked: () -> Unit = {},
     onLatihanClicked: () -> Unit
 ) {
@@ -309,11 +358,6 @@ fun QuickAccessSection(
             title = "Latihan Bahasa Isyarat",
             icon = R.drawable.orang2,
             onClick = onLatihanClicked
-        ),
-        QuickAccessData(
-            title = "Kuis Singkat SignLink",
-            icon = R.drawable.signlink_logo,
-            onClick = onKuisClicked
         ),
         QuickAccessData(
             title = "Suara ke Tulisan",
@@ -348,8 +392,6 @@ fun QuickAccessSection(
                 }
             }
         }
-
-        Spacer(modifier = Modifier.height(86.dp))
     }
 }
 
@@ -402,7 +444,7 @@ fun QuickAccessCard(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Judul (Title)
+            // Judul
             Text(
                 text = title,
                 color = DarkText,

@@ -24,7 +24,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
-import com.example.signlink.viewmodel.CustomerViewModel
 
 /**
  * Komponen Utama Loading Skeleton untuk HomeScreen
@@ -75,7 +74,11 @@ fun HomeScreenSkeleton(userName: String) {
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Spacer(modifier = Modifier.height(32.dp))
+
                     SkeletonQuickAccessSection()
+
+                    SkeletonQuizButton(modifier = Modifier.fillMaxWidth())
+
                     Spacer(modifier = Modifier.height(16.dp))
                 }
             }
@@ -230,7 +233,7 @@ fun SkeletonHeaderWithTranslatorSection(userName: String) {
 
 @Composable
 fun SkeletonQuickAccessSection() {
-    val totalItems = 5
+    val totalItems = 4
     val itemIndices = (0 until totalItems).toList()
 
     Column(
@@ -250,13 +253,8 @@ fun SkeletonQuickAccessSection() {
                             .height(120.dp)
                     )
                 }
-
-                if (rowItems.size == 1) {
-                    Spacer(modifier = Modifier.weight(1f))
-                }
             }
         }
-        Spacer(modifier = Modifier.height(86.dp))
     }
 }
 
@@ -289,6 +287,46 @@ fun SkeletonQuickAccessCard(
 
                 SkeletonCard(
                     modifier = Modifier.fillMaxWidth(0.8f).height(13.dp),
+                    brush = brush
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun SkeletonQuizButton(modifier: Modifier = Modifier) {
+    ShimmerAnimation { brush ->
+        Card(
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = CardBackground),
+            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+            modifier = modifier
+                .height(120.dp)
+                .padding(vertical = 8.dp)
+        ) {
+            Row(
+                modifier = Modifier.padding(16.dp).fillMaxSize(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    SkeletonCard(
+                        modifier = Modifier.width(180.dp).height(18.dp),
+                        brush = brush
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    SkeletonCard(
+                        modifier = Modifier.width(200.dp).height(14.dp),
+                        brush = brush
+                    )
+                }
+
+                SkeletonCard(
+                    modifier = Modifier.size(76.dp),
+                    shape = RoundedCornerShape(28.dp),
                     brush = brush
                 )
             }
