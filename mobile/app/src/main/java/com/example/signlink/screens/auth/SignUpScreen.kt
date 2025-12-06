@@ -39,7 +39,8 @@ fun SignUpScreen(
     viewModel: AuthViewModel,
     onSignUpSuccess: () -> Unit,
     onLoginFailed: () -> Unit,
-    onLoginClicked: () -> Unit
+    onLoginClicked: () -> Unit,
+    onGoogleAuth: () -> Unit
 ) {
     var role by remember { mutableStateOf("CUSTOMER") }
     var name by remember { mutableStateOf("") }
@@ -349,7 +350,6 @@ fun SignUpScreen(
             )
         }
 
-        // --- Notifikasi Status (Sukses/Gagal Login Otomatis) ---
         if (statusMessage != null) {
             val isSuccess = statusMessage!!.contains("berhasil", ignoreCase = true) || statusMessage!!.contains("sukses", ignoreCase = true)
             Text(
@@ -364,7 +364,6 @@ fun SignUpScreen(
             )
         }
 
-        // --- Notifikasi Error API General ---
         generalErrorMessage?.let {
             Text(
                 text = it.replace("\"", ""),
@@ -426,7 +425,7 @@ fun SignUpScreen(
         Spacer(modifier = Modifier.height(24.dp))
 
         OutlinedButton(
-            onClick = { /* Handle Google Login */ },
+            onClick = { onGoogleAuth() },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(56.dp)

@@ -19,12 +19,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-
+import coil.compose.AsyncImage
 import com.example.signlink.Destinations
 import com.example.signlink.components.BottomBarSignLink
 import com.example.signlink.components.MainFloatingActionButton
@@ -60,13 +61,25 @@ fun ProfileScreen(
     val coroutineScope = rememberCoroutineScope()
 
     var userName by remember { mutableStateOf("Memuat...") }
+    var hasPassword by remember { mutableStateOf(false) }
     var userEmail by remember { mutableStateOf("") }
+    var userProfile by remember { mutableStateOf("") }
 
     LaunchedEffect(Unit) {
         customerViewModel.getPersonal(context) { personal ->
             if (personal != null) {
                 userName = personal.name
                 userEmail = personal.email
+                personal.url
+                    .takeIf { it.isNotEmpty() }
+                    ?.let { url ->
+                        userProfile = if (personal.googleId != "") {
+                            url
+                        } else {
+                            "http://10.0.2.2:7777/api/$url"
+                        }
+                    }
+                hasPassword = personal.hasPassword
             } else {
                 userName = "Tidak diketahui"
                 userEmail = "-"
@@ -100,14 +113,18 @@ fun ProfileScreen(
             ProfileHeader(
                 name = userName,
                 phone = userEmail,
+                profile = userProfile,
                 onEditProfileClicked = { /* TODO: Navigasi ke Edit Profil */ }
             )
 
             ProfileSection(title = "Keamanan") {
                 ProfileOptionItem(
-                    text = "Ubah Password",
-                    onClick = { navController.navigate(Destinations.CHANGE_PASSWORD_SCREEN) }
+                    text = if (hasPassword) "Ubah Kata Sandi" else "Atur Kata Sandi",
+                    onClick = {
+                        navController.navigate("${Destinations.CHANGE_PASSWORD_SCREEN}/$hasPassword")
+                    }
                 )
+
                 ProfileOptionItem(
                     text = "Ubah Nomor Handphone",
                     onClick = { /* TODO: Navigasi Ubah Nomor HP */ }
@@ -167,7 +184,8 @@ fun ProfileScreen(
 fun ProfileHeader(
     name: String,
     phone: String,
-    onEditProfileClicked: () -> Unit
+    onEditProfileClicked: () -> Unit,
+    profile: String
 ) {
     Row(
         modifier = Modifier
@@ -182,12 +200,23 @@ fun ProfileHeader(
                 .background(SignLinkTeal.copy(alpha = 0.2f)),
             contentAlignment = Alignment.Center
         ) {
-            Icon(
-                imageVector = Icons.Default.Person,
-                contentDescription = "User Icon",
-                tint = SignLinkTeal,
-                modifier = Modifier.size(40.dp)
-            )
+            if (profile.isEmpty()) {
+                Icon(
+                    imageVector = Icons.Default.Person,
+                    contentDescription = "User Icon",
+                    tint = SignLinkTeal,
+                    modifier = Modifier.size(40.dp)
+                )
+            } else {
+                AsyncImage(
+                    model = profile,
+                    contentDescription = "User Profile",
+                    modifier = Modifier
+                        .fillMaxSize(),
+                    contentScale = ContentScale.Crop
+                )
+            }
+
         }
 
         Spacer(modifier = Modifier.width(16.dp))

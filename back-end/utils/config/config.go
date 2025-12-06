@@ -19,6 +19,7 @@ type Config struct {
 	Database    Database    `envconfig:"database"`
 	Logger      Logger      `envconfig:"logger"`
 	Auth        Auth        `envconfig:"auth"`
+	GoogleAuth  GoogleAuth
 	RateLimiter RateLimiter `envconfig:"rate_limiter"`
 	RajaOngkir  RajaOngkir  `envconfig:"raja_ongkir"`
 	Midtrans    Midtrans    `envconfig:"midtrans"`
@@ -43,6 +44,11 @@ type Logger struct {
 type Auth struct {
 	JWT   JWT   `envconfig:"jwt" validate:"required"`
 	Basic Basic `envconfig:"basic" validate:"required"`
+}
+
+type GoogleAuth struct {
+	Enabled  bool   `json:"enabled"`
+	ClientID string `json:"client_id"`
 }
 
 type JWT struct {

@@ -30,13 +30,15 @@ func (Admin) TableName() string {
 }
 
 type Customer struct {
-	ID        uuid.UUID `gorm:"type:uuid;default:gen_random_uuid();primaryKey"`
-	Name      string
-	Password  string
-	Email     string `gorm:"unique"`
-	AvatarUrl string
-	CreatedAt time.Time `gorm:"autoCreateTime"`
-	UpdatedAt time.Time `gorm:"autoUpdateTime"`
+	ID          uuid.UUID `gorm:"type:uuid;default:gen_random_uuid();primaryKey"`
+	Name        string
+	Password    string
+	Email       string `gorm:"unique"`
+	AvatarUrl   string
+	GoogleID    string    `gorm:"uniqueIndex"`
+	HasPassword bool      `gorm:"default:false"`
+	CreatedAt   time.Time `gorm:"autoCreateTime"`
+	UpdatedAt   time.Time `gorm:"autoUpdateTime"`
 }
 
 func (Customer) TableName() string {

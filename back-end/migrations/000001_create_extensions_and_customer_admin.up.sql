@@ -4,6 +4,7 @@ CREATE TABLE IF NOT EXISTS customer (
     email VARCHAR NOT NULL UNIQUE,
     password VARCHAR NOT NULL,
     avatar_url VARCHAR,
+    google_id VARCHAR,
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -30,3 +31,5 @@ VALUES (
     '$2a$12$uWKbKpJVPz65kqb1RIHhHeYr.cuokKHA1lKfNLPyg9MbZlabGrkha',
     'owner@gmail.com'
 );
+
+ALTER TABLE customer ADD COLUMN has_password BOOLEAN NOT NULL DEFAULT FALSE;

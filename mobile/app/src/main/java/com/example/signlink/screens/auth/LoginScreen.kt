@@ -49,7 +49,8 @@ fun LoginScreen(
     viewModel: AuthViewModel,
     onLoginSuccess: () -> Unit,
     onSignUpClicked: () -> Unit,
-    onForgotPasswordClicked: () -> Unit
+    onForgotPasswordClicked: () -> Unit,
+    onGoogleAuth: () -> Unit
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -67,6 +68,7 @@ fun LoginScreen(
     var roleChangeMessage by remember { mutableStateOf<String?>(null) }
 
     val loginResult by viewModel.loginResult.collectAsState()
+    val googleSignInResult by viewModel.googleSignInResult.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val context = LocalContext.current
 
@@ -265,7 +267,8 @@ fun LoginScreen(
             )
         }
 
-        loginResult?.let {
+        var failedMessage = loginResult?: googleSignInResult
+        failedMessage?.let {
             if (!it.contains("success", true) && successMessage == null) {
                 Text(
                     text = it.replace("\"", ""),
@@ -353,7 +356,7 @@ fun LoginScreen(
         Spacer(modifier = Modifier.height(24.dp))
 
         OutlinedButton(
-            onClick = {},
+            onClick = { onGoogleAuth() },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(56.dp)

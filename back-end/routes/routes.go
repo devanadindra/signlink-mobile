@@ -49,6 +49,7 @@ func NewDependency(
 	user := api.Group("/user")
 	{
 		user.POST("/login", mw.BasicAuth, userHandler.Login)
+		user.POST("/google", mw.GoogleAuth(), userHandler.GoogleAuth)
 		user.GET("/verify-token", mw.JWT(constants.ADMIN, constants.CUSTOMER), userHandler.VerifyToken)
 		user.POST("/logout", mw.JWT(constants.ADMIN, constants.CUSTOMER), userHandler.Logout)
 		user.POST("/reset-req", mw.BasicAuth, userHandler.ResetPassword)

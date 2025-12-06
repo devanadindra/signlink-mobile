@@ -24,6 +24,13 @@ type RegisterReq struct {
 	Email    string `json:"email" validate:"required,email"`
 }
 
+type GoogleAuth struct {
+	Name     string `json:"name" validate:"required"`
+	Email    string `json:"email" validate:"required,email"`
+	Picture  string `json:"picture"`
+	GoogleID string `json:"google_id" validate:"required"`
+}
+
 type ChangePasswordReq struct {
 	CurrentPassword string `json:"current_password" validate:"required"`
 	NewPassword     string `json:"new_password" validate:"required"`

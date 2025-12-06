@@ -183,7 +183,7 @@ fun SkeletonHeaderWithTranslatorSection(userName: String) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(220.dp)
-                    .clip(RoundedCornerShape(bottomStart = 22.dp, bottomEnd = 22.dp))
+                    .clip(RoundedCornerShape(bottomStart = 32.dp, bottomEnd = 32.dp))
                     .background(SignLinkTeal)
             )
             TopAppBar(

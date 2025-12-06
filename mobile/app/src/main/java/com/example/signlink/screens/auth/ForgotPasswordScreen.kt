@@ -56,7 +56,6 @@ fun ForgotPasswordScreen(
                 successMessage = "Tautan reset telah dikirim ke $email!"
                 scope.launch {
                     delay(1500L)
-                    // Navigasi ke layar submit, membawa email DAN role
                     onResetEmailSent(email, role)
                 }
             } else if (!result.contains("null", ignoreCase = true)) {

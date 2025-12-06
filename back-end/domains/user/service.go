@@ -35,6 +35,7 @@ type Service interface {
 	AddAvatar(ctx context.Context, req AvatarReq) (string, error)
 	ResetPassword(ctx context.Context, req ResetPasswordReq) (res *ResetPasswordRes, err error)
 	ResetPasswordSubmit(ctx context.Context, req ResetPasswordSubmitReq) error
+	GoogleAuth(ctx context.Context, input GoogleAuth) (*LoginRes, error)
 }
 
 type service struct {
@@ -58,8 +59,6 @@ func (s *service) GetPersonal(ctx context.Context) (*PersonalRes, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	fmt.Println("user id: ", token.Claims.UserID)
 
 	db, err := s.dbSelector.GetDBByRole(ctx)
 	if err != nil {
@@ -100,6 +99,8 @@ func (s *service) GetPersonal(ctx context.Context) (*PersonalRes, error) {
 		res.Name = customer.Name
 		res.Email = customer.Email
 		res.AvatarUrl = customer.AvatarUrl
+		res.GoogleID = customer.GoogleID
+		res.HasPassword = customer.HasPassword
 		res.CreatedAt = customer.CreatedAt
 		res.UpdatedAt = customer.UpdatedAt
 
@@ -214,11 +215,12 @@ func (s *service) Register(ctx context.Context, input RegisterReq) (res *Custome
 	}
 
 	customer := Customer{
-		Name:      input.Name,
-		Email:     input.Email,
-		Password:  hashedPassword,
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
+		Name:        input.Name,
+		Email:       input.Email,
+		Password:    hashedPassword,
+		HasPassword: true,
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
 	}
 
 	// Insert into DB
@@ -301,12 +303,22 @@ func (s *service) ChangePassword(ctx context.Context, input ChangePasswordReq) e
 	case constants.CUSTOMER:
 		var customer Customer
 		if err = db.WithContext(ctx).Where("id = ?", userID).First(&customer).Error; err == nil {
-			if !comparePassword(customer.Password, input.CurrentPassword) {
-				return apierror.NewWarn(http.StatusUnauthorized, ErrInvalidCurPassword)
+			if customer.HasPassword {
+				if !comparePassword(customer.Password, input.CurrentPassword) {
+					return apierror.NewWarn(http.StatusUnauthorized, ErrInvalidCurPassword)
+				}
+				customer.Password = hashedPassword
+				if err = db.WithContext(ctx).Save(&customer).Error; err != nil {
+					return err
+				}
 			}
-			customer.Password = hashedPassword
-			if err = db.WithContext(ctx).Save(&customer).Error; err != nil {
-				return err
+
+			if customer.GoogleID != "" && !customer.HasPassword {
+				customer.Password = hashedPassword
+				customer.HasPassword = true
+				if err = db.WithContext(ctx).Save(&customer).Error; err != nil {
+					return err
+				}
 			}
 		}
 	}
@@ -553,4 +565,66 @@ func (s *service) ResetPasswordSubmit(ctx context.Context, req ResetPasswordSubm
 	default:
 		return nil
 	}
+}
+
+func (s *service) GoogleAuth(ctx context.Context, input GoogleAuth) (*LoginRes, error) {
+	db := s.CustomerDB.DB
+
+	var existing Customer
+	err := db.WithContext(ctx).
+		Where("google_id = ?", input.GoogleID).
+		First(&existing).Error
+
+	var userID uuid.UUID
+
+	if err == nil {
+		userID = existing.ID
+	}
+
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, apierror.FromErr(err)
+	}
+
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+
+		password := randomPassword()
+
+		customer := Customer{
+			Name:      input.Name,
+			Email:     input.Email,
+			Password:  password,
+			AvatarUrl: input.Picture,
+			GoogleID:  input.GoogleID,
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+		}
+
+		if err := db.WithContext(ctx).Create(&customer).Error; err != nil {
+			return nil, apierror.FromErr(err)
+		}
+
+		userID = customer.ID
+	}
+
+	expirationTime := time.Now().Add(s.authConfig.JWT.ExpireIn)
+	claims := &constants.JWTClaims{
+		UserID: userID,
+		Email:  input.Email,
+		Role:   constants.CUSTOMER,
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(expirationTime),
+		},
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	tokenString, err := token.SignedString([]byte(s.authConfig.JWT.SecretKey))
+	if err != nil {
+		return nil, apierror.FromErr(err)
+	}
+
+	return &LoginRes{
+		Role:    constants.CUSTOMER,
+		Token:   tokenString,
+		Expires: expirationTime,
+	}, nil
 }

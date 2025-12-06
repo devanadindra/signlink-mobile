@@ -1,5 +1,7 @@
 package com.example.signlink
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.runtime.*
 import androidx.compose.ui.graphics.Color
@@ -72,6 +74,17 @@ fun AppNavHost() {
     val navController = rememberNavController()
     val context = LocalContext.current
     var startDestination by remember { mutableStateOf(Destinations.SPLASH_SCREEN) }
+    val googleSignInLauncher =
+        rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.StartActivityForResult()
+        ) { result ->
+            authViewModel.handleGoogleSignInResult(context, result) { isSuccess ->
+                if (isSuccess) {
+                    navController.popBackStack(Destinations.OPENING_SCREEN, inclusive = true)
+                    navController.navigate(Destinations.HOME_SCREEN)
+                }
+            }
+        }
 
     val systemUiController = rememberSystemUiController()
     val statusBarColor = Color.White
@@ -139,7 +152,11 @@ fun AppNavHost() {
                     navController.navigate(Destinations.HOME_SCREEN)
                 },
                 onSignUpClicked = { navController.navigate(Destinations.SIGNUP_SCREEN) },
-                onForgotPasswordClicked = { navController.navigate(Destinations.FORGOT_PASSWORD_SCREEN) }
+                onForgotPasswordClicked = { navController.navigate(Destinations.FORGOT_PASSWORD_SCREEN) },
+                onGoogleAuth = {
+                    val client = authViewModel.getGoogleSignInClient(context)
+                    googleSignInLauncher.launch(client.signInIntent)
+                }
             )
         }
 
@@ -152,7 +169,11 @@ fun AppNavHost() {
                     navController.navigate(Destinations.HOME_SCREEN)
                 },
                 onLoginFailed = { navController.navigate(Destinations.LOGIN_SCREEN) },
-                onLoginClicked = { navController.navigate(Destinations.LOGIN_SCREEN) }
+                onLoginClicked = { navController.navigate(Destinations.LOGIN_SCREEN) },
+                onGoogleAuth = {
+                    val client = authViewModel.getGoogleSignInClient(context)
+                    googleSignInLauncher.launch(client.signInIntent)
+                }
             )
         }
 
@@ -345,10 +366,12 @@ fun AppNavHost() {
             )
         }
 
-        composable(Destinations.CHANGE_PASSWORD_SCREEN) {
+        composable(route = Destinations.CHANGE_PASSWORD_SCREEN + "/{hasPassword}") { backStackEntry ->
+            val hasPassword = backStackEntry.arguments?.getString("hasPassword")?.toBoolean() == true
             ChangePasswordScreen(
                 viewModel = authViewModel,
                 navController = navController,
+                hasPassword = hasPassword,
                 onChangePasswordSuccess = { navController.navigate(Destinations.PROFILE_SCREEN) }
             )
         }

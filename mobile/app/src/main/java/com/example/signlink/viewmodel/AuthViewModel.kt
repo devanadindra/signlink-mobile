@@ -1,3 +1,5 @@
+@file:Suppress("DEPRECATION")
+
 package com.example.signlink.viewmodel
 
 import androidx.lifecycle.ViewModel
@@ -10,7 +12,12 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import com.example.signlink.data.utils.AuthUtil
 import android.content.Context
+import androidx.activity.result.ActivityResult
 import com.example.signlink.data.utils.utils.parseErrorMessage
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInClient
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import com.google.android.gms.common.api.ApiException
 
 
 @HiltViewModel
@@ -32,6 +39,9 @@ class AuthViewModel @Inject constructor(
 
     private val _changePasswordResult = MutableStateFlow<String?>(null)
     val changePasswordSubmitResult: StateFlow<String?> = _changePasswordResult
+
+    private val _googleSignInResult = MutableStateFlow<String?>(null)
+    val googleSignInResult = _googleSignInResult
 
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading
@@ -60,13 +70,14 @@ class AuthViewModel @Inject constructor(
                     if (!token.isNullOrEmpty()) {
                         AuthUtil.saveToken(context, token)
                         AuthUtil.saveRole(context, role.toString())
-                        _loginResult.value = "success"
+                        AuthUtil.saveLoginMethod(context, "manual")
+                        _loginResult.value = "sukses"
                     } else {
-                        _loginResult.value = "Invalid token"
+                        _loginResult.value = "Token tidak valid"
                     }
                 } else {
                     val errorJson = response.errorBody()?.string()
-                    _loginResult.value = parseErrorMessage(errorJson) ?: "Login failed"
+                    _loginResult.value = parseErrorMessage(errorJson) ?: "Gagal Masuk"
                 }
             } catch (e: Exception) {
                 _loginResult.value = e.message
@@ -83,13 +94,13 @@ class AuthViewModel @Inject constructor(
                 val response = repository.register(name, email, password)
 
                 if (response.isSuccessful) {
-                    _registerResult.value = "Registration success"
+                    _registerResult.value = "Pendaftaran berhasil"
                 } else {
                     val errorJson = response.errorBody()?.string()
-                    _registerResult.value = parseErrorMessage(errorJson) ?: "Registration failed"
+                    _registerResult.value = parseErrorMessage(errorJson) ?: "Pendaftaran Gagal"
                 }
             } catch (e: Exception) {
-                _registerResult.value = "Error: ${e.localizedMessage ?: "unknown error"}"
+                _registerResult.value = "Kesalahan: ${e.localizedMessage ?: "kesalahan yang tidak diketahui"}"
             } finally {
                 _isLoading.value = false
             }
@@ -115,6 +126,7 @@ class AuthViewModel @Inject constructor(
     fun logout(context: Context, onResult: (Boolean) -> Unit) {
         viewModelScope.launch {
             val token = AuthUtil.jwtAuth(context)
+            val loginMethod = AuthUtil.getLoginMethod(context)
             if (token != null) {
                 try {
                     val response = repository.logout(token)
@@ -122,6 +134,14 @@ class AuthViewModel @Inject constructor(
 
                     if (isSuccess) {
                         AuthUtil.clearToken(context)
+                        AuthUtil.clearLoginMethod(context)
+                        _loginResult.value = null
+                        _isLoading.value = false
+
+                        if (loginMethod == "google") {
+                            val googleClient = getGoogleSignInClient(context)
+                            googleClient.signOut()
+                        }
                     }
 
                     onResult(isSuccess)
@@ -140,12 +160,12 @@ class AuthViewModel @Inject constructor(
             try {
                 val response = repository.resetPasswordReq(email, role)
                 if (response != null) {
-                    _resetPasswordReqResult.value = "Reset password link sent to $email"
+                    _resetPasswordReqResult.value = "Reset password link sent $email"
                 } else {
-                    _resetPasswordReqResult.value = "Failed to send reset request. Please try again."
+                    _resetPasswordReqResult.value = "Gagal mengirim permintaan reset. Silakan coba lagi."
                 }
             } catch (e: Exception) {
-                _resetPasswordReqResult.value = "Error: ${e.localizedMessage ?: "Unknown error"}"
+                _resetPasswordReqResult.value = "Kesalahan: ${e.localizedMessage ?: "kesalahan yang tidak diketahui"}"
             }
         }
     }
@@ -158,11 +178,11 @@ class AuthViewModel @Inject constructor(
                 if (response != null && response.data?.message != null) {
                     _resetPasswordSubmitResult.value = response.data.message
                 } else {
-                    _resetPasswordSubmitResult.value = "Failed to reset password. Please try again."
+                    _resetPasswordSubmitResult.value = "Gagal mengatur ulang kata sandi. Silakan coba lagi."
                 }
 
             } catch (e: Exception) {
-                _resetPasswordSubmitResult.value = "Error: ${e.localizedMessage ?: "Unknown error"}"
+                _resetPasswordSubmitResult.value = "Kesalahan: ${e.localizedMessage ?: "kesalahan yang tidak diketahui"}"
             }
         }
     }
@@ -180,15 +200,77 @@ class AuthViewModel @Inject constructor(
                         if (response?.errors != null) {
                             _changePasswordResult.value = response.errors.first()
                         } else {
-                            _changePasswordResult.value = "Failed to reset password. Please try again."
+                            _changePasswordResult.value = "Gagal mengatur ulang kata sandi. Silakan coba lagi."
                         }
                     }
 
                 } catch (e: Exception) {
-                    _changePasswordResult.value = "Error: ${e.localizedMessage ?: "Unknown error"}"
+                    _changePasswordResult.value = "Kesalahan: ${e.localizedMessage ?: "kesalahan yang tidak diketahui"}"
                 }
             }
         }
     }
+
+    fun getGoogleSignInClient(context: Context): GoogleSignInClient {
+        val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+            .requestIdToken("672778860454-6io63jm7npn2aj1oe1tasr2s99o1noe6.apps.googleusercontent.com")
+            .requestEmail()
+            .build()
+
+        return GoogleSignIn.getClient(context, gso)
+    }
+
+    fun handleGoogleSignInResult(
+        context: Context,
+        result: ActivityResult,
+        onComplete: (Boolean) -> Unit
+    ) {
+        val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
+
+        try {
+            val account = task.getResult(ApiException::class.java)
+            val idToken = account.idToken
+
+            if (idToken != null) {
+
+                viewModelScope.launch {
+                    try {
+                        val response = repository.googleAuth(idToken)
+
+                        if (response.isSuccessful) {
+                            val token = response.body()?.data?.token
+                            val role = response.body()?.data?.role
+
+                            if (!token.isNullOrEmpty()) {
+                                AuthUtil.saveToken(context, token)
+                                AuthUtil.saveRole(context, role.toString())
+                                AuthUtil.saveLoginMethod(context, "google")
+
+                                _googleSignInResult.value = "sukses"
+                                onComplete(true)
+                            } else {
+                                _googleSignInResult.value = "Token tidak valid"
+                            }
+                        } else {
+                            val errorJson = response.errorBody()?.string()
+                            _googleSignInResult.value =
+                                parseErrorMessage(errorJson) ?: "Gagal Masuk"
+                        }
+                    } catch (e: Exception) {
+                        _googleSignInResult.value = e.message
+                    }
+                }
+
+            } else {
+                _googleSignInResult.value = "Token tidak ditemukan"
+                onComplete(false)
+            }
+
+        } catch (e: Exception) {
+            _googleSignInResult.value = e.localizedMessage
+            onComplete(false)
+        }
+    }
+
 
 }

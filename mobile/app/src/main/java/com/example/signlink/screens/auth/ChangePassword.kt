@@ -35,6 +35,7 @@ import kotlinx.coroutines.delay
 fun ChangePasswordScreen(
     navController: NavController,
     viewModel: AuthViewModel,
+    hasPassword: Boolean,
     onChangePasswordSuccess: () -> Unit,
 ) {
     val context = LocalContext.current
@@ -125,7 +126,7 @@ fun ChangePasswordScreen(
             )
             Spacer(modifier = Modifier.height(16.dp))
             Text(
-                text = "Ubah Kata Sandi",
+                text = if (hasPassword) "Ubah Kata Sandi" else "Atur Kata Sandi",
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
                 color = DarkText,
@@ -134,46 +135,57 @@ fun ChangePasswordScreen(
 
             Spacer(modifier = Modifier.height(40.dp))
 
-            Text(text = "Kata Sandi Saat ini", modifier = Modifier.fillMaxWidth(), color = DarkText, fontWeight = FontWeight.Medium)
-            Spacer(modifier = Modifier.height(8.dp))
-            OutlinedTextField(
-                value = currentPassword,
-                onValueChange = { currentPassword = it; currentPasswordError = null },
-                placeholder = { Text("Masukkan kata sandi saat ini") },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                visualTransformation = if (currentPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                trailingIcon = {
-                    val image = if (currentPasswordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
-                    IconButton(onClick = { currentPasswordVisible = !currentPasswordVisible }) {
-                        Icon(imageVector = image, contentDescription = "Toggle password visibility")
-                    }
-                },
-                isError = currentPasswordError != null,
-                shape = RoundedCornerShape(50),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedTextColor = Color.Black,
-                    unfocusedTextColor = Color.Black,
-                    focusedContainerColor = Color.White,
-                    unfocusedContainerColor = Color.White,
-                    errorContainerColor = Color.White,
-                    focusedBorderColor = SignLinkTeal,
-                    unfocusedBorderColor = Color.LightGray,
-                    errorBorderColor = Color.Red,
-                )
-            )
-            if (currentPasswordError != null) {
+            if (hasPassword == true) {
                 Text(
-                    text = currentPasswordError!!,
-                    color = Color.Red,
-                    style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(start = 16.dp, top = 4.dp),
-                    textAlign = TextAlign.Start
+                    text = "Kata Sandi Saat ini",
+                    modifier = Modifier.fillMaxWidth(),
+                    color = DarkText,
+                    fontWeight = FontWeight.Medium
                 )
+                Spacer(modifier = Modifier.height(8.dp))
+
+                OutlinedTextField(
+                    value = currentPassword,
+                    onValueChange = { currentPassword = it; currentPasswordError = null },
+                    placeholder = { Text("Masukkan kata sandi saat ini") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    visualTransformation = if (currentPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                    trailingIcon = {
+                        val image = if (currentPasswordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
+                        IconButton(onClick = { currentPasswordVisible = !currentPasswordVisible }) {
+                            Icon(imageVector = image, contentDescription = "Toggle password visibility")
+                        }
+                    },
+                    isError = currentPasswordError != null,
+                    shape = RoundedCornerShape(50),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = Color.Black,
+                        unfocusedTextColor = Color.Black,
+                        focusedContainerColor = Color.White,
+                        unfocusedContainerColor = Color.White,
+                        errorContainerColor = Color.White,
+                        focusedBorderColor = SignLinkTeal,
+                        unfocusedBorderColor = Color.LightGray,
+                        errorBorderColor = Color.Red,
+                    )
+                )
+
+                if (currentPasswordError != null) {
+                    Text(
+                        text = currentPasswordError!!,
+                        color = Color.Red,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(14.dp))
+            } else {
+                LaunchedEffect(Unit) {
+                    currentPassword = "default"
+                }
             }
-            Spacer(modifier = Modifier.height(14.dp))
+
 
             Text(text = "Kata Sandi Baru", modifier = Modifier.fillMaxWidth(), color = DarkText, fontWeight = FontWeight.Medium)
             Spacer(modifier = Modifier.height(8.dp))
@@ -301,7 +313,12 @@ fun ChangePasswordScreen(
                         modifier = Modifier.size(24.dp)
                     )
                 } else {
-                    Text("Ubah Kata Sandi", fontSize = 18.sp, fontWeight = FontWeight.SemiBold, color = Color.White)
+                    Text(
+                        text = if (hasPassword) "Ubah Kata Sandi" else "Atur Kata Sandi",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color.White
+                    )
                 }
             }
 

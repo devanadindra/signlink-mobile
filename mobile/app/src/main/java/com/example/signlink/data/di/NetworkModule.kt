@@ -20,8 +20,6 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 object NetworkModule {
 
-    private const val LOCAL_IP = "192.168.1.7:7777"
-
     private val BASE_URL: String
         get() {
             return if (isEmulator()) {

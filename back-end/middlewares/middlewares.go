@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"cloud.google.com/go/auth/credentials/idtoken"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/google/uuid"
@@ -31,6 +32,7 @@ type Middlewares interface {
 	Recover(ctx *gin.Context)
 	RateLimiter(ctx *gin.Context)
 	OptionalJWT(roles ...constants.ROLE) gin.HandlerFunc
+	GoogleAuth() gin.HandlerFunc
 }
 
 type middlewares struct {
@@ -196,7 +198,6 @@ func (m *middlewares) OptionalJWT(roles ...constants.ROLE) gin.HandlerFunc {
 			return []byte(m.conf.Auth.JWT.SecretKey), nil
 		})
 		if err != nil || !token.Valid {
-			// Kalau token invalid → treat as guest
 			ctx.Next()
 			return
 		}
@@ -208,17 +209,52 @@ func (m *middlewares) OptionalJWT(roles ...constants.ROLE) gin.HandlerFunc {
 			return
 		}
 
-		// kalau ada roles spesifik → cek role
 		if len(roles) > 0 && !slices.Contains(roles, claims.Role) {
 			ctx.Next()
 			return
 		}
 
-		// simpan claims ke context → biar GetTokenClaims bisa ambil
 		ctx = contextUtil.GinWithCtx(ctx, contextUtil.SetTokenClaims(ctx, constants.Token{
 			Token:  tokenStr,
 			Claims: claims,
 		}))
+
+		ctx.Next()
+	}
+}
+
+func (m *middlewares) GoogleAuth() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+
+		idToken := ctx.GetHeader(constants.AUTHORIZATION)
+		if idToken == "" {
+			var body struct {
+				IDToken string `json:"id_token"`
+			}
+			if err := ctx.ShouldBindJSON(&body); err != nil || body.IDToken == "" {
+				respond.Error(ctx, apierror.Unauthorized())
+				ctx.Abort()
+				return
+			}
+			idToken = body.IDToken
+		}
+
+		payload, err := idtoken.Validate(ctx, idToken, m.conf.GoogleAuth.ClientID)
+		if err != nil {
+			respond.Error(ctx, apierror.Unauthorized())
+			ctx.Abort()
+			return
+		}
+
+		email, _ := payload.Claims["email"].(string)
+		name, _ := payload.Claims["name"].(string)
+		picture, _ := payload.Claims["picture"].(string)
+		googleID := payload.Subject
+
+		ctx.Set("google_email", email)
+		ctx.Set("google_name", name)
+		ctx.Set("google_picture", picture)
+		ctx.Set("google_id", googleID)
 
 		ctx.Next()
 	}

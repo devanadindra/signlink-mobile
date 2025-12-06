@@ -13,6 +13,7 @@ val Context.dataStore by preferencesDataStore("user_prefs")
 object AuthUtil {
     private val TOKEN_KEY = stringPreferencesKey("jwt_token")
     val ROLE_KEY = stringPreferencesKey("user_role")
+    private const val LOGIN_METHOD = "login_method"
 
     fun basicAuth(): String {
         val credentials = "admin:admin"
@@ -50,5 +51,20 @@ object AuthUtil {
     suspend fun jwtAuth(context: Context): String? {
         val token = getToken(context) ?: return null
         return "Bearer $token"
+    }
+
+    fun saveLoginMethod(context: Context, method: String) {
+        val prefs = context.getSharedPreferences("auth", Context.MODE_PRIVATE)
+        prefs.edit().putString(LOGIN_METHOD, method).apply()
+    }
+
+    fun getLoginMethod(context: Context): String? {
+        val prefs = context.getSharedPreferences("auth", Context.MODE_PRIVATE)
+        return prefs.getString(LOGIN_METHOD, null)
+    }
+
+    fun clearLoginMethod(context: Context) {
+        val prefs = context.getSharedPreferences("auth", Context.MODE_PRIVATE)
+        prefs.edit().remove(LOGIN_METHOD).apply()
     }
 }

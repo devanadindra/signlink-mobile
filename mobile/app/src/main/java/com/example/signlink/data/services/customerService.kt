@@ -16,6 +16,11 @@ interface CustomerService {
         @Body req: LoginReq
     ): Response<ApiResponse<LoginRes>>
 
+    @POST("user/google")
+    suspend fun googleAuth(
+        @Header("Authorization") authHeader: String
+    ): Response<ApiResponse<LoginRes>>
+
     @POST("user/reset-req")
     suspend fun resetPasswordReq(
         @Header("Authorization") authHeader: String,

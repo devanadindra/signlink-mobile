@@ -1,5 +1,7 @@
 package com.example.signlink.data.models.customer
 
+import com.google.gson.annotations.SerializedName
+
 data class RegisterRes(
     val message: String
 )
@@ -18,7 +20,11 @@ data class PersonalRes(
     val id: String,
     val name: String,
     val email: String,
-    val url: String
+    val url: String,
+    @SerializedName("google_id")
+    val googleId : String,
+    @SerializedName("has_password")
+    val hasPassword: Boolean
 )
 
 data class ResetPasswordRes(

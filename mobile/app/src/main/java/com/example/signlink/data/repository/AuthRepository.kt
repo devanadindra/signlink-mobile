@@ -20,6 +20,9 @@ class AuthRepository(private val service: CustomerService) {
     suspend fun login(role: String, email: String, password: String) =
         service.login(AuthUtil.basicAuth(), LoginReq(role, email, password))
 
+    suspend fun googleAuth(token: String) =
+        service.googleAuth(token)
+
     suspend fun register(name: String, email: String, password: String) =
         service.register(AuthUtil.basicAuth(), RegisterReq(name, email, password))
 

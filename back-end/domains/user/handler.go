@@ -1,6 +1,7 @@
 package user
 
 import (
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -26,6 +27,7 @@ type Handler interface {
 	AddAvatar(ctx *gin.Context)
 	ResetPassword(ctx *gin.Context)
 	ResetPasswordSubmit(ctx *gin.Context)
+	GoogleAuth(ctx *gin.Context)
 }
 
 type handler struct {
@@ -87,8 +89,8 @@ func (h *handler) Login(ctx *gin.Context) {
 	sameSite := http.SameSiteLaxMode
 
 	if env == config.PRODUCTION_ENVIRONMENT {
-		cookieDomain = ".notimetohell.com"
-		cookieDomainAdmin = "admin.notimetohell.com"
+		cookieDomain = ""
+		cookieDomainAdmin = ""
 		secure = true
 		sameSite = http.SameSiteNoneMode
 	}
@@ -138,8 +140,8 @@ func (h *handler) Logout(ctx *gin.Context) {
 	sameSite := http.SameSiteLaxMode
 
 	if env == config.PRODUCTION_ENVIRONMENT {
-		cookieDomain = ".notimetohell.com"
-		cookieDomainAdmin = "admin.notimetohell.com"
+		cookieDomain = ""
+		cookieDomainAdmin = ""
 		secure = true
 		sameSite = http.SameSiteNoneMode
 	}
@@ -165,7 +167,6 @@ func (h *handler) Logout(ctx *gin.Context) {
 		SameSite: sameSite,
 	})
 
-	// Optional: logic logout server-side
 	token, err := contextUtil.GetTokenClaims(ctx)
 	if err != nil {
 		respond.Error(ctx, apierror.FromErr(err))
@@ -260,19 +261,16 @@ func (h *handler) ChangePassword(ctx *gin.Context) {
 func (h *handler) UpdateProfile(ctx *gin.Context) {
 	var input UpdateProfileReq
 
-	// Bind JSON ke struct input
 	if err := ctx.ShouldBindJSON(&input); err != nil {
 		respond.Error(ctx, apierror.Warn(http.StatusBadRequest, err))
 		return
 	}
 
-	// Validasi input menggunakan validator
 	if err := h.validate.Struct(input); err != nil {
 		respond.Error(ctx, apierror.FromErr(err))
 		return
 	}
 
-	// Panggil service untuk update profile
 	res, err := h.service.UpdateProfile(ctx, input)
 	if err != nil {
 		respond.Error(ctx, apierror.FromErr(err))
@@ -351,4 +349,27 @@ func (h *handler) ResetPasswordSubmit(ctx *gin.Context) {
 	}
 
 	respond.Success(ctx, http.StatusOK, gin.H{"message": "Password reset successfully"})
+}
+
+func (h *handler) GoogleAuth(ctx *gin.Context) {
+	email := ctx.GetString("google_email")
+	name := ctx.GetString("google_name")
+	picture := ctx.GetString("google_picture")
+	googleID := ctx.GetString("google_id")
+
+	input := GoogleAuth{
+		Name:     name,
+		Email:    email,
+		Picture:  picture,
+		GoogleID: googleID,
+	}
+
+	res, err := h.service.GoogleAuth(ctx, input)
+	if err != nil {
+		respond.Error(ctx, apierror.FromErr(err))
+		return
+	}
+	fmt.Println("GoogleAuth Response:", res)
+
+	respond.Success(ctx, http.StatusOK, res)
 }
