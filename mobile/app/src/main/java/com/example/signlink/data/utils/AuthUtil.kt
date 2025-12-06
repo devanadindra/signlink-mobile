@@ -14,6 +14,7 @@ object AuthUtil {
     private val TOKEN_KEY = stringPreferencesKey("jwt_token")
     val ROLE_KEY = stringPreferencesKey("user_role")
     private const val LOGIN_METHOD = "login_method"
+    private const val PROFILE = "profile"
 
     fun basicAuth(): String {
         val credentials = "admin:admin"
@@ -66,5 +67,20 @@ object AuthUtil {
     fun clearLoginMethod(context: Context) {
         val prefs = context.getSharedPreferences("auth", Context.MODE_PRIVATE)
         prefs.edit().remove(LOGIN_METHOD).apply()
+    }
+
+    fun saveProfile(context: Context, url: String) {
+        val prefs = context.getSharedPreferences("auth", Context.MODE_PRIVATE)
+        prefs.edit().putString(PROFILE, url).apply()
+    }
+
+    fun getProfile(context: Context): String? {
+        val prefs = context.getSharedPreferences("auth", Context.MODE_PRIVATE)
+        return prefs.getString(PROFILE, null)
+    }
+
+    fun clearProfile(context: Context) {
+        val prefs = context.getSharedPreferences("auth", Context.MODE_PRIVATE)
+        prefs.edit().remove(PROFILE).apply()
     }
 }

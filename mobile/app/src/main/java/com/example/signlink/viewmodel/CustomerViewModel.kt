@@ -20,7 +20,19 @@ class CustomerViewModel @Inject constructor(
             if (token != null) {
                 try {
                     val response = repository.getPersonal(token)
-                    onResult(response?.data)
+                    val personal = response?.data
+                    personal?.url?.let { url ->
+                        if (url.isNotEmpty()) {
+                            val fullUrl = if (url.startsWith("http://") || url.startsWith("https://")) {
+                                url
+                            } else {
+                                "http://10.0.2.2:7777/api/$url"
+                            }
+
+                            AuthUtil.saveProfile(context, fullUrl)
+                        }
+                    }
+                    onResult(personal)
                 } catch (e: Exception) {
                     e.printStackTrace()
                     onResult(null)

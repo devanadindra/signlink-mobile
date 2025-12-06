@@ -73,12 +73,13 @@ fun ProfileScreen(
                 personal.url
                     .takeIf { it.isNotEmpty() }
                     ?.let { url ->
-                        userProfile = if (personal.googleId != "") {
+                        userProfile = if (url.startsWith("http://") || url.startsWith("https://")) {
                             url
                         } else {
                             "http://10.0.2.2:7777/api/$url"
                         }
                     }
+
                 hasPassword = personal.hasPassword
             } else {
                 userName = "Tidak diketahui"
@@ -126,7 +127,12 @@ fun ProfileScreen(
                 )
 
                 ProfileOptionItem(
-                    text = "Ubah Nomor Handphone",
+                    text = "Statistik Kuis Singkat SignLink",
+                    onClick = { /* TODO: Navigasi Ubah Nomor HP */ }
+                )
+
+                ProfileOptionItem(
+                    text = "Statistik Latihan Bahasa Isyarat",
                     onClick = { /* TODO: Navigasi Ubah Nomor HP */ }
                 )
             }

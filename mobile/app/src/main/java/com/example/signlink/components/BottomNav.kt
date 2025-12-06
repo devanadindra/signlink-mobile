@@ -8,15 +8,25 @@ import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import com.example.signlink.ui.theme.SignLinkTeal // Menggunakan warna dari theme Anda
+import com.example.signlink.ui.theme.SignLinkTeal
+import coil.compose.AsyncImage
+import com.example.signlink.data.utils.AuthUtil
 
 /**
  * Data class untuk item navigasi bawah.
  */
-data class NavItem(val label: String, val icon: ImageVector, val isSelected: Boolean, val tag: String)
+data class NavItem(
+    val label: String,
+    val icon: ImageVector,
+    val isSelected: Boolean,
+    val tag: String,
+)
+
 
 /**
  * Komponen Floating Action Button utama (Kamera) untuk navigasi cepat.
@@ -51,6 +61,8 @@ fun BottomBarSignLink(
     onVTTClicked: () -> Unit,
     onProfileClicked: () -> Unit
 ) {
+    val context = LocalContext.current
+    val imageUrl = AuthUtil.getProfile(context)
     val navItemColors = NavigationBarItemDefaults.colors(
         indicatorColor = Color.Transparent,
         selectedIconColor = SignLinkTeal,
@@ -70,10 +82,17 @@ fun BottomBarSignLink(
 
             NavigationBarItem(
                 icon = {
-                    Icon(
-                        item.icon,
-                        contentDescription = item.label,
-                    )
+                    if (item.tag == "profil" && !imageUrl.isNullOrEmpty()) {
+                        AsyncImage(
+                            model = imageUrl,
+                            contentDescription = "Profile Image",
+                            modifier = Modifier
+                                .size(28.dp)
+                                .clip(RoundedCornerShape(50))
+                        )
+                    } else {
+                        Icon(item.icon, contentDescription = item.label)
+                    }
                 },
                 selected = item.isSelected,
                 onClick = {

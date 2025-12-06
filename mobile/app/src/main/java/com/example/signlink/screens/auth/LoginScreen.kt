@@ -100,7 +100,7 @@ fun LoginScreen(
 
     LaunchedEffect(loginResult) {
         loginResult?.let { result ->
-            if (result.contains("success", true)) {
+            if (result.contains("sukses", true)) {
                 successMessage = "Berhasil Masuk! Selamat datang."
 
                 delay(2000L)

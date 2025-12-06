@@ -135,6 +135,7 @@ class AuthViewModel @Inject constructor(
                     if (isSuccess) {
                         AuthUtil.clearToken(context)
                         AuthUtil.clearLoginMethod(context)
+                        AuthUtil.clearProfile(context)
                         _loginResult.value = null
                         _isLoading.value = false
 
