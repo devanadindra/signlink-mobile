@@ -25,12 +25,6 @@ class AuthViewModel @Inject constructor(
     private val repository: AuthRepository
 ) : ViewModel() {
 
-    private val _loginResult = MutableStateFlow<String?>(null)
-    val loginResult: StateFlow<String?> = _loginResult
-
-    private val _registerResult = MutableStateFlow<String?>(null)
-    val registerResult: StateFlow<String?> = _registerResult
-
     private val _resetPasswordReqResult = MutableStateFlow<String?>(null)
     val resetPasswordReqResult: StateFlow<String?> = _resetPasswordReqResult
 
@@ -40,28 +34,51 @@ class AuthViewModel @Inject constructor(
     private val _changePasswordResult = MutableStateFlow<String?>(null)
     val changePasswordSubmitResult: StateFlow<String?> = _changePasswordResult
 
-    private val _googleSignInResult = MutableStateFlow<String?>(null)
-    val googleSignInResult = _googleSignInResult
+    private val _errorMessage = MutableStateFlow<String?>(null)
+    val errorMessage: StateFlow<String?> = _errorMessage
+
+    private val _successMessage = MutableStateFlow<String?>(null)
+    val successMessage: StateFlow<String?> = _successMessage
+
+    private val _googleAuthMessage = MutableStateFlow<String?>(null)
+    val googleAuthMessage: StateFlow<String?> = _googleAuthMessage
 
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading
 
-    fun clearRegisterResult() {
-        _registerResult.value = null
-    }
+    private val _registerComplete = MutableStateFlow(false)
+    val registerComplete: StateFlow<Boolean> = _registerComplete
 
-    fun clearLoginResult() {
-        _loginResult.value = null
-    }
+    private val _loginComplete = MutableStateFlow(false)
+    val loginComplete: StateFlow<Boolean> = _loginComplete
 
     fun clearChangePasswordResult() {
         _changePasswordResult.value = null
         _isLoading.value = false
     }
 
+    fun clearError() {
+        _errorMessage.value = null
+        _isLoading.value = false
+    }
+
+    fun clearSuccess() {
+        _successMessage.value = null
+        _isLoading.value = false
+    }
+
+    fun clearAll() {
+        _loginComplete.value = false
+        _registerComplete.value = false
+        _successMessage.value = null
+        _errorMessage.value = null
+        _isLoading.value = false
+    }
+
 
     fun login(context: Context, role: String, email: String, password: String) {
         viewModelScope.launch {
+            _isLoading.value = true
             try {
                 val response = repository.login(role, email, password)
                 if (response.isSuccessful) {
@@ -71,38 +88,36 @@ class AuthViewModel @Inject constructor(
                         AuthUtil.saveToken(context, token)
                         AuthUtil.saveRole(context, role.toString())
                         AuthUtil.saveLoginMethod(context, "manual")
-                        _loginResult.value = "sukses"
+                        _successMessage.value = "Selamat Datang 👋🏻"
+                        _loginComplete.value = true
                     } else {
-                        _loginResult.value = "Token tidak valid"
+                        _errorMessage.value = "Token tidak valid"
                     }
                 } else {
                     val errorJson = response.errorBody()?.string()
-                    _loginResult.value = parseErrorMessage(errorJson) ?: "Gagal Masuk"
+                    _errorMessage.value = parseErrorMessage(errorJson) ?: "Gagal Masuk"
                 }
             } catch (e: Exception) {
-                _loginResult.value = e.message
+                _errorMessage.value = e.message
             }
         }
     }
 
     fun register(name: String, email: String, password: String) {
         viewModelScope.launch {
+            _isLoading.value = true
             try {
-                _isLoading.value = true
-                _registerResult.value = null
-
                 val response = repository.register(name, email, password)
 
                 if (response.isSuccessful) {
-                    _registerResult.value = "Pendaftaran berhasil"
+                    _successMessage.value = "Pendaftaran berhasil"
+                    _registerComplete.value = true
                 } else {
                     val errorJson = response.errorBody()?.string()
-                    _registerResult.value = parseErrorMessage(errorJson) ?: "Pendaftaran Gagal"
+                    _errorMessage.value = parseErrorMessage(errorJson)?.replace("\"", "") ?: "Pendaftaran Gagal"
                 }
             } catch (e: Exception) {
-                _registerResult.value = "Kesalahan: ${e.localizedMessage ?: "kesalahan yang tidak diketahui"}"
-            } finally {
-                _isLoading.value = false
+                _errorMessage.value = "Kesalahan: ${e.localizedMessage ?: "kesalahan yang tidak diketahui"}"
             }
         }
     }
@@ -110,18 +125,30 @@ class AuthViewModel @Inject constructor(
     fun checkJwt(context: Context, onResult: (Boolean) -> Unit) {
         viewModelScope.launch {
             val token = AuthUtil.jwtAuth(context)
-            if (token != null) {
-                try {
-                    val response = repository.checkJwt(token)
-                    onResult(response?.data != null)
-                } catch (_: Exception) {
-                    onResult(false)
+
+            if (token.isNullOrEmpty()) {
+                AuthUtil.clearAll(context)
+                onResult(false)
+                return@launch
+            }
+
+            try {
+                val response = repository.checkJwt(token)
+                val isValid = response?.data != null
+
+                if (!isValid) {
+                    AuthUtil.clearAll(context)
                 }
-            } else {
+
+                onResult(isValid)
+
+            } catch (_: Exception) {
+                AuthUtil.clearAll(context)
                 onResult(false)
             }
         }
     }
+
 
     fun logout(context: Context, onResult: (Boolean) -> Unit) {
         viewModelScope.launch {
@@ -133,11 +160,8 @@ class AuthViewModel @Inject constructor(
                     val isSuccess = response?.data?.loggedOut == true
 
                     if (isSuccess) {
-                        AuthUtil.clearToken(context)
-                        AuthUtil.clearLoginMethod(context)
-                        AuthUtil.clearProfile(context)
-                        _loginResult.value = null
-                        _isLoading.value = false
+                        AuthUtil.clearAll(context)
+                        clearAll()
 
                         if (loginMethod == "google") {
                             val googleClient = getGoogleSignInClient(context)
@@ -247,28 +271,28 @@ class AuthViewModel @Inject constructor(
                                 AuthUtil.saveRole(context, role.toString())
                                 AuthUtil.saveLoginMethod(context, "google")
 
-                                _googleSignInResult.value = "sukses"
+                                _googleAuthMessage.value = "Selamat Datang 👋🏻"
                                 onComplete(true)
                             } else {
-                                _googleSignInResult.value = "Token tidak valid"
+                                _errorMessage.value = "Token tidak valid"
                             }
                         } else {
                             val errorJson = response.errorBody()?.string()
-                            _googleSignInResult.value =
+                            _errorMessage.value =
                                 parseErrorMessage(errorJson) ?: "Gagal Masuk"
                         }
                     } catch (e: Exception) {
-                        _googleSignInResult.value = e.message
+                        _errorMessage.value = e.message
                     }
                 }
 
             } else {
-                _googleSignInResult.value = "Token tidak ditemukan"
+                _errorMessage.value = "Token tidak ditemukan"
                 onComplete(false)
             }
 
         } catch (e: Exception) {
-            _googleSignInResult.value = e.localizedMessage
+            _errorMessage.value = e.localizedMessage
             onComplete(false)
         }
     }

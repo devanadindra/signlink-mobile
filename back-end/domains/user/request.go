@@ -37,12 +37,8 @@ type ChangePasswordReq struct {
 }
 
 type UpdateProfileReq struct {
-	Name             string `json:"name" validate:"required"`
-	Email            string
-	DestinationID    string
-	Address          string
-	ZipCode          string
-	DestinationLabel string
+	Name  string `json:"name" validate:"required"`
+	Email string `json:"email" validate:"required"`
 }
 
 type AvatarReq struct {

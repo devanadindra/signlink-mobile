@@ -1,5 +1,7 @@
 package com.example.signlink
 
+import android.net.Uri
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.ExperimentalAnimationApi
@@ -17,7 +19,8 @@ import com.example.signlink.screens.kamus.KamusScreen
 import com.example.signlink.screens.kamus.KamusListScreen
 import com.example.signlink.screens.kamus.KamusDetailScreen
 import com.example.signlink.screens.kamus.AddKamusScreen
-import com.example.signlink.screens.ProfileScreen
+import com.example.signlink.screens.profile.ProfileScreen
+import com.example.signlink.screens.profile.EditProfileScreen
 import com.example.signlink.screens.VoiceToTextScreen
 import com.example.signlink.screens.SplashScreen
 import com.example.signlink.screens.OpeningScreen
@@ -40,6 +43,7 @@ import com.example.signlink.viewmodel.AuthViewModel
 import com.example.signlink.viewmodel.CustomerViewModel
 import com.google.accompanist.navigation.animation.composable
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
+import org.json.JSONObject
 
 object Destinations {
     const val SPLASH_SCREEN = "splash_screen"
@@ -57,6 +61,7 @@ object Destinations {
     const val KAMUS_DETAIL_SCREEN = "kamus_detail_screen"
     const val TTI_SCREEN = "tti_screen"
     const val PROFILE_SCREEN = "profile_screen"
+    const val EDIT_PROFILE_SCREEN = "edit_profile_screen"
     const val LATIHAN_SCREEN = "latihan_screen"
     const val LATIHAN_DETAIL_SCREEN = "latihan_detail_screen/{charactersJson}"
     const val LATIHAN_RESULT_SCREEN = "latihan_result_screen"
@@ -80,6 +85,7 @@ fun AppNavHost() {
         ) { result ->
             authViewModel.handleGoogleSignInResult(context, result) { isSuccess ->
                 if (isSuccess) {
+                    Toast.makeText(context, "Berhasil: Selamat Datang 👋🏻", Toast.LENGTH_SHORT).show()
                     navController.popBackStack(Destinations.OPENING_SCREEN, inclusive = true)
                     navController.navigate(Destinations.HOME_SCREEN)
                 }
@@ -393,5 +399,34 @@ fun AppNavHost() {
                 data = kamusData
             )
         }
+
+        // edit profile
+        composable(
+            route = "${Destinations.EDIT_PROFILE_SCREEN}/{data}",
+            arguments = listOf(
+                navArgument("data") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+
+            val encoded = backStackEntry.arguments?.getString("data") ?: ""
+            val decodedJson = Uri.decode(encoded)
+
+            val json = JSONObject(decodedJson)
+
+            val name = json.getString("name")
+            val email = json.getString("email")
+            val profile = json.getString("profile")
+            val googleID = json.getString("google_id")
+
+            EditProfileScreen(
+                customerViewModel = customerViewModel,
+                navController = navController,
+                initialName = name,
+                initialEmail = email,
+                initialProfile = profile,
+                initialGoogleID = googleID
+            )
+        }
+
     }
 }

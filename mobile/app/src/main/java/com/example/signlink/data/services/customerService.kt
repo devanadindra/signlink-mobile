@@ -59,4 +59,10 @@ interface CustomerService {
         @Header("Authorization") authHeader: String,
         @Body req: ChangePaswordReq
     ): Response<ApiResponse<ChangePasswordRes>>
+
+    @PATCH("user/updateUser")
+    suspend fun updateProfile(
+        @Header("Authorization") authHeader: String,
+        @Body req: UpdateProfileReq
+    ): Response<ApiResponse<PersonalRes>>
 }

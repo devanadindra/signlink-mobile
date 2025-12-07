@@ -1,5 +1,6 @@
 package com.example.signlink.screens.auth
 
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -15,6 +16,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -29,6 +31,8 @@ import com.example.signlink.ui.theme.DarkText
 import com.example.signlink.viewmodel.AuthViewModel
 import androidx.compose.ui.platform.LocalContext
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 
 private fun isValidEmail(email: String): Boolean {
     return android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()
@@ -55,12 +59,9 @@ fun SignUpScreen(
     var passwordError by remember { mutableStateOf<String?>(null) }
     var confirmPasswordError by remember { mutableStateOf<String?>(null) }
 
-    val registerResult by viewModel.registerResult.collectAsState()
-    val loginResult by viewModel.loginResult.collectAsState()
+    val registerComplete by viewModel.registerComplete.collectAsState()
+    val loginComplete by viewModel.loginComplete.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
-
-    var statusMessage by remember { mutableStateOf<String?>(null) }
-    var isAutoLoggingIn by remember { mutableStateOf(false) }
 
     LaunchedEffect(password, confirmPassword) {
         if (password != confirmPassword && password.isNotBlank() && confirmPassword.isNotBlank()) {
@@ -72,10 +73,6 @@ fun SignUpScreen(
 
     fun validateForm(): Boolean {
         var isValid = true
-
-        viewModel.clearRegisterResult()
-        viewModel.clearLoginResult()
-        statusMessage = null
 
         // Cek Nama
         if (name.isBlank()) {
@@ -121,46 +118,41 @@ fun SignUpScreen(
         return isValid
     }
 
-    val generalErrorMessage = if (nameError == null && emailError == null && passwordError == null && confirmPasswordError == null && statusMessage == null) {
-        if (registerResult?.contains("success", true) == false || loginResult?.contains("success", true) == false) {
-            (registerResult ?: loginResult)?.replace("\"", "")
-        } else {
-            null
-        }
-    } else {
-        null
-    }
-
     val context = LocalContext.current
 
-    LaunchedEffect(registerResult) {
-        registerResult?.let {
-            if (it.contains("success", true)) {
-                statusMessage = "Pendaftaran berhasil! Mencoba masuk..."
-                delay(500L)
-                isAutoLoggingIn = true
-                viewModel.login(context, role, email, password)
+    LaunchedEffect(Unit) {
+        viewModel.clearAll()
+        launch {
+            viewModel.successMessage.collectLatest { success ->
+                success?.let {
+                    delay(1500)
+                    Toast.makeText(context, "Berhasil: $it", Toast.LENGTH_LONG).show()
+
+                    if (registerComplete && !loginComplete) {
+                        viewModel.clearSuccess()
+                        viewModel.login(context, role, email, password)
+                    } else if (loginComplete) {
+                        viewModel.clearSuccess()
+                        onSignUpSuccess()
+                    }
+                }
+            }
+        }
+
+        launch {
+            viewModel.errorMessage.collectLatest { error ->
+                error?.let {
+                    delay(1500)
+                    Toast.makeText(context, "Gagal: $it", Toast.LENGTH_LONG).show()
+
+                    if (!loginComplete) {
+                        onLoginFailed()
+                    }
+                    viewModel.clearError()
+                }
             }
         }
     }
-
-    LaunchedEffect(loginResult) {
-        loginResult?.let {
-            isAutoLoggingIn = false
-            if (it.contains("success", true)) {
-                statusMessage = "Berhasil masuk! Selamat datang."
-                delay(1500L)
-                onSignUpSuccess()
-            } else if (it.isNotBlank() && !it.contains("success", true)) {
-                statusMessage = "Gagal masuk otomatis: ${it.replace("\"", "")}"
-                delay(2000L)
-                statusMessage = null
-                onLoginFailed()
-            }
-        }
-    }
-
-    val showLoading = isLoading || isAutoLoggingIn
 
     Column(
         modifier = Modifier
@@ -350,39 +342,11 @@ fun SignUpScreen(
             )
         }
 
-        if (statusMessage != null) {
-            val isSuccess = statusMessage!!.contains("berhasil", ignoreCase = true) || statusMessage!!.contains("sukses", ignoreCase = true)
-            Text(
-                text = statusMessage!!.replace("\"", ""),
-                color = if (isSuccess) Color(0xFF4CAF50) else Color.Red,
-                fontWeight = FontWeight.SemiBold,
-                style = MaterialTheme.typography.bodySmall,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 10.dp),
-                textAlign = TextAlign.Center
-            )
-        }
-
-        generalErrorMessage?.let {
-            Text(
-                text = it.replace("\"", ""),
-                color = Color.Red,
-                fontWeight = FontWeight.SemiBold,
-                style = MaterialTheme.typography.bodySmall,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 10.dp),
-                textAlign = TextAlign.Center
-            )
-        }
-
-
         Spacer(modifier = Modifier.height(20.dp))
 
         Button(
             onClick = {
-                if (!showLoading && validateForm()) {
+                if (!isLoading && validateForm()) {
                     viewModel.register(name, email, password)
                 }
             },
@@ -391,9 +355,9 @@ fun SignUpScreen(
                 .height(56.dp),
             colors = ButtonDefaults.buttonColors(containerColor = SignLinkTeal),
             shape = RoundedCornerShape(50),
-            enabled = !showLoading
+            enabled = !isLoading
         ) {
-            if (showLoading) {
+            if (isLoading) {
                 CircularProgressIndicator(
                     color = Color.White,
                     modifier = Modifier.size(24.dp)
@@ -426,13 +390,20 @@ fun SignUpScreen(
 
         OutlinedButton(
             onClick = { onGoogleAuth() },
+            enabled = !isLoading,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(56.dp)
                 .border(1.dp, Color.LightGray, RoundedCornerShape(50)),
-            colors = ButtonDefaults.outlinedButtonColors(contentColor = DarkText, containerColor = Color.White),
+            colors = ButtonDefaults.outlinedButtonColors(
+                contentColor = DarkText,
+                containerColor = Color.White,
+                disabledContentColor = Color.Gray,
+                disabledContainerColor = Color(0xFFE0E0E0),
+            ),
             shape = RoundedCornerShape(50)
-        ) {
+        )
+ {
             Image(
                 painter = painterResource(id = R.drawable.google),
                 contentDescription = "Google Logo",
@@ -448,10 +419,15 @@ fun SignUpScreen(
             Text("Sudah memiliki akun? ", color = Color.Gray, fontSize = 16.sp)
             Text(
                 text = "Masuk",
-                color = SignLinkTeal,
+                color = if (isLoading) Color.Gray else SignLinkTeal,
                 fontSize = 16.sp,
                 fontWeight = FontWeight.SemiBold,
-                modifier = Modifier.clickable(onClick = onLoginClicked)
+                modifier = Modifier
+                    .alpha(if (isLoading) 0.5f else 1f)
+                    .clickable(
+                        enabled = !isLoading,
+                        onClick = onLoginClicked
+                    )
             )
         }
 

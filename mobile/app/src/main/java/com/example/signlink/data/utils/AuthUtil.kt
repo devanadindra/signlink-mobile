@@ -83,4 +83,12 @@ object AuthUtil {
         val prefs = context.getSharedPreferences("auth", Context.MODE_PRIVATE)
         prefs.edit().remove(PROFILE).apply()
     }
+
+    suspend fun clearAll(context: Context) {
+        context.dataStore.edit { it.clear() }
+
+        val prefs = context.getSharedPreferences("auth", Context.MODE_PRIVATE)
+        prefs.edit().clear().apply()
+    }
+
 }

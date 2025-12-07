@@ -34,10 +34,12 @@ class KamusViewModel @Inject constructor(
 
     fun clearError() {
         _errorMessage.value = null
+        _isLoading.value = false
     }
 
     fun clearSuccess() {
         _successMessage.value = null
+        _isLoading.value = false
     }
 
     fun getKamus(context: Context, kategori: String) {
@@ -76,15 +78,13 @@ class KamusViewModel @Inject constructor(
                 if (response.isSuccessful) {
                     val body = response.body()
                     _successMessage.value = body?.data?.message ?: "Upload successful"
-                    getKamus(context, kategori)
+//                    getKamus(context, kategori)
                 } else {
                     val errorJson = response.errorBody()?.string()
                     _errorMessage.value = parseErrorMessage(errorJson) ?: "Upload failed"
                 }
             } catch (e: Exception) {
                 _errorMessage.value = e.message
-            } finally {
-                _isLoading.value = false
             }
         }
     }

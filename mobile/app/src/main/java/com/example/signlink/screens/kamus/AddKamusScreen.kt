@@ -59,6 +59,7 @@ import com.example.signlink.data.utils.utils.uriToFile
 import com.example.signlink.ui.theme.DarkText
 import com.example.signlink.ui.theme.SignLinkTeal
 import com.example.signlink.viewmodel.KamusViewModel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -90,6 +91,7 @@ fun AddKamusScreen(
     LaunchedEffect(Unit) {
         viewmodel.errorMessage.collectLatest { error ->
             error?.let {
+                delay(1500)
                 Toast.makeText(context, "Gagal: $it", Toast.LENGTH_LONG).show()
                 viewmodel.clearError()
             }
@@ -99,6 +101,7 @@ fun AddKamusScreen(
     LaunchedEffect(Unit) {
         viewmodel.successMessage.collectLatest { success ->
             success?.let {
+                delay(1500)
                 Toast.makeText(context, "Berhasil: $it", Toast.LENGTH_SHORT).show()
                 navController.popBackStack()
                 viewmodel.clearSuccess()

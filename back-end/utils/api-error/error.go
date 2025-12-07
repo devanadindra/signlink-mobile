@@ -112,3 +112,10 @@ func DuplicateArti(arti string) error {
 func DuplicateEmail(email string) error {
 	return NewWarn(http.StatusConflict, fmt.Sprintf("email '%s' sudah digunakan", email))
 }
+
+func ErrGoogleEmailLocked() error {
+	return NewWarn(
+		http.StatusConflict,
+		"Email tidak dapat diubah untuk akun yang login via Google",
+	)
+}

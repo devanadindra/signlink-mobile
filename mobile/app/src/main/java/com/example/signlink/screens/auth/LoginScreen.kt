@@ -1,5 +1,6 @@
 package com.example.signlink.screens.auth
 
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -33,12 +34,15 @@ import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Icon
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.platform.LocalContext
 import com.example.signlink.ui.theme.SignLinkTeal
 import com.example.signlink.ui.theme.DarkText
 import com.example.signlink.viewmodel.AuthViewModel
 import kotlinx.coroutines.delay
 import androidx.compose.ui.input.pointer.pointerInput
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 
 private fun isValidEmail(email: String): Boolean {
     return android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()
@@ -64,12 +68,10 @@ fun LoginScreen(
     var emailError by remember { mutableStateOf<String?>(null) }
     var passwordError by remember { mutableStateOf<String?>(null) }
 
-    var successMessage by remember { mutableStateOf<String?>(null) }
     var roleChangeMessage by remember { mutableStateOf<String?>(null) }
 
-    val loginResult by viewModel.loginResult.collectAsState()
-    val googleSignInResult by viewModel.googleSignInResult.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
+    val loginComplete by viewModel.loginComplete.collectAsState()
     val context = LocalContext.current
 
     fun validateForm(): Boolean {
@@ -77,7 +79,6 @@ fun LoginScreen(
 
         emailError = null
         passwordError = null
-        successMessage = null
 
         if (email.isBlank()) {
             emailError = "Email tidak boleh kosong."
@@ -98,17 +99,34 @@ fun LoginScreen(
         return isValid
     }
 
-    LaunchedEffect(loginResult) {
-        loginResult?.let { result ->
-            if (result.contains("sukses", true)) {
-                successMessage = "Berhasil Masuk! Selamat datang."
+    LaunchedEffect(Unit) {
+        viewModel.clearAll()
+        launch {
+            viewModel.successMessage.collectLatest { success ->
+                success?.let {
+                    delay(1500)
+                    Toast.makeText(context, "Berhasil: $it", Toast.LENGTH_SHORT).show()
 
-                delay(2000L)
+                    if (loginComplete) {
+                        onLoginSuccess()
+                    }
 
-                onLoginSuccess()
+                    viewModel.clearSuccess()
+                }
+            }
+        }
+
+        launch {
+            viewModel.errorMessage.collectLatest { error ->
+                error?.let {
+                    delay(1500)
+                    Toast.makeText(context, "Gagal: $it", Toast.LENGTH_LONG).show()
+                    viewModel.clearError()
+                }
             }
         }
     }
+
 
     LaunchedEffect(tapCount) {
         if (tapCount > 0) {
@@ -254,35 +272,6 @@ fun LoginScreen(
             )
         }
 
-        if (successMessage != null) {
-            Text(
-                text = successMessage!!.replace("\"", ""),
-                color = Color(0xFF4CAF50),
-                fontWeight = FontWeight.SemiBold,
-                style = MaterialTheme.typography.bodySmall,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 10.dp),
-                textAlign = TextAlign.Center
-            )
-        }
-
-        var failedMessage = loginResult?: googleSignInResult
-        failedMessage?.let {
-            if (!it.contains("success", true) && successMessage == null) {
-                Text(
-                    text = it.replace("\"", ""),
-                    color = Color.Red,
-                    fontWeight = FontWeight.SemiBold,
-                    style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 10.dp),
-                    textAlign = TextAlign.Center
-                )
-            }
-        }
-
         Spacer(modifier = Modifier.height(10.dp))
 
         Row(
@@ -309,11 +298,9 @@ fun LoginScreen(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        val showLoading = isLoading || (loginResult?.contains("success", true) == true && successMessage != null)
-
         Button(
             onClick = {
-                if (!showLoading && validateForm()) {
+                if (!isLoading && validateForm()) {
                     viewModel.login(context, role, email, password)
                 }
             },
@@ -322,9 +309,9 @@ fun LoginScreen(
                 .height(56.dp),
             colors = ButtonDefaults.buttonColors(containerColor = SignLinkTeal),
             shape = RoundedCornerShape(50),
-            enabled = !showLoading
+            enabled = !isLoading
         ) {
-            if (showLoading) {
+            if (isLoading) {
                 CircularProgressIndicator(
                     color = Color.White,
                     modifier = Modifier.size(24.dp)
@@ -357,13 +344,20 @@ fun LoginScreen(
 
         OutlinedButton(
             onClick = { onGoogleAuth() },
+            enabled = !isLoading,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(56.dp)
                 .border(1.dp, Color.LightGray, RoundedCornerShape(50)),
-            colors = ButtonDefaults.outlinedButtonColors(contentColor = DarkText, containerColor = Color.White),
+            colors = ButtonDefaults.outlinedButtonColors(
+                contentColor = DarkText,
+                containerColor = Color.White,
+                disabledContentColor = Color.Gray,
+                disabledContainerColor = Color(0xFFE0E0E0),
+            ),
             shape = RoundedCornerShape(50)
-        ) {
+        )
+ {
             Image(
                 painter = painterResource(id = R.drawable.google),
                 contentDescription = "Google Logo",
@@ -379,15 +373,26 @@ fun LoginScreen(
             horizontalArrangement = Arrangement.Center,
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text("Belum memiliki akun? ", color = Color.Gray, fontSize = 16.sp)
+            Text(
+                "Belum memiliki akun? ",
+                color = Color.Gray,
+                fontSize = 16.sp
+            )
+
             Text(
                 text = "Daftar",
-                color = SignLinkTeal,
+                color = if (isLoading) Color.Gray else SignLinkTeal,
                 fontSize = 16.sp,
                 fontWeight = FontWeight.SemiBold,
-                modifier = Modifier.clickable(onClick = onSignUpClicked)
+                modifier = Modifier
+                    .alpha(if (isLoading) 0.5f else 1f)
+                    .clickable(
+                        enabled = !isLoading,
+                        onClick = onSignUpClicked
+                    )
             )
         }
+
 
         Spacer(modifier = Modifier.height(32.dp))
     }

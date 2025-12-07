@@ -24,6 +24,11 @@ data class ResetPasswordSubmit(
     val role: String,
 )
 
+data class UpdateProfileReq(
+    val name: String,
+    val email: String,
+    val role: String,
+)
 
 data class ChangePaswordReq(
     @SerializedName("current_password")

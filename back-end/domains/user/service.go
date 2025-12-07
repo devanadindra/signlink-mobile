@@ -349,16 +349,24 @@ func (s *service) UpdateProfile(ctx context.Context, input UpdateProfileReq) (*P
 	switch role {
 	case constants.CUSTOMER:
 		var customer Customer
-		err = db.WithContext(ctx).
+		if err := db.WithContext(ctx).
 			Where("id = ?", userID).
-			First(&customer).Error
-		if err != nil {
+			First(&customer).Error; err != nil {
 			return nil, apierror.FromErr(err)
 		}
 
+		if customer.GoogleID != "" {
+			if input.Email != customer.Email {
+				return nil, apierror.ErrGoogleEmailLocked()
+			}
+		}
+
 		customer.Name = input.Name
-		customer.Email = input.Email
 		customer.UpdatedAt = time.Now()
+
+		if customer.GoogleID == "" {
+			customer.Email = input.Email
+		}
 
 		if err := db.WithContext(ctx).Save(&customer).Error; err != nil {
 			return nil, apierror.FromErr(err)
