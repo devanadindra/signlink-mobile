@@ -53,7 +53,6 @@ fun EditProfileScreen(
     var email by remember { mutableStateOf(initialEmail) }
     var profile by remember { mutableStateOf(initialProfile) }
     val isGoogleLogin = initialGoogleID.isNotBlank()
-    var currentProfileUrl by remember { mutableStateOf("") }
 
     DisposableEffect(Unit) {
         customerViewModel.clearUpdateProfileResult()
