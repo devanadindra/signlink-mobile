@@ -158,11 +158,11 @@ fun ProfileScreen(
             ProfileSection(title = "Pusat Bantuan") {
                 ProfileOptionItem(
                     text = "Kebijakan Privasi",
-                    onClick = { /* TODO: Navigasi Kebijakan Privasi */ }
+                    onClick = { navController.navigate(Destinations.PRIVACY_POLICY_SCREEN) }
                 )
                 ProfileOptionItem(
                     text = "Bantuan SignLink",
-                    onClick = { /* TODO: Navigasi Bantuan */ }
+                    onClick = { navController.navigate(Destinations.HELP_SCREEN) }
                 )
             }
 

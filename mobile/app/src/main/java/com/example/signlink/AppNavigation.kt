@@ -37,6 +37,8 @@ import com.example.signlink.screens.kuis.KuisResultScreen
 import com.example.signlink.screens.latihan.LatihanScreen
 import com.example.signlink.screens.latihan.LatihanDetailScreen
 import com.example.signlink.screens.latihan.LatihanResultScreen
+import com.example.signlink.screens.profile.HelpScreen
+import com.example.signlink.screens.profile.PrivacyPolicyScreen
 import com.example.signlink.screens.tti.TTIResultScreen
 import com.example.signlink.screens.tti.TextToIsyaratScreen
 import com.example.signlink.viewmodel.AuthViewModel
@@ -68,6 +70,8 @@ object Destinations {
     const val SIGN_CLASSIFIER_SCREEN = "sign_classifier_screen"
     const val FORGOT_PASSWORD_SCREEN = "forgot_password_screen"
     const val CHANGE_PASSWORD_SCREEN = "change_password_screen"
+    const val PRIVACY_POLICY_SCREEN = "privacy_policy_screen"
+    const val HELP_SCREEN = "help_screen"
 }
 
 @OptIn(ExperimentalAnimationApi::class)
@@ -385,6 +389,20 @@ fun AppNavHost() {
         // Texts to Isyarat
         composable(Destinations.TTI_SCREEN) {
             TextToIsyaratScreen(
+                navController = navController,
+            )
+        }
+
+        // Privacy Policy
+        composable(Destinations.PRIVACY_POLICY_SCREEN) {
+            PrivacyPolicyScreen(
+                navController = navController,
+            )
+        }
+
+        // Help
+        composable(Destinations.HELP_SCREEN) {
+            HelpScreen(
                 navController = navController,
             )
         }
