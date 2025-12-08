@@ -28,7 +28,8 @@ fun VideoPlayer(
     onPlayerReady: (ExoPlayer) -> Unit = {}
 ) {
     val context = LocalContext.current
-    val baseUrl= "http://10.0.2.2:7777/api/"
+    // http://103.150.190.75:7777/api/
+    val baseUrl= "https://devanadindra.site/api/"
 
     val exoPlayer = remember(videoUrl) {
         ExoPlayer.Builder(context).build().apply {
