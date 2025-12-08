@@ -2,12 +2,19 @@ pipeline {
     agent any
 
     stages {
-        stage('Deploy to VPS') {
+        stage('Deploy') {
             steps {
                 sh '''
-                cd ~/signlink
-                git pull origin main
-                docker compose up -d --build
+                    cd /home/depaaa/signlink
+
+                    echo ">>> Pulling latest code..."
+                    git pull
+
+                    cd /back-end
+
+                    echo ">>> Restarting Docker..."
+                    docker compose down || true
+                    docker compose up -d --build
                 '''
             }
         }
