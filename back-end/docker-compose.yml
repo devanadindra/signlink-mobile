@@ -1,0 +1,47 @@
+version: '3.9'
+
+services:
+  db:
+    image: postgres:15
+    container_name: db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${BACKEND_DATABASE_ROOT_USERNAME}
+      POSTGRES_PASSWORD: ${BACKEND_DATABASE_ROOT_PASSWORD}
+      POSTGRES_DB: ${BACKEND_DATABASE_NAME}
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+  back-end:
+    build: ./back-end
+    container_name: back-end
+    restart: unless-stopped
+    env_file:
+      - ./.env
+    ports:
+      - "${BACKEND_PORT}:${BACKEND_PORT}"
+    volumes:
+      - ./back-end/uploads:/app/uploads
+      - ./back-end/kamus_videos:/app/kamus_videos
+    depends_on:
+      - db
+
+  nginx:
+    image: nginx:alpine
+    container_name: nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf
+      - /etc/letsencrypt/live/devanadindra.site/fullchain.pem:/etc/letsencrypt/live/devanadindra.site/fullchain.pem:ro
+      - /etc/letsencrypt/live/devanadindra.site/privkey.pem:/etc/letsencrypt/live/devanadindra.site/privkey.pem:ro
+    depends_on:
+      - back-end
+
+
+volumes:
+  db_data:
