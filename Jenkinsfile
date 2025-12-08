@@ -10,8 +10,6 @@ pipeline {
                     echo ">>> Pulling latest code..."
                     git pull
 
-                    cd /back-end
-
                     echo ">>> Restarting Docker..."
                     docker compose down || true
                     docker compose up -d --build
