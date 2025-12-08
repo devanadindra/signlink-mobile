@@ -1,7 +1,7 @@
 # =========================
 # Stage 1: Builder
 # =========================
-FROM golang:1.21-alpine AS builder
+FROM golang:latest AS builder
 
 # Install git dan build tools
 RUN apk add --no-cache git build-base
