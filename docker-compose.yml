@@ -19,7 +19,7 @@ services:
     container_name: back-end
     restart: unless-stopped
     env_file:
-      - ./.env
+      - ./back-end/.env
     ports:
       - "${BACKEND_PORT}:${BACKEND_PORT}"
     volumes:
