@@ -294,7 +294,7 @@ fun ChangePasswordScreen(
 
             val showLoading = isLoading || successMessage != null
 
-            Button(
+            OutlinedButton(
                 onClick = {
                     if (!showLoading && validateForm()) {
                         viewModel.changePassword(context, currentPassword, newPassword)
@@ -303,7 +303,12 @@ fun ChangePasswordScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = SignLinkTeal),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = DarkText,
+                    containerColor = SignLinkTeal,
+                    disabledContentColor = Color.Gray,
+                    disabledContainerColor = Color(0xFFE0E0E0),
+                ),
                 shape = RoundedCornerShape(50),
                 enabled = !showLoading
             ) {

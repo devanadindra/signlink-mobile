@@ -142,12 +142,17 @@ fun EditProfileScreen(
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            Button(
+            OutlinedButton(
                 onClick = ::handleSubmit,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = SignLinkTeal),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = DarkText,
+                    containerColor = SignLinkTeal,
+                    disabledContentColor = Color.Gray,
+                    disabledContainerColor = Color(0xFFE0E0E0),
+                ),
                 shape = RoundedCornerShape(50),
                 enabled = !isLoading &&
                         name.isNotBlank() &&

@@ -23,7 +23,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.FileUpload
-import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
@@ -282,12 +281,17 @@ fun AddKamusScreen(
 
             Spacer(modifier = Modifier.height(40.dp))
 
-            Button(
+            OutlinedButton(
                 onClick = ::handleSubmit,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = SignLinkTeal),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = DarkText,
+                    containerColor = SignLinkTeal,
+                    disabledContentColor = Color.Gray,
+                    disabledContainerColor = Color(0xFFE0E0E0),
+                ),
                 shape = RoundedCornerShape(50),
                 enabled = !isLoading
             ) {

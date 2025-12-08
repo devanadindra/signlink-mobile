@@ -43,7 +43,7 @@ fun TTIResultScreen(
     data: List<KamusData>,
 ) {
     val context = LocalContext.current
-    val baseUrl = if (isEmulator()) "http://10.0.2.2:7777/api/" else "http://10.0.2.2:7777/api/"
+    val baseUrl = "http://10.0.2.2:7777/api/"
 
     val videoList = remember { data.map { it.url } }
     val wordList = remember { data.map { it.arti.replace("_", " ") } }

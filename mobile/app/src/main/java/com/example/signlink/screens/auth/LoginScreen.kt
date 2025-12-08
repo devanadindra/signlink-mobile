@@ -27,7 +27,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.signlink.R
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
@@ -298,7 +297,7 @@ fun LoginScreen(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        Button(
+        OutlinedButton(
             onClick = {
                 if (!isLoading && validateForm()) {
                     viewModel.login(context, role, email, password)
@@ -307,7 +306,12 @@ fun LoginScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(56.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = SignLinkTeal),
+            colors = ButtonDefaults.outlinedButtonColors(
+                contentColor = DarkText,
+                containerColor = SignLinkTeal,
+                disabledContentColor = Color.Gray,
+                disabledContainerColor = Color(0xFFE0E0E0),
+            ),
             shape = RoundedCornerShape(50),
             enabled = !isLoading
         ) {

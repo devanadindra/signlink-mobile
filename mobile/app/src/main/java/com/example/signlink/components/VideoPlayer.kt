@@ -28,14 +28,7 @@ fun VideoPlayer(
     onPlayerReady: (ExoPlayer) -> Unit = {}
 ) {
     val context = LocalContext.current
-    val baseUrl = remember {
-        if (isEmulator()) {
-            "http://10.0.2.2:7777/api/"
-        } else {
-//            "http://192.168.1.7:7777/api/"
-            "http://10.0.2.2:7777/api/"
-        }
-    }
+    val baseUrl= "http://10.0.2.2:7777/api/"
 
     val exoPlayer = remember(videoUrl) {
         ExoPlayer.Builder(context).build().apply {
@@ -137,12 +130,4 @@ fun VideoPlayer(
             }
         }
     }
-}
-
-fun isEmulator(): Boolean {
-    return (android.os.Build.FINGERPRINT.startsWith("generic")
-            || android.os.Build.FINGERPRINT.lowercase().contains("vbox")
-            || android.os.Build.FINGERPRINT.lowercase().contains("test-keys")
-            || android.os.Build.MODEL.contains("Emulator")
-            || android.os.Build.MODEL.contains("Android SDK built for x86"))
 }

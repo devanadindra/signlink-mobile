@@ -344,7 +344,7 @@ fun SignUpScreen(
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        Button(
+        OutlinedButton(
             onClick = {
                 if (!isLoading && validateForm()) {
                     viewModel.register(name, email, password)
@@ -353,7 +353,12 @@ fun SignUpScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(56.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = SignLinkTeal),
+            colors = ButtonDefaults.outlinedButtonColors(
+                contentColor = DarkText,
+                containerColor = SignLinkTeal,
+                disabledContentColor = Color.Gray,
+                disabledContainerColor = Color(0xFFE0E0E0),
+            ),
             shape = RoundedCornerShape(50),
             enabled = !isLoading
         ) {
