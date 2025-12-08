@@ -57,7 +57,7 @@ $$;
 	grantCustomerSQL := fmt.Sprintf(`
 		GRANT SELECT, INSERT, UPDATE ON customer TO %s;
 		GRANT SELECT ON kamus TO %s;
-		GRANT select, insert  ON invalide_token TO %s;
+		GRANT select, insert  ON invalid_token TO %s;
 	`, customerUser, customerUser, customerUser)
 
 	if err := db.Exec(grantCustomerSQL).Error; err != nil {
