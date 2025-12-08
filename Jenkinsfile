@@ -39,9 +39,6 @@ pipeline {
             steps {
                 withCredentials([file(credentialsId: 'env', variable: 'ENV_FILE')]) {
                     sh '''
-                        mkdir -p signlink
-                        mkdir -p signlink/back-end
-
                         cp "$ENV_FILE" "signlink/.env"
                         cp "$ENV_FILE" "signlink/back-end/.env"
                     '''
