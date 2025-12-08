@@ -3,38 +3,39 @@
 # =========================
 FROM golang:1.24-alpine AS builder
 
-# Install git dan build tools
+# Build deps
 RUN apk add --no-cache git build-base
 
-# Set working directory
 WORKDIR /app
 
-# Copy go.mod dan go.sum dulu (biar caching efektif)
+# Enable go build cache
+ENV GOMODCACHE=/go/pkg/mod
+ENV GOCACHE=/root/.cache/go-build
+
+# Copy go.mod & go.sum
 COPY go.mod go.sum ./
+
 RUN go mod download
 
 # Copy source code
 COPY . .
 
-# Build executable
-RUN go build -o app .
+# Use caching mount for fast builds
+RUN --mount=type=cache,target=/root/.cache/go-build \
+    --mount=type=cache,target=/go/pkg/mod \
+    go build -o app .
 
 # =========================
 # Stage 2: Final Image
 # =========================
 FROM alpine:latest
 
-# Install ca-certificates (needed for HTTPS requests)
 RUN apk add --no-cache ca-certificates
 
-# Set working directory
 WORKDIR /app
 
-# Copy executable dari builder
 COPY --from=builder /app/app .
 
-# Expose backend port
 EXPOSE 7777
 
-# Run the app
 CMD ["./app"]
