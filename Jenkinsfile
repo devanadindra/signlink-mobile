@@ -35,24 +35,13 @@ pipeline {
             }
         }
 
-        stage('Copy ENV') {
+        stage('Deploy') {
             steps {
-                withCredentials([file(credentialsId: 'env', variable: 'ENV_FILE')]) {
-                    sh '''
-                        cp "$ENV_FILE" ".env"
-                        cp "$ENV_FILE" "back-end/.env"
-                    '''
-                }
+                sh '''
+                    cd signlink
+                    docker-compose up -d --build
+                '''
             }
         }
-
-        // stage('Deploy') {
-        //     steps {
-        //         sh '''
-        //             cd signlink
-        //             docker-compose up -d --build
-        //         '''
-        //     }
-        // }
     }
 }
