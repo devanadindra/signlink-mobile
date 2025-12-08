@@ -24,7 +24,7 @@ object NetworkModule {
     // "http://10.0.2.2:7777/api/"
     // http://103.150.190.75:7777/api/
     // https://devanadindra.site/api/
-    private const val BASE_URL= "http://10.0.2.2:7777/api/"
+    private const val BASE_URL= "https://devanadindra.site/api/"
 
     @Provides
     @Singleton

@@ -34,6 +34,7 @@ import com.example.signlink.screens.auth.SignUpScreen
 import com.example.signlink.screens.kuis.KuisScreen
 import com.example.signlink.screens.kuis.KuisDetailScreen
 import com.example.signlink.screens.kuis.KuisResultScreen
+import com.example.signlink.screens.latihan.AddLatihanScreen
 import com.example.signlink.screens.latihan.LatihanScreen
 import com.example.signlink.screens.latihan.LatihanDetailScreen
 import com.example.signlink.screens.latihan.LatihanResultScreen
@@ -66,6 +67,7 @@ object Destinations {
     const val EDIT_PROFILE_SCREEN = "edit_profile_screen"
     const val LATIHAN_SCREEN = "latihan_screen"
     const val LATIHAN_DETAIL_SCREEN = "latihan_detail_screen/{charactersJson}"
+    const val ADD_LATIHAN_SCREEN = "add_latihan_screen"
     const val LATIHAN_RESULT_SCREEN = "latihan_result_screen"
     const val SIGN_CLASSIFIER_SCREEN = "sign_classifier_screen"
     const val FORGOT_PASSWORD_SCREEN = "forgot_password_screen"
@@ -347,6 +349,7 @@ fun AppNavHost() {
         composable(Destinations.LATIHAN_SCREEN) {
             LatihanScreen(
                 navController = navController,
+                onAddLatihanClicked = { navController.navigate(Destinations.ADD_LATIHAN_SCREEN) }
             )
         }
 
@@ -373,6 +376,13 @@ fun AppNavHost() {
             LatihanResultScreen(
                 navController = navController,
                 resultJson = resultJson
+            )
+        }
+
+        // Add Kamus Screen
+        composable(Destinations.ADD_LATIHAN_SCREEN) {
+            AddLatihanScreen(
+                navController = navController,
             )
         }
 

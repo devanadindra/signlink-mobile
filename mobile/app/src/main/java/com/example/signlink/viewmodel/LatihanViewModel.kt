@@ -66,7 +66,7 @@ class LatihanViewModel @Inject constructor(
         }
     }
 
-    fun addLatihan(context: Context, name: String, soalLatihan: List<String>,  page: Int, limit: Int) {
+    fun addLatihan(context: Context, name: String, soalLatihan: List<String>) {
         viewModelScope.launch {
             _isLoading.value = true
             val token = AuthUtil.jwtAuth(context)
@@ -84,7 +84,6 @@ class LatihanViewModel @Inject constructor(
                 if (response.isSuccessful) {
                     val body = response.body()
                     _successMessage.value = body?.data?.message ?: "Upload successful"
-                    getAllLatihan(context, page, limit)
                 } else {
                     val errorJson = response.errorBody()?.string()
                     _errorMessage.value = parseErrorMessage(errorJson) ?: "Upload failed"
@@ -126,8 +125,6 @@ class LatihanViewModel @Inject constructor(
     }
 
     fun getAllLatihan(context: Context, page: Int, limit: Int) {
-        Log.d("LatihanViewModel", "Memanggil API getAllLatihan page=$page pageSize=$limit")
-        println("CALL API -> getAllLatihan (page=$page)")
         viewModelScope.launch {
             _isLoading.value = true
             val token = AuthUtil.jwtAuth(context)

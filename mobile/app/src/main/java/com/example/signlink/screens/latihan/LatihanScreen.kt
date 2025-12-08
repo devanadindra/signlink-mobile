@@ -12,6 +12,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ListAlt
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -36,15 +38,25 @@ import com.example.signlink.components.DictionaryHeaderCard
 import com.example.signlink.ui.theme.SignLinkTeal
 import com.example.signlink.Destinations
 import com.example.signlink.data.models.latihan.LatihanData
+import com.example.signlink.data.utils.AuthUtil.getRole
 import com.example.signlink.viewmodel.LatihanViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LatihanScreen(
     viewModel: LatihanViewModel = hiltViewModel(),
-    navController: NavController
+    navController: NavController,
+    onAddLatihanClicked: () -> Unit = {}
 ) {
     val context = LocalContext.current
+
+    var userRole by remember { mutableStateOf<String?>(null) }
+
+    LaunchedEffect(Unit) {
+        userRole = getRole(context)
+    }
+
+    val currentRole = userRole ?: "CUSTOMER"
 
     val latihanList by viewModel.latihanList.collectAsState(initial = emptyList())
     val isLoading by viewModel.isLoading.collectAsState()
@@ -56,7 +68,7 @@ fun LatihanScreen(
 
     val listState = rememberLazyListState()
 
-    val pageSize = 8
+    val pageSize = 5
 
     LaunchedEffect(currentPage) {
         listState.scrollToItem(0)
@@ -75,6 +87,7 @@ fun LatihanScreen(
     LaunchedEffect(successMessage) {
         successMessage?.let { success ->
             if (success.isNotBlank()) {
+                Toast.makeText(context, "Berhasil: $success", Toast.LENGTH_SHORT).show()
                 viewModel.clearSuccess()
             }
         }
@@ -115,10 +128,36 @@ fun LatihanScreen(
                 contentDescription = "SignLink Logo",
                 modifier = Modifier
                     .size(80.dp)
-                    .padding(top = 16.dp)
             )
 
             Spacer(modifier = Modifier.height(16.dp))
+
+            if (userRole == "ADMIN") {
+                Spacer(modifier = Modifier.height(8.dp))
+                Button(
+                    onClick = onAddLatihanClicked,
+                    colors = ButtonDefaults.buttonColors(containerColor = SignLinkTeal),
+                    shape = RoundedCornerShape(12.dp),
+                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp),
+                    modifier = Modifier
+                        .fillMaxWidth(0.9f)
+                        .height(50.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = "Tambah Latihan",
+                        tint = Color.White
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Tambah Modul Latihan",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color.White
+                    )
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+            }
 
             // Header Card
             DictionaryHeaderCard(
@@ -143,8 +182,12 @@ fun LatihanScreen(
                     key = { item -> item.id }) { item ->
                     LatihanModulCard(
                         modul = item,
+                        userRole = currentRole,
                         onClick = {
                             navController.navigate("${Destinations.LATIHAN_DETAIL_SCREEN}/${item.id}")
+                        },
+                        onDeleteClicked = {
+                            viewModel.deleteLatihan(context, item.id, currentPage, pageSize)
                         },
                         modifier = Modifier.padding(vertical = 8.dp)
                     )
@@ -215,25 +258,30 @@ fun LatihanScreen(
 fun LatihanModulCard(
     modul: LatihanData,
     onClick: () -> Unit,
+    userRole: String,
+    onDeleteClicked: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val isUserAdmin = userRole == "ADMIN"
+    val itemHeight = if (isUserAdmin) 80.dp else 60.dp
+
     Card(
         shape = RoundedCornerShape(12.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
         colors = CardDefaults.cardColors(containerColor = SignLinkTeal),
         modifier = modifier
             .fillMaxWidth(0.9f)
-            .height(90.dp)
+            .height(itemHeight)
             .clickable(onClick = onClick)
     ) {
         Row(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp),
+                .fillMaxSize(),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
                 modifier = Modifier
+                    .padding(16.dp)
                     .size(56.dp)
                     .background(Color.White.copy(alpha = 0.2f), RoundedCornerShape(8.dp)),
                 contentAlignment = Alignment.Center
@@ -270,6 +318,26 @@ fun LatihanModulCard(
                         color = Color.White,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Normal
+                    )
+                }
+            }
+
+            if (isUserAdmin) {
+                Spacer(modifier = Modifier.width(4.dp))
+
+                Box(
+                    modifier = Modifier
+                        .weight(0.35f)
+                        .fillMaxHeight()
+                        .background(Color(0xFFE57373), shape = RoundedCornerShape(topEnd = 12.dp, bottomEnd = 12.dp))
+                        .clickable(onClick = onDeleteClicked),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        Icons.Default.Delete,
+                        contentDescription = "Hapus",
+                        tint = Color.White,
+                        modifier = Modifier.size(28.dp)
                     )
                 }
             }

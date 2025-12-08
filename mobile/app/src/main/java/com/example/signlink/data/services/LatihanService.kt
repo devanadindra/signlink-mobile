@@ -25,7 +25,6 @@ interface LatihanService {
         @Path("id") id: String
     ): Response<ApiResponse<LatihanByIdRes>>
 
-    @Multipart
     @POST("latihan/")
     suspend fun addLatihan(
         @Header("Authorization") authHeader: String,
