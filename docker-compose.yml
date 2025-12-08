@@ -5,6 +5,8 @@ services:
     image: postgres:15
     container_name: db
     restart: unless-stopped
+    env_file:
+    - ./back-end/.env
     environment:
       POSTGRES_USER: ${BACKEND_DATABASE_ROOT_USERNAME}
       POSTGRES_PASSWORD: ${BACKEND_DATABASE_ROOT_PASSWORD}
