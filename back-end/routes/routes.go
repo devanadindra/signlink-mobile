@@ -7,6 +7,7 @@ import (
 
 	"github.com/devanadindraa/NTTH-Store/back-end/database"
 	"github.com/devanadindraa/NTTH-Store/back-end/domains/kamus"
+	"github.com/devanadindraa/NTTH-Store/back-end/domains/latihan"
 	"github.com/devanadindraa/NTTH-Store/back-end/domains/user"
 	"github.com/devanadindraa/NTTH-Store/back-end/middlewares"
 	apierror "github.com/devanadindraa/NTTH-Store/back-end/utils/api-error"
@@ -22,6 +23,7 @@ func NewDependency(
 	customerDB *database.CustomerDB,
 	userHandler user.Handler,
 	kamusHandler kamus.Handler,
+	latihanHandler latihan.Handler,
 ) *Dependency {
 
 	if conf.Environment != config.DEVELOPMENT_ENVIRONMENT {
@@ -71,6 +73,14 @@ func NewDependency(
 		kamus.GET("/all", mw.JWT(constants.ADMIN, constants.CUSTOMER), kamusHandler.GetAllKamus)
 		kamus.POST("/", mw.JWT(constants.ADMIN), kamusHandler.AddKamus)
 		kamus.DELETE("/:id", mw.JWT(constants.ADMIN), kamusHandler.DeleteKamus)
+	}
+
+	latihan := api.Group("/latihan")
+	{
+		latihan.GET("/", mw.JWT(constants.ADMIN, constants.CUSTOMER), latihanHandler.GetAllLatihan)
+		latihan.GET("/:id", mw.JWT(constants.ADMIN, constants.CUSTOMER), latihanHandler.GetLatihanById)
+		latihan.POST("/", mw.JWT(constants.ADMIN), latihanHandler.AddLatihan)
+		latihan.DELETE("/:id", mw.JWT(constants.ADMIN), latihanHandler.DeleteLatihan)
 	}
 
 	router.NoRoute(func(ctx *gin.Context) {

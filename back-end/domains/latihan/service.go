@@ -2,25 +2,25 @@ package latihan
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"os"
-	"path/filepath"
 	"strings"
 	"time"
 
 	"github.com/devanadindraa/NTTH-Store/back-end/database"
+	apierror "github.com/devanadindraa/NTTH-Store/back-end/utils/api-error"
 	"github.com/devanadindraa/NTTH-Store/back-end/utils/config"
 	"github.com/devanadindraa/NTTH-Store/back-end/utils/constants"
 	"github.com/devanadindraa/NTTH-Store/back-end/utils/dbselector"
-	fileutils "github.com/devanadindraa/NTTH-Store/back-end/utils/file"
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 type Service interface {
-	GetKamus(ctx context.Context, kategori string) (*[]KamusRes, error)
-	AddKamus(ctx context.Context, req KamusReq) error
-	DeleteKamus(ctx context.Context, kamusId string) error
-	GetAllKamus(ctx context.Context, input GetAllKamusReq, filter constants.FilterReq) (*[]KamusRes, int64, error)
+	GetAllLatihan(ctx context.Context, input GetAllLatihanReq, filter constants.FilterReq) (*[]LatihanRes, int64, error)
+	GetLatihanById(ctx context.Context, latihanId string) (*LatihanByIdRes, error)
+	AddLatihan(ctx context.Context, req LatihanReq) error
+	DeleteLatihan(ctx context.Context, latihanId string) error
 }
 
 type service struct {
@@ -39,167 +39,139 @@ func NewService(config *config.Config, dbSelector *dbselector.DBService, Custome
 	}
 }
 
-func (s *service) GetKamus(ctx context.Context, kategori string) (*[]KamusRes, error) {
-	db, err := s.dbSelector.GetDBByRole(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	var kamusList []Kamus
-	err = db.WithContext(ctx).
-		Where("kategori = ?", kategori).
-		Find(&kamusList).Error
-	if err != nil {
-		return nil, err
-	}
-
-	res := make([]KamusRes, len(kamusList))
-	for i, k := range kamusList {
-		res[i] = KamusRes{
-			ID:       k.ID.String(),
-			Arti:     k.Arti,
-			Kategori: k.Kategori,
-			VideoUrl: k.VideoUrl,
-		}
-	}
-
-	return &res, nil
-}
-
-func (s *service) AddKamus(ctx context.Context, req KamusReq) error {
-	db, err := s.dbSelector.GetDBByRole(ctx)
-	if err != nil {
-		return err
-	}
-
-	tx := db.WithContext(ctx).Begin()
-	if tx.Error != nil {
-		return tx.Error
-	}
-
-	defer func() {
-		if r := recover(); r != nil {
-			tx.Rollback()
-		}
-	}()
-
-	kamusId := uuid.New()
-
-	file, err := req.Video.Open()
-	if err != nil {
-		tx.Rollback()
-		return fmt.Errorf("failed to open video: %w", err)
-	}
-	defer file.Close()
-
-	ext := filepath.Ext(req.Video.Filename)
-	filename, err := fileutils.GenerateMediaName(kamusId.String())
-	if err != nil {
-		tx.Rollback()
-		return fmt.Errorf("error generating image name: %v", err)
-	}
-
-	filename = fmt.Sprintf("%s%s", filename, ext)
-	path := filepath.Join("kamus_videos", req.Kategori, filename)
-	videoURL := "/kamus_videos/" + req.Kategori + "/" + filename
-
-	if err := os.MkdirAll(filepath.Dir(path), os.ModePerm); err != nil {
-		tx.Rollback()
-		return fmt.Errorf("failed to create directory: %w", err)
-	}
-
-	if err := fileutils.SaveMedia(ctx, req.Video, path); err != nil {
-		tx.Rollback()
-		return err
-	}
-
-	kamus := Kamus{
-		ID:        kamusId,
-		Arti:      req.Arti,
-		Kategori:  req.Kategori,
-		VideoUrl:  videoURL,
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
-	}
-
-	if err := tx.Create(&kamus).Error; err != nil {
-		tx.Rollback()
-		return err
-	}
-
-	return tx.Commit().Error
-}
-
-func (s *service) DeleteKamus(ctx context.Context, kamusId string) error {
-	db, err := s.dbSelector.GetDBByRole(ctx)
-	if err != nil {
-		return err
-	}
-
-	var kamus Kamus
-	if err := db.WithContext(ctx).First(&kamus, "id = ?", kamusId).Error; err != nil {
-		return fmt.Errorf("kamus not found: %v", err)
-	}
-
-	cleanFilePath := strings.TrimPrefix(kamus.VideoUrl, "/")
-	if err := os.Remove(cleanFilePath); err != nil {
-		if !os.IsNotExist(err) {
-			return fmt.Errorf("failed to delete video file %s: %v", cleanFilePath, err)
-		}
-	}
-
-	if err := db.WithContext(ctx).Delete(&kamus).Error; err != nil {
-		return fmt.Errorf("error deleting kamus: %v", err)
-	}
-
-	return nil
-}
-
-func (s *service) GetAllKamus(ctx context.Context, input GetAllKamusReq, filter constants.FilterReq) (*[]KamusRes, int64, error) {
+func (s *service) GetAllLatihan(ctx context.Context, input GetAllLatihanReq, filter constants.FilterReq) (*[]LatihanRes, int64, error) {
 	var total int64
-	var kamusList []Kamus
+	var latihanList []Latihan
 
 	db, err := s.dbSelector.GetDBByRole(ctx)
 	if err != nil {
 		return nil, 0, err
 	}
 
-	query := db.WithContext(ctx).Model(&Kamus{})
+	query := db.WithContext(ctx).Model(&Latihan{})
 
-	// Filtering keyword
-	if input.Keyword != "" {
-		query = query.Where(
-			"arti ILIKE ? OR kategori ILIKE ? ",
-			"%"+input.Keyword+"%",
-			"%"+input.Keyword+"%",
-		)
-	}
-
-	// Hitung total data sebelum limit & offset
 	if err := query.Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
 
-	// Pagination
 	offset := (filter.Page - 1) * filter.Limit
 
 	if err := query.
 		Order(fmt.Sprintf("%s %s", filter.OrderBy, filter.SortOrder)).
 		Limit(int(filter.Limit)).
 		Offset(int(offset)).
-		Find(&kamusList).Error; err != nil {
+		Find(&latihanList).Error; err != nil {
 		return nil, 0, err
 	}
 
-	res := make([]KamusRes, len(kamusList))
-	for i, k := range kamusList {
-		res[i] = KamusRes{
-			ID:       k.ID.String(),
-			Arti:     k.Arti,
-			Kategori: k.Kategori,
-			VideoUrl: k.VideoUrl,
+	res := make([]LatihanRes, len(latihanList))
+	for i, l := range latihanList {
+		res[i] = LatihanRes{
+			ID:        l.ID.String(),
+			Name:      l.Name,
+			TotalSoal: l.TotalSoal,
 		}
 	}
 
 	return &res, total, nil
+}
+
+func (s *service) GetLatihanById(ctx context.Context, latihanId string) (*LatihanByIdRes, error) {
+	db, err := s.dbSelector.GetDBByRole(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var latihan Latihan
+	err = db.WithContext(ctx).
+		Preload("SoalLatihan").
+		Where("id =?", latihanId).
+		Find(&latihan).Error
+	if err != nil {
+		return nil, err
+	}
+
+	soalRes := make([]SoalLatihanRes, len(latihan.SoalLatihan))
+	for i, soal := range latihan.SoalLatihan {
+		soalRes[i] = SoalLatihanRes{
+			ID:        soal.ID.String(),
+			LatihanID: soal.LatihanID.String(),
+			Soal:      soal.Soal,
+		}
+	}
+
+	res := LatihanByIdRes{
+		ID:          latihan.ID.String(),
+		Name:        latihan.Name,
+		TotalSoal:   latihan.TotalSoal,
+		SoalLatihan: soalRes,
+	}
+
+	return &res, nil
+}
+
+func (s *service) AddLatihan(ctx context.Context, req LatihanReq) error {
+	db, err := s.dbSelector.GetDBByRole(ctx)
+	if err != nil {
+		return apierror.FromErr(err)
+	}
+
+	tx := db.Begin()
+	if tx.Error != nil {
+		return tx.Error
+	}
+
+	latihanID := uuid.New()
+
+	latihan := Latihan{
+		ID:        latihanID,
+		Name:      req.Name,
+		TotalSoal: len(req.SoalLatihan),
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+
+	if err := tx.WithContext(ctx).Create(&latihan).Error; err != nil {
+		tx.Rollback()
+		return apierror.FromErr(err)
+	}
+
+	soalList := make([]SoalLatihan, 0, len(req.SoalLatihan))
+	for _, soal := range req.SoalLatihan {
+		soalList = append(soalList, SoalLatihan{
+			ID:        uuid.New(),
+			LatihanID: latihanID,
+			Soal:      strings.ToUpper(soal),
+		})
+	}
+
+	if len(soalList) > 0 {
+		if err := tx.WithContext(ctx).Create(&soalList).Error; err != nil {
+			tx.Rollback()
+			return apierror.FromErr(err)
+		}
+	}
+
+	return tx.Commit().Error
+}
+
+func (s *service) DeleteLatihan(ctx context.Context, latihanId string) error {
+	db, err := s.dbSelector.GetDBByRole(ctx)
+	if err != nil {
+		return apierror.FromErr(err)
+	}
+
+	var latihan Latihan
+	if err := db.WithContext(ctx).First(&latihan, "id = ?", latihanId).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return apierror.LatihanNotFound(latihanId)
+		}
+		return apierror.FromErr(err)
+	}
+
+	if err := db.WithContext(ctx).Delete(&latihan).Error; err != nil {
+		return apierror.FromErr(err)
+	}
+
+	return nil
 }

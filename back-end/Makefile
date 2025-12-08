@@ -5,7 +5,7 @@ dev:
 	nodemon --watch .env --watch '**/*.go' --ext go,env --exec "go run main.go" --signal SIGTERM --ignore data/
 
 wire:
-	cd ./wire && go run github.com/google/wire/cmd/wire
+	cd ./wire && go wire
 
 lint:
 	golangci-lint run --timeout 5m -v

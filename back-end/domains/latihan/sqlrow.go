@@ -7,11 +7,12 @@ import (
 )
 
 type Latihan struct {
-	ID        uuid.UUID `gorm:"type:uuid;default:gen_random_uuid();primaryKey"`
-	name      string
-	TotalSoal int
-	CreatedAt time.Time `gorm:"autoCreateTime"`
-	UpdatedAt time.Time `gorm:"autoUpdateTime"`
+	ID          uuid.UUID `gorm:"type:uuid;default:gen_random_uuid();primaryKey"`
+	Name        string
+	TotalSoal   int
+	SoalLatihan []SoalLatihan `gorm:"foreignKey:LatihanID;references:ID"`
+	CreatedAt   time.Time     `gorm:"autoCreateTime"`
+	UpdatedAt   time.Time     `gorm:"autoUpdateTime"`
 }
 
 func (Latihan) TableName() string {
@@ -20,8 +21,8 @@ func (Latihan) TableName() string {
 
 type SoalLatihan struct {
 	ID        uuid.UUID `gorm:"type:uuid;default:gen_random_uuid();primaryKey"`
-	LatihanID uuid.UUID `gorm:"type:uuid"`
-	soal      string
+	LatihanID uuid.UUID `gorm:"type:uuid;not null"`
+	Soal      string    `gorm:"type:text;not null"`
 	CreatedAt time.Time `gorm:"autoCreateTime"`
 	UpdatedAt time.Time `gorm:"autoUpdateTime"`
 }

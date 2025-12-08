@@ -10,6 +10,7 @@ import (
 
 	"github.com/devanadindraa/NTTH-Store/back-end/database"
 	"github.com/devanadindraa/NTTH-Store/back-end/domains/kamus"
+	"github.com/devanadindraa/NTTH-Store/back-end/domains/latihan"
 	"github.com/devanadindraa/NTTH-Store/back-end/domains/user"
 	"github.com/devanadindraa/NTTH-Store/back-end/middlewares"
 	"github.com/devanadindraa/NTTH-Store/back-end/routes"
@@ -36,6 +37,11 @@ var kamusSet = wire.NewSet(
 	kamus.NewHandler,
 )
 
+var latihanSet = wire.NewSet(
+	latihan.NewService,
+	latihan.NewHandler,
+)
+
 func initializeDependency(config *config.Config) (*routes.Dependency, error) {
 
 	wire.Build(
@@ -46,6 +52,7 @@ func initializeDependency(config *config.Config) (*routes.Dependency, error) {
 		routes.NewDependency,
 		userSet,
 		kamusSet,
+		latihanSet,
 	)
 
 	return nil, nil

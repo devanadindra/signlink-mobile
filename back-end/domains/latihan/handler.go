@@ -2,7 +2,6 @@ package latihan
 
 import (
 	"net/http"
-	"strings"
 
 	apierror "github.com/devanadindraa/NTTH-Store/back-end/utils/api-error"
 	"github.com/devanadindraa/NTTH-Store/back-end/utils/common"
@@ -12,10 +11,10 @@ import (
 )
 
 type Handler interface {
-	GetKamus(ctx *gin.Context)
-	AddKamus(ctx *gin.Context)
-	DeleteKamus(ctx *gin.Context)
-	GetAllKamus(ctx *gin.Context)
+	GetLatihanById(ctx *gin.Context)
+	AddLatihan(ctx *gin.Context)
+	DeleteLatihan(ctx *gin.Context)
+	GetAllLatihan(ctx *gin.Context)
 }
 
 type handler struct {
@@ -30,14 +29,10 @@ func NewHandler(service Service, validate *validator.Validate) Handler {
 	}
 }
 
-func (h *handler) GetKamus(ctx *gin.Context) {
-	kategori := ctx.Query("kategori")
-	if kategori == "" {
-		respond.Error(ctx, apierror.InvalidCategory())
-		return
-	}
+func (h *handler) GetLatihanById(ctx *gin.Context) {
+	id := ctx.Param("id")
 
-	res, err := h.service.GetKamus(ctx, kategori)
+	res, err := h.service.GetLatihanById(ctx, id)
 	if err != nil {
 		respond.Error(ctx, apierror.FromErr(err))
 		return
@@ -46,57 +41,53 @@ func (h *handler) GetKamus(ctx *gin.Context) {
 	respond.Success(ctx, http.StatusOK, res)
 }
 
-func (h *handler) AddKamus(ctx *gin.Context) {
-	var req KamusReq
+func (h *handler) AddLatihan(ctx *gin.Context) {
+	var req LatihanReq
 
 	if err := ctx.ShouldBind(&req); err != nil {
 		respond.Error(ctx, apierror.FromErr(err))
 		return
 	}
 
-	if err := h.service.AddKamus(ctx, req); err != nil {
-		if strings.Contains(err.Error(), "kamus_arti_key") {
-			respond.Error(ctx, apierror.DuplicateArti(req.Arti))
-			return
-		}
-
+	if err := h.service.AddLatihan(ctx, req); err != nil {
 		respond.Error(ctx, apierror.FromErr(err))
 		return
 	}
 
-	respond.Success(ctx, http.StatusCreated, gin.H{"message": "kamus and video added successfully"})
+	respond.Success(ctx, http.StatusCreated, gin.H{"message": "latihan added successfully"})
 }
 
-func (h *handler) DeleteKamus(ctx *gin.Context) {
+func (h *handler) DeleteLatihan(ctx *gin.Context) {
 	id := ctx.Param("id")
 
-	if err := h.service.DeleteKamus(ctx, id); err != nil {
+	if err := h.service.DeleteLatihan(ctx, id); err != nil {
 		respond.Error(ctx, apierror.FromErr(err))
 		return
 	}
 
-	respond.Success(ctx, http.StatusCreated, gin.H{"message": "kamus and video deleted successfully"})
+	respond.Success(ctx, http.StatusCreated, gin.H{"message": "latihan deleted successfully"})
 }
 
-func (h *handler) GetAllKamus(ctx *gin.Context) {
-	filter, err := common.GetMetaData(ctx, h.validate, "created_at", "arti", "kategori")
+func (h *handler) GetAllLatihan(ctx *gin.Context) {
+	filter, err := common.GetMetaData(ctx, h.validate, "created_at", "name")
 	if err != nil {
 		respond.Error(ctx, apierror.FromErr(err))
 		return
 	}
 
-	input := GetAllKamusReq{
-		Keyword: ctx.Query("keyword"),
+	req := GetAllLatihanReq{
+		Page:  filter.Page,
+		Limit: filter.Limit,
 	}
 
-	kamusList, total, err := h.service.GetAllKamus(ctx, input, *filter)
+	latihanList, total, err := h.service.GetAllLatihan(ctx, req, *filter)
 	if err != nil {
 		respond.Error(ctx, apierror.FromErr(err))
 		return
 	}
 
 	respond.Success(ctx, http.StatusOK, gin.H{
-		"data":  kamusList,
+		"data":  latihanList,
 		"total": total,
 		"page":  filter.Page,
 		"limit": filter.Limit,

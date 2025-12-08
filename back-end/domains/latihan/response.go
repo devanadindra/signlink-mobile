@@ -1,10 +1,16 @@
 package latihan
 
 type LatihanRes struct {
-	ID          string        `json:"id"`
-	Name        string        `json:"name"`
-	TotalSoal   string        `json:"total_soal"`
-	SoalLatihan []SoalLatihan `json:"soal_latihan"`
+	ID        string `json:"id"`
+	Name      string `json:"name"`
+	TotalSoal int    `json:"total_soal"`
+}
+
+type LatihanByIdRes struct {
+	ID          string           `json:"id"`
+	Name        string           `json:"name"`
+	TotalSoal   int              `json:"total_soal"`
+	SoalLatihan []SoalLatihanRes `json:"soal_latihan"`
 }
 
 type SoalLatihanRes struct {

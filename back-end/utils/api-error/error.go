@@ -113,6 +113,10 @@ func DuplicateEmail(email string) error {
 	return NewWarn(http.StatusConflict, fmt.Sprintf("email '%s' sudah digunakan", email))
 }
 
+func LatihanNotFound(latihanId string) error {
+	return NewWarn(http.StatusConflict, fmt.Sprintf("latihan dengan id '%s' tidak ditemukan", latihanId))
+}
+
 func ErrGoogleEmailLocked() error {
 	return NewWarn(
 		http.StatusConflict,
