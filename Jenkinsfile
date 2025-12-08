@@ -11,7 +11,7 @@ pipeline {
                 sh '''
                     if [ ! -d signlink/.git ]; then
                         echo "== First time clone =="
-                        git clone --no-checkout https://github.com/devanadindra/signlink-mobile.git signlink
+                        git clone --no-checkout https://github.com/devanadindra/signlink-mobile.git
                         cd signlink
                         git sparse-checkout init --cone
                         git sparse-checkout set / "!mobile" "!ai"
