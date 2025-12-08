@@ -29,7 +29,7 @@ pipeline {
 
         stage('Copy ENV') {
             steps {
-                withCredentials([file(credentialsId: 'env-backend', variable: 'ENV_FILE')]) {
+                withCredentials([file(credentialsId: 'env', variable: 'ENV_FILE')]) {
                     sh """
                 cp \$ENV_FILE signlink/.env
                 cp \$ENV_FILE signlink/back-end/.env
