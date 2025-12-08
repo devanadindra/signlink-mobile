@@ -351,15 +351,15 @@ fun AppNavHost() {
         }
 
         composable(
-            route = "${Destinations.LATIHAN_DETAIL_SCREEN}/{charactersJson}",
+            route = "${Destinations.LATIHAN_DETAIL_SCREEN}/{latihanId}",
             arguments = listOf(
-                navArgument("charactersJson") {
+                navArgument("latihanId") {
                     type = NavType.StringType
                 }
             )
         ) { backStackEntry ->
-            val charactersJson = backStackEntry.arguments?.getString("charactersJson") ?: ""
-            LatihanDetailScreen(navController, charactersJson)
+            val latihanId = backStackEntry.arguments?.getString("latihanId") ?: ""
+            LatihanDetailScreen(navController, latihanId)
         }
 
         composable(

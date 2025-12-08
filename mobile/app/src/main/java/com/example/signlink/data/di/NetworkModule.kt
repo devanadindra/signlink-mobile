@@ -4,7 +4,9 @@ import com.example.signlink.data.services.CustomerService
 import com.example.signlink.data.repository.AuthRepository
 import com.example.signlink.data.repository.CustomerRepository
 import com.example.signlink.data.repository.KamusRepository
+import com.example.signlink.data.repository.LatihanRepository
 import com.example.signlink.data.services.KamusService
+import com.example.signlink.data.services.LatihanService
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -21,7 +23,8 @@ object NetworkModule {
 
     // "http://10.0.2.2:7777/api/"
     // http://103.150.190.75:7777/api/
-    private const val BASE_URL= "https://devanadindra.site/api/"
+    // https://devanadindra.site/api/
+    private const val BASE_URL= "http://10.0.2.2:7777/api/"
 
     @Provides
     @Singleton
@@ -76,6 +79,18 @@ object NetworkModule {
     @Singleton
     fun provideCustomerRepository(service: CustomerService): CustomerRepository {
         return CustomerRepository(service)
+    }
+
+    @Provides
+    @Singleton
+    fun provideLatihanService(retrofit: Retrofit): LatihanService {
+        return retrofit.create(LatihanService::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideLatihanRepository(service: LatihanService): LatihanRepository {
+        return LatihanRepository(service)
     }
 }
 

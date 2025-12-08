@@ -45,8 +45,10 @@ import android.util.Size
 import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.draw.clip
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.signlink.Destinations
 import com.example.signlink.screens.PermissionDeniedView
+import com.example.signlink.viewmodel.LatihanViewModel
 import com.google.gson.reflect.TypeToken
 import com.google.gson.Gson
 import kotlinx.coroutines.delay
@@ -90,9 +92,26 @@ private fun checkCameraAvailability(context: Context): Pair<Boolean, Boolean> {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LatihanDetailScreen(navController: NavController,
-                        charactersJson: String) {
+                        latihanId: String,
+                        viewModel: LatihanViewModel = hiltViewModel(),) {
     val context = LocalContext.current
-    val practiceCharacters = remember { getCharactersFromJson(charactersJson) }
+
+    LaunchedEffect(latihanId) {
+        viewModel.getLatihanById(context, latihanId)
+    }
+
+    val latihanDetail by viewModel.latihanDetail.collectAsState()
+    if (latihanDetail == null) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            CircularProgressIndicator()
+        }
+        return
+    }
+
+    val practiceCharacters = latihanDetail!!.soalLatihan.map { it.soal }
 
     val startTime = remember { System.currentTimeMillis() }
 
