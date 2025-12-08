@@ -6,6 +6,7 @@ pipeline {
     }
 
     stages {
+
         stage('Sparse Checkout') {
             steps {
                 sh '''
@@ -13,15 +14,22 @@ pipeline {
                         echo "== First time clone =="
                         git clone --no-checkout https://github.com/devanadindra/signlink-mobile.git signlink
                         cd signlink
+
+                        # Sparse checkout exclude mobile & ai
                         git sparse-checkout init --cone
-                        git sparse-checkout set / "!mobile" "!ai"
+                        echo "/*" > .git/info/sparse-checkout
+                        echo "!mobile/" >> .git/info/sparse-checkout
+                        echo "!ai/" >> .git/info/sparse-checkout
+
                         git checkout main
+                        git sparse-checkout reapply
+
                     else
                         echo "== Updating existing sparse clone =="
                         cd signlink
-                        git fetch --all
-                        git checkout main
+                        git fetch origin main
                         git reset --hard origin/main
+                        git sparse-checkout reapply
                     fi
                 '''
             }
@@ -30,10 +38,13 @@ pipeline {
         stage('Copy ENV') {
             steps {
                 withCredentials([file(credentialsId: 'env', variable: 'ENV_FILE')]) {
-                    sh """
-                cp \$ENV_FILE signlink/.env
-                cp \$ENV_FILE signlink/back-end/.env
-            """
+                    sh '''
+                        mkdir -p signlink
+                        mkdir -p signlink/back-end
+
+                        cp "$ENV_FILE" "signlink/.env"
+                        cp "$ENV_FILE" "signlink/back-end/.env"
+                    '''
                 }
             }
         }
