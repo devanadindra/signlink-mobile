@@ -46,13 +46,13 @@ pipeline {
             }
         }
 
-        stage('Deploy') {
-            steps {
-                sh '''
-                    cd signlink
-                    docker-compose up -d --build
-                '''
-            }
-        }
+        // stage('Deploy') {
+        //     steps {
+        //         sh '''
+        //             cd signlink
+        //             docker-compose up -d --build
+        //         '''
+        //     }
+        // }
     }
 }
