@@ -117,6 +117,10 @@ func LatihanNotFound(latihanId string) error {
 	return NewWarn(http.StatusConflict, fmt.Sprintf("latihan dengan id '%s' tidak ditemukan", latihanId))
 }
 
+func ExistingStatsLatihan() error {
+	return NewWarn(http.StatusConflict, "anda sudah memiliki skor untuk latihan ini.")
+}
+
 func ErrGoogleEmailLocked() error {
 	return NewWarn(
 		http.StatusConflict,

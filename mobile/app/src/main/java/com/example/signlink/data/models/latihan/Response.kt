@@ -28,6 +28,10 @@ data class AddLatihanRes(
     val message: String
 )
 
+data class AddStatsLatihanRes(
+    val message: String
+)
+
 data class DeleteLatihanRes(
     val message: String
 )

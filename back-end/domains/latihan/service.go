@@ -197,6 +197,14 @@ func (s *service) AddStatsLatihan(ctx context.Context, req StatsLatihanReq) erro
 		return apierror.FromErr(err)
 	}
 
+	var existing StatsLatihan
+	if err := db.WithContext(ctx).
+		Where("latihan_id = ? AND user_id = ?", latihan.ID, token.Claims.UserID).
+		First(&existing).Error; err == nil {
+
+		return apierror.ExistingStatsLatihan()
+	}
+
 	statsLatihan := StatsLatihan{
 		LatihanID: latihan.ID,
 		UserID:    token.Claims.UserID,

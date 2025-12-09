@@ -3,10 +3,12 @@ package com.example.signlink.data.services
 import com.example.signlink.data.models.ApiResponse
 import com.example.signlink.data.models.PaginatedData
 import com.example.signlink.data.models.latihan.AddLatihanRes
+import com.example.signlink.data.models.latihan.AddStatsLatihanRes
 import com.example.signlink.data.models.latihan.DeleteLatihanRes
 import com.example.signlink.data.models.latihan.LatihanByIdRes
 import com.example.signlink.data.models.latihan.LatihanData
 import com.example.signlink.data.models.latihan.LatihanReq
+import com.example.signlink.data.models.latihan.StatsLatihanReq
 import retrofit2.Response
 import retrofit2.http.*
 
@@ -30,6 +32,12 @@ interface LatihanService {
         @Header("Authorization") authHeader: String,
         @Body req: LatihanReq
     ): Response<ApiResponse<AddLatihanRes>>
+
+    @POST("latihan/stats")
+    suspend fun addStatsLatihan(
+        @Header("Authorization") authHeader: String,
+        @Body req: StatsLatihanReq
+    ): Response<ApiResponse<AddStatsLatihanRes>>
 
     @DELETE("latihan/{id}")
     suspend fun deleteLatihan(

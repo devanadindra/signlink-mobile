@@ -1,12 +1,12 @@
 package com.example.signlink.viewmodel
 
 import android.content.Context
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.signlink.data.models.latihan.LatihanByIdRes
 import com.example.signlink.data.models.latihan.LatihanData
 import com.example.signlink.data.models.latihan.LatihanReq
+import com.example.signlink.data.models.latihan.StatsLatihanReq
 import com.example.signlink.data.utils.utils.parseErrorMessage
 import com.example.signlink.data.repository.LatihanRepository
 import com.example.signlink.data.utils.AuthUtil
@@ -87,6 +87,34 @@ class LatihanViewModel @Inject constructor(
                 } else {
                     val errorJson = response.errorBody()?.string()
                     _errorMessage.value = parseErrorMessage(errorJson) ?: "Upload failed"
+                }
+            } catch (e: Exception) {
+                _errorMessage.value = e.message
+            }
+        }
+    }
+
+    fun addStatsLatihan(context: Context, latihanId: String, score: Float) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            val token = AuthUtil.jwtAuth(context)
+
+            if (token.isNullOrEmpty()) {
+                _errorMessage.value = "Token not found"
+                _isLoading.value = false
+                return@launch
+            }
+
+            try {
+                val req = StatsLatihanReq(latihanId, score)
+                val response = repository.addStatsLatihan(token, req)
+
+                if (response.isSuccessful) {
+                    val body = response.body()
+                    _successMessage.value = body?.data?.message ?: "Save stats successful"
+                } else {
+                    val errorJson = response.errorBody()?.string()
+                    _errorMessage.value = parseErrorMessage(errorJson) ?: "Save stats failed"
                 }
             } catch (e: Exception) {
                 _errorMessage.value = e.message

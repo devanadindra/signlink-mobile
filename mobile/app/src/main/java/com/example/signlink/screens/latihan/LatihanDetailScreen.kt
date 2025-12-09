@@ -49,34 +49,15 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.signlink.Destinations
 import com.example.signlink.screens.PermissionDeniedView
 import com.example.signlink.viewmodel.LatihanViewModel
-import com.google.gson.reflect.TypeToken
 import com.google.gson.Gson
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import java.net.URLDecoder
 
 data class LatihanResult(
-    val totalCharacters: Int,
+    val latihanId: String,
+    val totalQuestions: Int,
     val totalTimeSeconds: Long
 )
-
-private fun getCharactersFromJson(jsonString: String): List<String> {
-    return try {
-        val decoded = URLDecoder.decode(jsonString, "UTF-8")
-
-        if (decoded.trim().startsWith("[")) {
-            val listType = object : TypeToken<List<String>>() {}.type
-            return Gson().fromJson(decoded, listType)
-        }
-
-        return listOf(decoded.trim())
-
-    } catch (e: Exception) {
-        Log.e("LatihanDetail", "Error decoding characters: ${e.message}")
-        emptyList()
-    }
-}
-
 
 private fun checkCameraAvailability(context: Context): Pair<Boolean, Boolean> {
     return try {
@@ -177,7 +158,8 @@ fun LatihanDetailScreen(navController: NavController,
                                     val endTime = System.currentTimeMillis()
                                     val totalTimeSeconds = (endTime - startTime) / 1000
                                     val result = LatihanResult(
-                                        totalCharacters = practiceCharacters.size,
+                                        latihanId = latihanDetail!!.id,
+                                        totalQuestions = practiceCharacters.size,
                                         totalTimeSeconds = totalTimeSeconds
                                     )
 

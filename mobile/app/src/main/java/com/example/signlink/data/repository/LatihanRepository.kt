@@ -1,10 +1,12 @@
 package com.example.signlink.data.repository
 import com.example.signlink.data.models.ApiResponse
 import com.example.signlink.data.models.latihan.AddLatihanRes
+import com.example.signlink.data.models.latihan.AddStatsLatihanRes
 import com.example.signlink.data.models.latihan.DeleteLatihanRes
 import com.example.signlink.data.models.latihan.LatihanByIdRes
 import com.example.signlink.data.models.latihan.LatihanData
 import com.example.signlink.data.models.latihan.LatihanReq
+import com.example.signlink.data.models.latihan.StatsLatihanReq
 import com.example.signlink.data.services.LatihanService
 import retrofit2.Response
 import javax.inject.Inject
@@ -36,6 +38,14 @@ class LatihanRepository @Inject constructor(private val service: LatihanService)
     suspend fun addLatihan(token: String, req: LatihanReq): Response<ApiResponse<AddLatihanRes>> {
 
         return service.addLatihan(
+            authHeader = token,
+            req = req,
+        )
+    }
+
+    suspend fun addStatsLatihan(token: String, req: StatsLatihanReq): Response<ApiResponse<AddStatsLatihanRes>> {
+
+        return service.addStatsLatihan(
             authHeader = token,
             req = req,
         )
