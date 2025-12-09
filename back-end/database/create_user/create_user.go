@@ -60,7 +60,8 @@ $$;
 		GRANT SELECT ON latihan TO %s;
 		GRANT SELECT ON soal_latihan TO %s;
 		GRANT select, insert  ON invalid_token TO %s;
-	`, customerUser, customerUser, customerUser, customerUser, customerUser)
+		GRANT select, insert  ON stats_latihan TO %s;
+	`, customerUser, customerUser, customerUser, customerUser, customerUser, customerUser)
 
 	if err := db.Exec(grantCustomerSQL).Error; err != nil {
 		log.Fatal("Failed to grant privileges to customer_app:", err)
