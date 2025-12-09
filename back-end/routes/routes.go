@@ -80,6 +80,7 @@ func NewDependency(
 		latihan.GET("/", mw.JWT(constants.ADMIN, constants.CUSTOMER), latihanHandler.GetAllLatihan)
 		latihan.GET("/:id", mw.JWT(constants.ADMIN, constants.CUSTOMER), latihanHandler.GetLatihanById)
 		latihan.POST("/", mw.JWT(constants.ADMIN), latihanHandler.AddLatihan)
+		latihan.POST("/stats", mw.JWT(constants.ADMIN, constants.CUSTOMER), latihanHandler.AddStatsLatihan)
 		latihan.DELETE("/:id", mw.JWT(constants.ADMIN), latihanHandler.DeleteLatihan)
 	}
 

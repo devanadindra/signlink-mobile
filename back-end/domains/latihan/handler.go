@@ -15,6 +15,7 @@ type Handler interface {
 	AddLatihan(ctx *gin.Context)
 	DeleteLatihan(ctx *gin.Context)
 	GetAllLatihan(ctx *gin.Context)
+	AddStatsLatihan(ctx *gin.Context)
 }
 
 type handler struct {
@@ -92,4 +93,20 @@ func (h *handler) GetAllLatihan(ctx *gin.Context) {
 		"page":  filter.Page,
 		"limit": filter.Limit,
 	})
+}
+
+func (h *handler) AddStatsLatihan(ctx *gin.Context) {
+	var req StatsLatihanReq
+
+	if err := ctx.ShouldBind(&req); err != nil {
+		respond.Error(ctx, apierror.FromErr(err))
+		return
+	}
+
+	if err := h.service.AddStatsLatihan(ctx, req); err != nil {
+		respond.Error(ctx, apierror.FromErr(err))
+		return
+	}
+
+	respond.Success(ctx, http.StatusCreated, gin.H{"message": "stats latihan added successfully"})
 }

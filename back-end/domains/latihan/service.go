@@ -11,6 +11,7 @@ import (
 	apierror "github.com/devanadindraa/NTTH-Store/back-end/utils/api-error"
 	"github.com/devanadindraa/NTTH-Store/back-end/utils/config"
 	"github.com/devanadindraa/NTTH-Store/back-end/utils/constants"
+	contextUtil "github.com/devanadindraa/NTTH-Store/back-end/utils/context"
 	"github.com/devanadindraa/NTTH-Store/back-end/utils/dbselector"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -21,6 +22,7 @@ type Service interface {
 	GetLatihanById(ctx context.Context, latihanId string) (*LatihanByIdRes, error)
 	AddLatihan(ctx context.Context, req LatihanReq) error
 	DeleteLatihan(ctx context.Context, latihanId string) error
+	AddStatsLatihan(ctx context.Context, req StatsLatihanReq) error
 }
 
 type service struct {
@@ -170,6 +172,40 @@ func (s *service) DeleteLatihan(ctx context.Context, latihanId string) error {
 	}
 
 	if err := db.WithContext(ctx).Delete(&latihan).Error; err != nil {
+		return apierror.FromErr(err)
+	}
+
+	return nil
+}
+
+func (s *service) AddStatsLatihan(ctx context.Context, req StatsLatihanReq) error {
+	token, err := contextUtil.GetTokenClaims(ctx)
+	if err != nil {
+		return err
+	}
+
+	db, err := s.dbSelector.GetDBByRole(ctx)
+	if err != nil {
+		return apierror.FromErr(err)
+	}
+
+	var latihan Latihan
+	if err := db.WithContext(ctx).First(&latihan, "id = ?", req.LatihanID).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return apierror.LatihanNotFound(req.LatihanID)
+		}
+		return apierror.FromErr(err)
+	}
+
+	statsLatihan := StatsLatihan{
+		LatihanID: latihan.ID,
+		UserID:    token.Claims.UserID,
+		Score:     req.Score,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+
+	if err := db.WithContext(ctx).Create(&statsLatihan).Error; err != nil {
 		return apierror.FromErr(err)
 	}
 
