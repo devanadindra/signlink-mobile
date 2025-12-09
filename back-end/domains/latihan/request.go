@@ -13,3 +13,8 @@ type GetAllLatihanReq struct {
 	Page  int64
 	Limit int64
 }
+
+type StatsLatihanReq struct {
+	LatihanID string  `json:"latihan_id" binding:"required"`
+	Score     float64 `json:"score" binding:"required"`
+}

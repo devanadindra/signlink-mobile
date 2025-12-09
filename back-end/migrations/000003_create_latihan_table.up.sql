@@ -13,3 +13,12 @@ CREATE TABLE IF NOT EXISTS soal_latihan (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW (),
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW ()
 )
+
+CREATE TABLE IF NOT EXISTS stats_latihan (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    latihan_id UUID NOT NULL REFERENCES latihan(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES customer(id) ON DELETE CASCADE,
+    score FLOAT NOT NULL,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW (),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW ()
+)
