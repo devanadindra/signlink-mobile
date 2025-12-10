@@ -16,7 +16,7 @@ func main() {
 		log.Println("Warning: .env file not loaded:", err)
 	}
 
-	dbHost := os.Getenv("BACKEND_DATABASE_HOST")
+	dbHost := os.Getenv("BACKEND_DATABASE_CONTAINER")
 	dbPort := os.Getenv("BACKEND_DATABASE_PORT")
 	dbName := os.Getenv("BACKEND_DATABASE_NAME")
 	dbRoot := os.Getenv("BACKEND_DATABASE_ROOT_USERNAME")
