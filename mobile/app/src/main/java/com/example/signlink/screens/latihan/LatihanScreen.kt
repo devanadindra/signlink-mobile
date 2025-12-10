@@ -7,13 +7,13 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ListAlt
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -29,6 +29,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -177,33 +178,41 @@ fun LatihanScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 contentPadding = PaddingValues(bottom = 0.dp)
             ) {
+                var previousIsDone = true
                 items(
-                    latihanList,
-                    key = { item -> item.id }) { item ->
+                    latihanList.size,
+                    key = { index -> latihanList[index].id }
+                ) { index ->
+                    val item = latihanList[index]
+
+                    val isLocked = if (index == 0) {
+                        false
+                    } else {
+                        !previousIsDone
+                    }
+
                     LatihanModulCard(
                         modul = item,
                         userRole = currentRole,
+                        isLocked = isLocked,
                         onClick = {
-                            navController.navigate("${Destinations.LATIHAN_DETAIL_SCREEN}/${item.id}")
+                            if (!isLocked) {
+                                navController.navigate("${Destinations.LATIHAN_DETAIL_SCREEN}/${item.id}")
+                            } else {
+                                Toast.makeText(
+                                    context,
+                                    "Selesaikan modul sebelumnya untuk membuka ini.",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
                         },
                         onDeleteClicked = {
                             viewModel.deleteLatihan(context, item.id, currentPage, pageSize)
                         },
                         modifier = Modifier.padding(vertical = 8.dp)
                     )
-                }
 
-                if (isLoading) {
-                    item {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(24.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            CircularProgressIndicator(color = SignLinkTeal)
-                        }
-                    }
+                    previousIsDone = item.isDone
                 }
             }
 
@@ -259,6 +268,7 @@ fun LatihanModulCard(
     modul: LatihanData,
     onClick: () -> Unit,
     userRole: String,
+    isLocked: Boolean,
     onDeleteClicked: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -272,72 +282,120 @@ fun LatihanModulCard(
         modifier = modifier
             .fillMaxWidth(0.9f)
             .height(itemHeight)
-            .clickable(onClick = onClick)
+            .clickable(onClick = onClick, enabled = !isLocked || isUserAdmin)
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxSize(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Box(
+        Box(modifier = Modifier.fillMaxSize()) {
+
+            Row(
                 modifier = Modifier
-                    .padding(16.dp)
-                    .size(56.dp)
-                    .background(Color.White.copy(alpha = 0.2f), RoundedCornerShape(8.dp)),
-                contentAlignment = Alignment.Center
+                    .fillMaxSize()
+                    .padding(end = if (isUserAdmin) 0.dp else 16.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(
-                    Icons.AutoMirrored.Filled.ListAlt,
-                    contentDescription = "Ikon Kuis",
-                    tint = Color.White,
-                    modifier = Modifier.size(32.dp)
-                )
-            }
-
-            Spacer(modifier = Modifier.width(16.dp))
-            Column(
-                modifier = Modifier.weight(1f)
-            ) {
-                Text(
-                    text = modul.name,
-                    color = Color.White,
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        Icons.AutoMirrored.Filled.ListAlt,
-                        contentDescription = "Total Soal",
-                        tint = Color.White,
-                        modifier = Modifier.size(14.dp)
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = "${modul.totalSoal} Latihan",
-                        color = Color.White,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Normal
-                    )
-                }
-            }
-
-            if (isUserAdmin) {
-                Spacer(modifier = Modifier.width(4.dp))
 
                 Box(
                     modifier = Modifier
-                        .weight(0.35f)
-                        .fillMaxHeight()
-                        .background(Color(0xFFE57373), shape = RoundedCornerShape(topEnd = 12.dp, bottomEnd = 12.dp))
-                        .clickable(onClick = onDeleteClicked),
+                        .padding(10.dp)
+                        .size(56.dp)
+                        .background(Color.White.copy(alpha = 0.25f), RoundedCornerShape(8.dp)),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        Icons.Default.Delete,
-                        contentDescription = "Hapus",
+                        imageVector = Icons.AutoMirrored.Filled.ListAlt,
+                        contentDescription = null,
                         tint = Color.White,
-                        modifier = Modifier.size(28.dp)
+                        modifier = Modifier.size(42.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(16.dp))
+
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = modul.name,
+                        color = Color.White,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            Icons.AutoMirrored.Filled.ListAlt,
+                            contentDescription = "Total Soal",
+                            tint = Color.White,
+                            modifier = Modifier.size(14.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = "${modul.totalSoal} Latihan",
+                            color = Color.White,
+                            fontSize = 12.sp
+                        )
+                    }
+                }
+
+                if (isUserAdmin) {
+                    Box(
+                        modifier = Modifier
+                            .width(70.dp)
+                            .fillMaxHeight()
+                            .background(Color(0xFFE57373), RoundedCornerShape(topEnd = 12.dp, bottomEnd = 12.dp))
+                            .clickable(onClick = onDeleteClicked),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            Icons.Default.Delete,
+                            contentDescription = "Hapus",
+                            tint = Color.White,
+                            modifier = Modifier.size(28.dp)
+                        )
+                    }
+                }
+            }
+
+            if (isLocked && !isUserAdmin) {
+                Box(
+                    modifier = Modifier
+                        .matchParentSize()
+                        .background(Color(0xAA000000))
+                )
+
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(12.dp)
+                        .size(28.dp)
+                        .background(Color.Black.copy(alpha = 0.35f), RoundedCornerShape(8.dp)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        Icons.Default.Lock,
+                        contentDescription = "Locked",
+                        tint = Color.White,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+
+                Column(
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .padding(horizontal = 12.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = "Terkunci",
+                        color = Color.White,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    Text(
+                        text = "Selesaikan modul sebelumnya untuk membuka",
+                        color = Color.White.copy(alpha = 0.9f),
+                        fontSize = 11.sp,
+                        textAlign = TextAlign.Center
                     )
                 }
             }

@@ -45,6 +45,11 @@ func (s *service) GetAllLatihan(ctx context.Context, input GetAllLatihanReq, fil
 	var total int64
 	var latihanList []Latihan
 
+	token, err := contextUtil.GetTokenClaims(ctx)
+	if err != nil {
+		return nil, 0, err
+	}
+
 	db, err := s.dbSelector.GetDBByRole(ctx)
 	if err != nil {
 		return nil, 0, err
@@ -60,6 +65,7 @@ func (s *service) GetAllLatihan(ctx context.Context, input GetAllLatihanReq, fil
 
 	if err := query.
 		Order(fmt.Sprintf("%s %s", filter.OrderBy, filter.SortOrder)).
+		Preload("StatsLatihan", "user_id = ?", token.Claims.UserID).
 		Limit(int(filter.Limit)).
 		Offset(int(offset)).
 		Find(&latihanList).Error; err != nil {
@@ -72,6 +78,7 @@ func (s *service) GetAllLatihan(ctx context.Context, input GetAllLatihanReq, fil
 			ID:        l.ID.String(),
 			Name:      l.Name,
 			TotalSoal: l.TotalSoal,
+			IsDone:    len(l.StatsLatihan) > 0,
 		}
 	}
 

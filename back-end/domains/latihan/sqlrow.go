@@ -7,12 +7,13 @@ import (
 )
 
 type Latihan struct {
-	ID          uuid.UUID `gorm:"type:uuid;default:gen_random_uuid();primaryKey"`
-	Name        string
-	TotalSoal   int
-	SoalLatihan []SoalLatihan `gorm:"foreignKey:LatihanID;references:ID"`
-	CreatedAt   time.Time     `gorm:"autoCreateTime"`
-	UpdatedAt   time.Time     `gorm:"autoUpdateTime"`
+	ID           uuid.UUID `gorm:"type:uuid;default:gen_random_uuid();primaryKey"`
+	Name         string
+	TotalSoal    int
+	SoalLatihan  []SoalLatihan  `gorm:"foreignKey:LatihanID;references:ID"`
+	StatsLatihan []StatsLatihan `gorm:"foreignKey:LatihanID;references:ID"`
+	CreatedAt    time.Time      `gorm:"autoCreateTime"`
+	UpdatedAt    time.Time      `gorm:"autoUpdateTime"`
 }
 
 func (Latihan) TableName() string {

@@ -4,6 +4,7 @@ type LatihanRes struct {
 	ID        string `json:"id"`
 	Name      string `json:"name"`
 	TotalSoal int    `json:"total_soal"`
+	IsDone    bool   `json:"is_done"`
 }
 
 type LatihanByIdRes struct {

@@ -7,6 +7,8 @@ data class LatihanData(
     val name: String,
     @SerializedName("total_soal")
     val totalSoal: String,
+    @SerializedName("is_done")
+    val isDone: Boolean,
 )
 
 data class LatihanByIdRes(
