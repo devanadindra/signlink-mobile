@@ -1,26 +1,26 @@
+# syntax=docker/dockerfile:1.6
+
 # =========================
 # Stage 1: Builder
 # =========================
 FROM golang:1.24-alpine AS builder
 
 # Build deps
-RUN apk add git build-base
+RUN apk add --no-cache git build-base
 
 WORKDIR /app
 
-# Enable go build cache
-ENV GOMODCACHE=/go/pkg/mod
-ENV GOCACHE=/root/.cache/go-build
-
-# Copy go.mod & go.sum
+# Copy go.mod & go.sum (agar cache optimal)
 COPY go.mod go.sum ./
 
-RUN go mod download
+# Download dependency once (cached)
+RUN --mount=type=cache,target=/go/pkg/mod \
+    go mod download
 
-# Copy source code
+# Copy full source
 COPY . .
 
-# Use caching mount for fast builds
+# Build using cache
 RUN --mount=type=cache,target=/root/.cache/go-build \
     --mount=type=cache,target=/go/pkg/mod \
     go build -o app .
@@ -30,7 +30,7 @@ RUN --mount=type=cache,target=/root/.cache/go-build \
 # =========================
 FROM alpine:latest
 
-RUN apk add ca-certificates
+RUN apk add --no-cache ca-certificates
 
 WORKDIR /app
 
