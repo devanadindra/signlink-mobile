@@ -28,9 +28,21 @@ class CustomerRepository(private val service: CustomerService) {
     }
 
     suspend fun addAvatar(token: String, avatar: File): ApiResponse<AvatarRes>? {
-        val imageBody = avatar.asRequestBody("image/*".toMediaTypeOrNull())
-        val imagePart = MultipartBody.Part.createFormData("avatar", avatar.name, imageBody)
+
+        val mimeType = "image/*".toMediaTypeOrNull()
+        val extension = when (mimeType.toString()) {
+            "image/jpeg" -> "jpg"
+            "image/png" -> "png"
+            else -> "jpg"
+        }
+
+        val forcedName = "avatar_${System.currentTimeMillis()}.$extension"
+
+        val requestBody = avatar.asRequestBody(mimeType)
+        val imagePart = MultipartBody.Part.createFormData("avatar", forcedName, requestBody)
+
         val response = service.addAvatar(token, imagePart)
         return if (response.isSuccessful) response.body() else null
     }
+
 }

@@ -17,13 +17,17 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import javax.inject.Singleton
 
+object ApiConfig {
+    const val BASE_URLS = "https://devanadindra.site/api/"
+//    const val BASE_URLS= "http://10.0.2.2:7777/api/"
+}
+
+
 @Module
 @InstallIn(SingletonComponent::class)
 object NetworkModule {
 
-    private const val BASE_URL= "http://10.0.2.2:7777/api/"
-//    private const val BASE_URL= "https://devanadindra.site/api/"
-//    private const val BASE_URL= "http://103.150.190.75:7777/api/"
+    private const val BASE_URL = ApiConfig.BASE_URLS
 
     @Provides
     @Singleton

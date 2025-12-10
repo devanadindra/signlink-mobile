@@ -3,6 +3,7 @@ package com.example.signlink.viewmodel
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.signlink.data.di.ApiConfig
 import com.example.signlink.data.models.customer.PersonalRes
 import com.example.signlink.data.repository.CustomerRepository
 import com.example.signlink.data.utils.AuthUtil
@@ -12,6 +13,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import java.io.File
 import javax.inject.Inject
+
+private const val BASE_URL = ApiConfig.BASE_URLS
 
 @HiltViewModel
 class CustomerViewModel @Inject constructor(
@@ -56,7 +59,7 @@ class CustomerViewModel @Inject constructor(
                                 url
                             } else {
                                 val cleanUrl = url.removePrefix("/")
-                                "http://10.0.2.2:7777/api/$cleanUrl"
+                                BASE_URL + cleanUrl
                             }
 
                             AuthUtil.saveProfile(context, fullUrl)

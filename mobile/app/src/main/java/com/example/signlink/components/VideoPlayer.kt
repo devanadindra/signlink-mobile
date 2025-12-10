@@ -20,6 +20,7 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
+import com.example.signlink.data.di.ApiConfig
 
 @Composable
 fun VideoPlayer(
@@ -28,9 +29,7 @@ fun VideoPlayer(
     onPlayerReady: (ExoPlayer) -> Unit = {}
 ) {
     val context = LocalContext.current
-    val baseUrl= "https://devanadindra.site/api/"
-    // val baseUrl= "http://103.150.190.75:7777/api/"
-    // val baseUrl= "http://10.0.2.2:7777/api/"
+    val baseUrl = ApiConfig.BASE_URLS
 
     val exoPlayer = remember(videoUrl) {
         ExoPlayer.Builder(context).build().apply {

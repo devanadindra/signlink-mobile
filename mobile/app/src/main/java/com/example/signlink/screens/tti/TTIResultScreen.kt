@@ -1,6 +1,5 @@
 package com.example.signlink.screens.tti
 
-import android.os.Build
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
@@ -30,6 +29,7 @@ import androidx.media3.ui.PlayerView
 import androidx.navigation.NavController
 import com.example.signlink.R
 import com.example.signlink.components.DictionaryHeaderCard
+import com.example.signlink.data.di.ApiConfig
 import com.example.signlink.data.models.kamus.KamusData
 import com.example.signlink.ui.theme.SignLinkTeal
 import com.example.signlink.ui.theme.DarkText
@@ -43,8 +43,7 @@ fun TTIResultScreen(
     data: List<KamusData>,
 ) {
     val context = LocalContext.current
-//    http://103.150.190.75:7777/api/
-    val baseUrl = "https://devanadindra.site/api/"
+    val baseUrl = ApiConfig.BASE_URLS
 
     val videoList = remember { data.map { it.url } }
     val wordList = remember { data.map { it.arti.replace("_", " ") } }
@@ -244,13 +243,4 @@ fun TTIResultScreen(
             }
         }
     }
-}
-
-
-fun isEmulator(): Boolean {
-    return (Build.FINGERPRINT.startsWith("generic")
-            || Build.FINGERPRINT.lowercase().contains("vbox")
-            || Build.FINGERPRINT.lowercase().contains("test-keys")
-            || Build.MODEL.contains("Emulator")
-            || Build.MODEL.contains("Android SDK built for x86"))
 }
