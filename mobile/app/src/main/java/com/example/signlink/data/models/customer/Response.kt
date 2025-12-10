@@ -37,3 +37,12 @@ data class ResetPasswordSubmitRes(
 data class ChangePasswordRes(
     val message: String,
 )
+
+data class AvatarRes(
+    val avatarUrl: String,
+    val message: String
+)
+
+data class DeleteAvatarRes(
+    val message: String
+)

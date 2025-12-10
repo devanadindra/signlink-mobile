@@ -28,6 +28,7 @@ type Handler interface {
 	ResetPassword(ctx *gin.Context)
 	ResetPasswordSubmit(ctx *gin.Context)
 	GoogleAuth(ctx *gin.Context)
+	DeleteAvatar(ctx *gin.Context)
 }
 
 type handler struct {
@@ -281,7 +282,7 @@ func (h *handler) UpdateProfile(ctx *gin.Context) {
 }
 
 func (h *handler) AddAvatar(ctx *gin.Context) {
-	file, err := ctx.FormFile("AvatarUrl")
+	file, err := ctx.FormFile("avatar")
 	if err != nil {
 		respond.Error(ctx, apierror.FromErr(err))
 		return
@@ -372,4 +373,14 @@ func (h *handler) GoogleAuth(ctx *gin.Context) {
 	fmt.Println("GoogleAuth Response:", res)
 
 	respond.Success(ctx, http.StatusOK, res)
+}
+
+func (h *handler) DeleteAvatar(ctx *gin.Context) {
+	err := h.service.DeleteAvatar(ctx)
+	if err != nil {
+		respond.Error(ctx, apierror.FromErr(err))
+		return
+	}
+
+	respond.Success(ctx, http.StatusOK, gin.H{"message": "Password reset successfully"})
 }

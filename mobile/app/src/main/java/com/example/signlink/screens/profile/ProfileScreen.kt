@@ -31,6 +31,7 @@ import com.example.signlink.Destinations
 import com.example.signlink.components.BottomBarSignLink
 import com.example.signlink.components.MainFloatingActionButton
 import com.example.signlink.components.NavItem
+import com.example.signlink.data.utils.AuthUtil
 import com.example.signlink.ui.theme.*
 import com.example.signlink.viewmodel.AuthViewModel
 import com.example.signlink.viewmodel.CustomerViewModel
@@ -64,7 +65,7 @@ fun ProfileScreen(
     var userName by remember { mutableStateOf("Memuat...") }
     var hasPassword by remember { mutableStateOf(false) }
     var userEmail by remember { mutableStateOf("") }
-    var userProfile by remember { mutableStateOf("") }
+    val imageUrl = AuthUtil.getProfile(context)
     var userGoogleID by remember { mutableStateOf("") }
 
     LaunchedEffect(Unit) {
@@ -73,16 +74,6 @@ fun ProfileScreen(
                 userName = personal.name
                 userEmail = personal.email
                 userGoogleID = personal.googleId
-                personal.url
-                    .takeIf { it.isNotEmpty() }
-                    ?.let { url ->
-                        userProfile = if (url.startsWith("http://") || url.startsWith("https://")) {
-                            url
-                        } else {
-                            "http://10.0.2.2:7777/api/$url"
-                        }
-                    }
-
                 hasPassword = personal.hasPassword
             } else {
                 userName = "Tidak diketahui"
@@ -116,13 +107,13 @@ fun ProfileScreen(
             ProfileHeader(
                 name = userName,
                 email = userEmail,
-                profile = userProfile,
+                profile = imageUrl.toString(),
                 onEditProfileClicked = {
                     val dataJson = """
                         {
                             "name": "$userName",
                             "email": "$userEmail",
-                            "profile": "$userProfile",
+                            "profile": "$imageUrl",
                             "google_id": "$userGoogleID"
                         }
                     """.trimIndent()

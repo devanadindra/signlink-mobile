@@ -2,12 +2,16 @@ package com.example.signlink.data.services
 
 import com.example.signlink.data.models.ApiResponse
 import com.example.signlink.data.models.customer.*
+import okhttp3.MultipartBody
 import retrofit2.Response
 import retrofit2.http.Body
+import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.Header
+import retrofit2.http.Multipart
 import retrofit2.http.PATCH
 import retrofit2.http.POST
+import retrofit2.http.Part
 
 interface CustomerService {
     @POST("user/login")
@@ -65,4 +69,17 @@ interface CustomerService {
         @Header("Authorization") authHeader: String,
         @Body req: UpdateProfileReq
     ): Response<ApiResponse<PersonalRes>>
+
+    @Multipart
+    @POST("user/avatar")
+    suspend fun addAvatar(
+        @Header("Authorization") authHeader: String,
+        @Part avatar: MultipartBody.Part
+    ): Response<ApiResponse<AvatarRes>>
+
+    @DELETE("user/avatar")
+    suspend fun deleteAvatar(
+        @Header("Authorization") authHeader: String,
+    ): Response<ApiResponse<DeleteAvatarRes>>
+
 }

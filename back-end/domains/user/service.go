@@ -36,6 +36,7 @@ type Service interface {
 	ResetPassword(ctx context.Context, req ResetPasswordReq) (res *ResetPasswordRes, err error)
 	ResetPasswordSubmit(ctx context.Context, req ResetPasswordSubmitReq) error
 	GoogleAuth(ctx context.Context, input GoogleAuth) (*LoginRes, error)
+	DeleteAvatar(ctx context.Context) error
 }
 
 type service struct {
@@ -635,4 +636,77 @@ func (s *service) GoogleAuth(ctx context.Context, input GoogleAuth) (*LoginRes, 
 		Token:   tokenString,
 		Expires: expirationTime,
 	}, nil
+}
+
+func (s *service) DeleteAvatar(ctx context.Context) error {
+	token, err := contextUtil.GetTokenClaims(ctx)
+	if err != nil {
+		return err
+	}
+
+	db, err := s.dbSelector.GetDBByRole(ctx)
+	if err != nil {
+		return err
+	}
+
+	userID := token.Claims.UserID
+	role := token.Claims.Role
+
+	tx := db.Begin()
+	if tx.Error != nil {
+		return tx.Error
+	}
+
+	var oldAvatar string
+
+	switch role {
+	case constants.ADMIN:
+		var admin Admin
+		if err := tx.WithContext(ctx).Where("id = ?", userID).First(&admin).Error; err != nil {
+			tx.Rollback()
+			return apierror.FromErr(err)
+		}
+		oldAvatar = admin.AvatarUrl
+
+	case constants.CUSTOMER:
+		var customer Customer
+		if err := tx.WithContext(ctx).Where("id = ?", userID).First(&customer).Error; err != nil {
+			tx.Rollback()
+			return apierror.FromErr(err)
+		}
+		oldAvatar = customer.AvatarUrl
+	}
+
+	switch role {
+	case constants.ADMIN:
+		if err := tx.WithContext(ctx).Model(&Admin{}).
+			Where("id = ?", userID).
+			Update("avatar_url", nil).Error; err != nil {
+			tx.Rollback()
+			return err
+		}
+
+	case constants.CUSTOMER:
+		if err := tx.WithContext(ctx).Model(&Customer{}).
+			Where("id = ?", userID).
+			Update("avatar_url", nil).Error; err != nil {
+			tx.Rollback()
+			return err
+		}
+	}
+
+	if oldAvatar != "" {
+		oldPath := strings.TrimPrefix(oldAvatar, "/")
+		if err := os.Remove(oldPath); err != nil && !os.IsNotExist(err) {
+			tx.Rollback()
+			return apierror.FromErr(err)
+		}
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	return nil
 }

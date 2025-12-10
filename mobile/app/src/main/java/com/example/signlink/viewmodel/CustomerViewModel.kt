@@ -7,10 +7,10 @@ import com.example.signlink.data.models.customer.PersonalRes
 import com.example.signlink.data.repository.CustomerRepository
 import com.example.signlink.data.utils.AuthUtil
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import java.io.File
 import javax.inject.Inject
 
 @HiltViewModel
@@ -55,7 +55,8 @@ class CustomerViewModel @Inject constructor(
                             val fullUrl = if (url.startsWith("http://") || url.startsWith("https://")) {
                                 url
                             } else {
-                                "http://10.0.2.2:7777/api/$url"
+                                val cleanUrl = url.removePrefix("/")
+                                "http://10.0.2.2:7777/api/$cleanUrl"
                             }
 
                             AuthUtil.saveProfile(context, fullUrl)
@@ -82,8 +83,7 @@ class CustomerViewModel @Inject constructor(
             _isLoading.value = true
             if (token != null) {
                 try {
-                    val role = AuthUtil.getRole(context).toString()
-                    val response = repository.updateProfile(token, name, email, role)
+                    val response = repository.updateProfile(token, name, email)
                     val personal = response?.data
 
                     if (personal != null) {
@@ -97,6 +97,72 @@ class CustomerViewModel @Inject constructor(
                 }
             } else {
                 _errorMessage.value = "Gagal menyimpan perubahan. Silakan coba lagi."
+            }
+        }
+    }
+
+    fun addAvatar(
+        context: Context,
+        avatar: File
+    ) {
+        viewModelScope.launch {
+            val token = AuthUtil.jwtAuth(context)
+            _isLoading.value = true
+            if (token != null) {
+                try {
+                    val response = repository.addAvatar(token, avatar)
+                    val res = response?.data
+
+                    if (res != null) {
+                        res.avatarUrl.let { url ->
+                            if (url.isNotEmpty()) {
+                                val fullUrl = if (url.startsWith("http://") || url.startsWith("https://")) {
+                                    url
+                                } else {
+                                    val cleanUrl = url.removePrefix("/")
+                                    "http://10.0.2.2:7777/api/$cleanUrl"
+                                }
+
+                                AuthUtil.saveProfile(context, fullUrl)
+                            }
+                        }
+                        _successMessage.value = "avatar berhasil disimpan!"
+                    } else {
+                        _errorMessage.value = "Gagal menyimpan avatar. Silakan coba lagi."
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    _errorMessage.value = e.message
+                }
+            } else {
+                _errorMessage.value = "Gagal menyimpan avatar. Silakan coba lagi."
+            }
+        }
+    }
+
+    fun deleteAvatar(
+        context: Context
+    ) {
+        viewModelScope.launch {
+            val token = AuthUtil.jwtAuth(context)
+            _isLoading.value = true
+            if (token != null) {
+                try {
+                    val response = repository.deleteAvatar(token)
+                    val res = response?.data
+
+                    if (res != null) {
+                        _successMessage.value = res.message
+                        AuthUtil.clearProfile(context)
+                    } else {
+                        _errorMessage.value = "Gagal menghapus foto. Silakan coba lagi."
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    _errorMessage.value = e.message
+                }
+            } else {
+                _errorMessage.value = "Gagal menghapus foto. Silakan coba lagi."
             }
         }
     }

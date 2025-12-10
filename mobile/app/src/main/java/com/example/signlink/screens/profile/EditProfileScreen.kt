@@ -11,6 +11,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -24,10 +25,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
+import com.example.signlink.Destinations
+import com.example.signlink.data.utils.AuthUtil
 import com.example.signlink.ui.theme.*
 import com.example.signlink.viewmodel.CustomerViewModel
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.collectLatest
 
 
@@ -42,16 +44,14 @@ fun EditProfileScreen(
     navController: NavController,
     initialName: String,
     initialEmail: String,
-    initialProfile: String,
     initialGoogleID: String
 ) {
-    val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
     val isLoading by customerViewModel.isLoading.collectAsState()
 
     var name by remember { mutableStateOf(initialName) }
     var email by remember { mutableStateOf(initialEmail) }
-    var profile by remember { mutableStateOf(initialProfile) }
+    val imageUrl = AuthUtil.getProfile(context)
     val isGoogleLogin = initialGoogleID.isNotBlank()
 
     DisposableEffect(Unit) {
@@ -97,7 +97,7 @@ fun EditProfileScreen(
 
         } catch (e: Exception) {
             e.printStackTrace()
-            Toast.makeText(context, "Gagal memproses file video. Pastikan format video valid.", Toast.LENGTH_LONG).show()
+            Toast.makeText(context, "Gagal memproses data. Pastikan format data valid.", Toast.LENGTH_LONG).show()
         }
     }
 
@@ -110,6 +110,7 @@ fun EditProfileScreen(
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Kembali")
                     }
                 },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
             )
         },
     ) { paddingValues ->
@@ -123,12 +124,7 @@ fun EditProfileScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // Bagian Foto Profil
-            EditProfileImage(profile) {
-                // TODO: Logika untuk mengubah/mengunggah foto profil
-                coroutineScope.launch {
-                    Toast.makeText(context, "Fungsi ubah foto profil belum diimplementasikan.", Toast.LENGTH_LONG).show()
-                }
-            }
+            EditProfileImage(imageUrl.toString(), onEditClicked = {navController.navigate(Destinations.PHOTO_PROFILE_SCREEN)})
 
             Spacer(modifier = Modifier.height(32.dp))
 
@@ -188,9 +184,9 @@ fun EditProfileImage(
                 .background(SignLinkTeal.copy(alpha = 0.2f)),
             contentAlignment = Alignment.Center
         ) {
-            if (profileUrl.isEmpty()) {
+            if (profileUrl.isEmpty() || profileUrl == "") {
                 Icon(
-                    imageVector = Icons.Default.CameraAlt,
+                    imageVector = Icons.Default.Person,
                     contentDescription = "Edit Foto Profil",
                     tint = SignLinkTeal,
                     modifier = Modifier.size(60.dp)

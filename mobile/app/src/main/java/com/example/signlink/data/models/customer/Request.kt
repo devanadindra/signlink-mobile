@@ -1,6 +1,7 @@
 package com.example.signlink.data.models.customer
 
 import com.google.gson.annotations.SerializedName
+import java.io.File
 
 data class RegisterReq(
     val name: String,
@@ -26,8 +27,7 @@ data class ResetPasswordSubmit(
 
 data class UpdateProfileReq(
     val name: String,
-    val email: String,
-    val role: String,
+    val email: String
 )
 
 data class ChangePaswordReq(
@@ -36,4 +36,8 @@ data class ChangePaswordReq(
 
     @SerializedName("new_password")
     val newPassword: String
+)
+
+data class AvatarReq(
+    val avatar: File
 )

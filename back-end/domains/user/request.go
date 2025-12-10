@@ -42,7 +42,7 @@ type UpdateProfileReq struct {
 }
 
 type AvatarReq struct {
-	AvatarUrl *multipart.FileHeader `json:"AvatarUrl" validate:"required"`
+	AvatarUrl *multipart.FileHeader `json:"avatar" validate:"required"`
 }
 
 type ResetPasswordReq struct {

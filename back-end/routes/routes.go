@@ -60,6 +60,7 @@ func NewDependency(
 		user.POST("/registerAdmin", mw.JWT(constants.ADMIN), userHandler.RegisterAdmin)
 		user.PATCH("/updateUser", mw.JWT(constants.CUSTOMER, constants.ADMIN), userHandler.UpdateProfile)
 		user.POST("/avatar", mw.JWT(constants.CUSTOMER, constants.ADMIN), userHandler.AddAvatar)
+		user.DELETE("/avatar", mw.JWT(constants.CUSTOMER, constants.ADMIN), userHandler.DeleteAvatar)
 		user.PATCH("/password", mw.JWT(constants.ADMIN, constants.CUSTOMER), userHandler.ChangePassword)
 		user.GET("/get-personal", mw.JWT(constants.ADMIN, constants.CUSTOMER), userHandler.GetPersonal)
 		user.GET("/check-jwt", mw.JWT(constants.ADMIN, constants.CUSTOMER), func(ctx *gin.Context) {

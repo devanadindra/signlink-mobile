@@ -40,6 +40,7 @@ import com.example.signlink.screens.latihan.LatihanDetailScreen
 import com.example.signlink.screens.latihan.LatihanResultScreen
 import com.example.signlink.screens.latihan.StatsLatihanScreen
 import com.example.signlink.screens.profile.HelpScreen
+import com.example.signlink.screens.profile.PhotoProfileScreen
 import com.example.signlink.screens.profile.PrivacyPolicyScreen
 import com.example.signlink.screens.tti.TTIResultScreen
 import com.example.signlink.screens.tti.TextToIsyaratScreen
@@ -65,6 +66,7 @@ object Destinations {
     const val KAMUS_DETAIL_SCREEN = "kamus_detail_screen"
     const val TTI_SCREEN = "tti_screen"
     const val PROFILE_SCREEN = "profile_screen"
+    const val PHOTO_PROFILE_SCREEN = "photo_profile_screen"
     const val EDIT_PROFILE_SCREEN = "edit_profile_screen"
     const val LATIHAN_SCREEN = "latihan_screen"
     const val LATIHAN_DETAIL_SCREEN = "latihan_detail_screen/{charactersJson}"
@@ -445,7 +447,6 @@ fun AppNavHost() {
 
             val name = json.getString("name")
             val email = json.getString("email")
-            val profile = json.getString("profile")
             val googleID = json.getString("google_id")
 
             EditProfileScreen(
@@ -453,7 +454,6 @@ fun AppNavHost() {
                 navController = navController,
                 initialName = name,
                 initialEmail = email,
-                initialProfile = profile,
                 initialGoogleID = googleID
             )
         }
@@ -465,5 +465,12 @@ fun AppNavHost() {
             )
         }
 
+        // Foto Profil
+        composable( route = Destinations.PHOTO_PROFILE_SCREEN ) {
+            PhotoProfileScreen(
+                navController = navController,
+                customerViewModel= customerViewModel
+            )
+        }
     }
 }
