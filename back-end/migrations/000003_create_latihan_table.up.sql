@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS soal_latihan (
     soal TEXT NOT NULL,
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW (),
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW ()
-)
+);
 
 CREATE TABLE IF NOT EXISTS stats_latihan (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -21,4 +21,4 @@ CREATE TABLE IF NOT EXISTS stats_latihan (
     score FLOAT NOT NULL,
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW (),
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW ()
-)
+);
