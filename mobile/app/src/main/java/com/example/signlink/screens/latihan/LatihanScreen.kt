@@ -12,6 +12,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ListAlt
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.*
@@ -41,6 +42,7 @@ import com.example.signlink.Destinations
 import com.example.signlink.data.models.latihan.LatihanData
 import com.example.signlink.data.utils.AuthUtil.getRole
 import com.example.signlink.viewmodel.LatihanViewModel
+import androidx.compose.material.icons.filled.Refresh
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -87,7 +89,7 @@ fun LatihanScreen(
 
     LaunchedEffect(successMessage) {
         successMessage?.let { success ->
-            if (success.isNotBlank()) {
+            if (success.isNotBlank() && currentRole == "ADMIN") {
                 Toast.makeText(context, "Berhasil: $success", Toast.LENGTH_SHORT).show()
                 viewModel.clearSuccess()
             }
@@ -173,7 +175,7 @@ fun LatihanScreen(
             LazyColumn(
                 state = listState,
                 modifier = Modifier
-                    .fillMaxWidth()
+                    .fillMaxWidth(0.95f)
                     .weight(1f),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 contentPadding = PaddingValues(bottom = 0.dp)
@@ -192,11 +194,12 @@ fun LatihanScreen(
                     }
 
                     LatihanModulCard(
+                        navController = navController,
                         modul = item,
                         userRole = currentRole,
                         isLocked = isLocked,
                         onClick = {
-                            if (!isLocked) {
+                            if (!isLocked || item.isDone) {
                                 navController.navigate("${Destinations.LATIHAN_DETAIL_SCREEN}/${item.id}")
                             } else {
                                 Toast.makeText(
@@ -209,7 +212,7 @@ fun LatihanScreen(
                         onDeleteClicked = {
                             viewModel.deleteLatihan(context, item.id, currentPage, pageSize)
                         },
-                        modifier = Modifier.padding(vertical = 8.dp)
+                        modifier = Modifier.padding(vertical = 8.dp),
                     )
 
                     previousIsDone = item.isDone
@@ -265,6 +268,7 @@ fun LatihanScreen(
  */
 @Composable
 fun LatihanModulCard(
+    navController: NavController,
     modul: LatihanData,
     onClick: () -> Unit,
     userRole: String,
@@ -275,21 +279,26 @@ fun LatihanModulCard(
     val isUserAdmin = userRole == "ADMIN"
     val itemHeight = if (isUserAdmin) 80.dp else 60.dp
 
+    val cardColor = if (modul.isDone) Color(0xFF4CAF50) else SignLinkTeal
+
     Card(
         shape = RoundedCornerShape(12.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-        colors = CardDefaults.cardColors(containerColor = SignLinkTeal),
+        colors = CardDefaults.cardColors(containerColor = cardColor),
         modifier = modifier
             .fillMaxWidth(0.9f)
             .height(itemHeight)
-            .clickable(onClick = onClick, enabled = !isLocked || isUserAdmin)
+            .clickable(
+                enabled = (!isLocked || isUserAdmin),
+                onClick = onClick
+            )
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
 
             Row(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(end = if (isUserAdmin) 0.dp else 16.dp),
+                    .padding(end = 0.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
 
@@ -301,7 +310,7 @@ fun LatihanModulCard(
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ListAlt,
+                        imageVector = if (modul.isDone) Icons.Default.Check else Icons.AutoMirrored.Filled.ListAlt,
                         contentDescription = null,
                         tint = Color.White,
                         modifier = Modifier.size(42.dp)
@@ -317,7 +326,9 @@ fun LatihanModulCard(
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold
                     )
+
                     Spacer(modifier = Modifier.height(4.dp))
+
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
                             Icons.AutoMirrored.Filled.ListAlt,
@@ -334,6 +345,7 @@ fun LatihanModulCard(
                     }
                 }
 
+                // ADMIN: tombol delete
                 if (isUserAdmin) {
                     Box(
                         modifier = Modifier
@@ -348,6 +360,26 @@ fun LatihanModulCard(
                             contentDescription = "Hapus",
                             tint = Color.White,
                             modifier = Modifier.size(28.dp)
+                        )
+                    }
+                }
+
+                if (!isUserAdmin && modul.isDone) {
+                    Box(
+                        modifier = Modifier
+                            .width(70.dp)
+                            .fillMaxHeight()
+                            .background(Color(0xFF388E3C), RoundedCornerShape(topEnd = 12.dp, bottomEnd = 12.dp))
+                            .clickable(
+                                onClick = {navController.navigate("${Destinations.LATIHAN_DETAIL_SCREEN}/${modul.id}") }
+                                ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            Icons.Default.Refresh,
+                            contentDescription = "Ulangi",
+                            tint = Color.White,
+                            modifier = Modifier.size(26.dp)
                         )
                     }
                 }

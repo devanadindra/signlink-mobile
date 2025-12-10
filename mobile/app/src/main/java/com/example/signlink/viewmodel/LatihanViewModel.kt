@@ -1,19 +1,24 @@
 package com.example.signlink.viewmodel
 
 import android.content.Context
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.signlink.data.models.latihan.LatihanByIdRes
 import com.example.signlink.data.models.latihan.LatihanData
 import com.example.signlink.data.models.latihan.LatihanReq
+import com.example.signlink.data.models.latihan.StatsLatihanByUserIdRes
 import com.example.signlink.data.models.latihan.StatsLatihanReq
 import com.example.signlink.data.utils.utils.parseErrorMessage
 import com.example.signlink.data.repository.LatihanRepository
 import com.example.signlink.data.utils.AuthUtil
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -24,6 +29,9 @@ class LatihanViewModel @Inject constructor(
 
     private val _latihanList = MutableStateFlow<List<LatihanData>>(emptyList())
     val latihanList: StateFlow<List<LatihanData>> = _latihanList
+
+    private val _statsLatihanByuserIdList = MutableStateFlow<List<StatsLatihanByUserIdRes>>(emptyList())
+    val statsLatihanByuserIdList: StateFlow<List<StatsLatihanByUserIdRes>> = _statsLatihanByuserIdList
 
     private val _latihanDetail = MutableStateFlow<LatihanByIdRes?>(null)
     val latihanDetail = _latihanDetail.asStateFlow()
@@ -37,6 +45,10 @@ class LatihanViewModel @Inject constructor(
 
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading
+
+    val averageScore = statsLatihanByuserIdList.map { list ->
+        if (list.isNotEmpty()) list.sumOf { it.score.toDouble() } / list.size else 0.0
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.0)
 
     fun clearError() {
         _errorMessage.value = null
@@ -169,6 +181,37 @@ class LatihanViewModel @Inject constructor(
                 _errorMessage.value = "Terjadi kesalahan: ${e.message}"
             } finally {
                 _isLoading.value = false
+            }
+        }
+    }
+
+    fun getStatsLatihanByUserId(context: Context) {
+        viewModelScope.launch {
+            Log.d("DEBUG", "Mulai getStatsLatihanByUserId()")
+            _isLoading.value = true
+
+            val token = AuthUtil.jwtAuth(context)
+            Log.d("DEBUG", "Token: $token")
+
+            try {
+                val result = repository.getStatsLatihanByUserId(token.toString())
+                Log.d("DEBUG", "Result dari repository: $result")
+
+                if (result != null) {
+                    _statsLatihanByuserIdList.value = result
+                    _successMessage.value = "Data berhasil dimuat"
+                    Log.d("DEBUG", "Berhasil: $result")
+                } else {
+                    _errorMessage.value = "Data gagal dimuat"
+                    Log.e("DEBUG", "Result NULL")
+                }
+
+            } catch (e: Exception) {
+                _errorMessage.value = "Terjadi kesalahan: ${e.message}"
+                Log.e("DEBUG", "Catch error: ", e)
+            } finally {
+                _isLoading.value = false
+                Log.d("DEBUG", "Selesai getStatsLatihanByUserId()")
             }
         }
     }

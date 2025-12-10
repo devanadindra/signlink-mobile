@@ -38,6 +38,7 @@ import com.example.signlink.screens.latihan.AddLatihanScreen
 import com.example.signlink.screens.latihan.LatihanScreen
 import com.example.signlink.screens.latihan.LatihanDetailScreen
 import com.example.signlink.screens.latihan.LatihanResultScreen
+import com.example.signlink.screens.latihan.StatsLatihanScreen
 import com.example.signlink.screens.profile.HelpScreen
 import com.example.signlink.screens.profile.PrivacyPolicyScreen
 import com.example.signlink.screens.tti.TTIResultScreen
@@ -69,6 +70,7 @@ object Destinations {
     const val LATIHAN_DETAIL_SCREEN = "latihan_detail_screen/{charactersJson}"
     const val ADD_LATIHAN_SCREEN = "add_latihan_screen"
     const val LATIHAN_RESULT_SCREEN = "latihan_result_screen"
+    const val STATS_LATIHAN_SCREEN = "stats_latihan_screen"
     const val SIGN_CLASSIFIER_SCREEN = "sign_classifier_screen"
     const val FORGOT_PASSWORD_SCREEN = "forgot_password_screen"
     const val CHANGE_PASSWORD_SCREEN = "change_password_screen"
@@ -453,6 +455,13 @@ fun AppNavHost() {
                 initialEmail = email,
                 initialProfile = profile,
                 initialGoogleID = googleID
+            )
+        }
+
+        // Stats Latihan
+        composable(Destinations.STATS_LATIHAN_SCREEN) {
+            StatsLatihanScreen(
+                navController = navController,
             )
         }
 

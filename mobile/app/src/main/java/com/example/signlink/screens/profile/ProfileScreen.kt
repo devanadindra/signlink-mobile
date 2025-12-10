@@ -149,7 +149,7 @@ fun ProfileScreen(
 
                 ProfileOptionItem(
                     text = "Statistik Latihan Bahasa Isyarat",
-                    onClick = { /* TODO: Navigasi Ubah Nomor HP */ }
+                    onClick = { navController.navigate(Destinations.STATS_LATIHAN_SCREEN) }
                 )
             }
 

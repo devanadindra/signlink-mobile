@@ -20,6 +20,17 @@ data class LatihanByIdRes(
     val soalLatihan: List<SoalLatihanRes>,
 )
 
+data class StatsLatihanByUserIdRes(
+    val id: String,
+    @SerializedName("latihan_id")
+    val latihanId: String,
+    @SerializedName("latihan_name")
+    val latihanName: String,
+    @SerializedName("total_soal")
+    val totalSoal: Int,
+    val score: Float,
+)
+
 data class SoalLatihanRes(
     val id: String,
     val latihanId: String,

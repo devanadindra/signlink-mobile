@@ -16,6 +16,7 @@ type Handler interface {
 	DeleteLatihan(ctx *gin.Context)
 	GetAllLatihan(ctx *gin.Context)
 	AddStatsLatihan(ctx *gin.Context)
+	GetStatsByUserId(ctx *gin.Context)
 }
 
 type handler struct {
@@ -109,4 +110,15 @@ func (h *handler) AddStatsLatihan(ctx *gin.Context) {
 	}
 
 	respond.Success(ctx, http.StatusCreated, gin.H{"message": "stats latihan added successfully"})
+}
+
+func (h *handler) GetStatsByUserId(ctx *gin.Context) {
+
+	res, err := h.service.GetStatsByUserId(ctx)
+	if err != nil {
+		respond.Error(ctx, apierror.FromErr(err))
+		return
+	}
+
+	respond.Success(ctx, http.StatusOK, res)
 }

@@ -34,8 +34,8 @@ func (SoalLatihan) TableName() string {
 
 type StatsLatihan struct {
 	ID        uuid.UUID `gorm:"type:uuid;default:gen_random_uuid();primaryKey"`
-	LatihanID uuid.UUID `gorm:"uniqueIndex:idx_latihan_user"`
-	UserID    uuid.UUID `gorm:"uniqueIndex:idx_latihan_user"`
+	LatihanID uuid.UUID
+	UserID    uuid.UUID
 	Score     float64   `gorm:"type:float64;not null"`
 	CreatedAt time.Time `gorm:"autoCreateTime"`
 	UpdatedAt time.Time `gorm:"autoUpdateTime"`

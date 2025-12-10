@@ -8,6 +8,7 @@ import com.example.signlink.data.models.latihan.DeleteLatihanRes
 import com.example.signlink.data.models.latihan.LatihanByIdRes
 import com.example.signlink.data.models.latihan.LatihanData
 import com.example.signlink.data.models.latihan.LatihanReq
+import com.example.signlink.data.models.latihan.StatsLatihanByUserIdRes
 import com.example.signlink.data.models.latihan.StatsLatihanReq
 import retrofit2.Response
 import retrofit2.http.*
@@ -38,6 +39,11 @@ interface LatihanService {
         @Header("Authorization") authHeader: String,
         @Body req: StatsLatihanReq
     ): Response<ApiResponse<AddStatsLatihanRes>>
+
+    @GET("latihan/stats")
+    suspend fun getStatsLatihanByUserId(
+        @Header("Authorization") authHeader: String,
+    ): Response<ApiResponse<List<StatsLatihanByUserIdRes>>>
 
     @DELETE("latihan/{id}")
     suspend fun deleteLatihan(

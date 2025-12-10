@@ -125,6 +125,7 @@ dependencies {
 
     implementation("io.coil-kt:coil-compose:2.4.0")
 
+
     // Testing
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

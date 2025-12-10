@@ -50,3 +50,23 @@ fun DictionaryHeaderCard(
         }
     }
 }
+
+@Composable
+fun DescriptionCard(
+    description: String,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        shape = RoundedCornerShape(8.dp),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFFF0F0F0)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        modifier = modifier.fillMaxWidth()
+    ) {
+        Text(
+            text = description,
+            color = Color.Gray,
+            fontSize = 13.sp,
+            modifier = Modifier.padding(12.dp)
+        )
+    }
+}

@@ -6,6 +6,7 @@ import com.example.signlink.data.models.latihan.DeleteLatihanRes
 import com.example.signlink.data.models.latihan.LatihanByIdRes
 import com.example.signlink.data.models.latihan.LatihanData
 import com.example.signlink.data.models.latihan.LatihanReq
+import com.example.signlink.data.models.latihan.StatsLatihanByUserIdRes
 import com.example.signlink.data.models.latihan.StatsLatihanReq
 import com.example.signlink.data.services.LatihanService
 import retrofit2.Response
@@ -53,5 +54,18 @@ class LatihanRepository @Inject constructor(private val service: LatihanService)
 
     suspend fun deleteLatihan(token: String, latihanId: String): Response<ApiResponse<DeleteLatihanRes>>{
         return service.deleteLatihan(token, latihanId)
+    }
+
+    suspend fun getStatsLatihanByUserId(
+        token: String,
+    ): List<StatsLatihanByUserIdRes>? {
+
+        val response = service.getStatsLatihanByUserId(
+            authHeader = token
+        )
+
+        return (if (response.isSuccessful)
+            response.body()?.data
+        else null)
     }
 }

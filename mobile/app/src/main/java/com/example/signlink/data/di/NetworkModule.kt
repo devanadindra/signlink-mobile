@@ -22,8 +22,8 @@ import javax.inject.Singleton
 object NetworkModule {
 
     private const val BASE_URL= "http://10.0.2.2:7777/api/"
-    // private const val BASE_URL= "https://devanadindra.site/api/"
-    // private const val BASE_URL= "http://103.150.190.75:7777/api/"
+//    private const val BASE_URL= "https://devanadindra.site/api/"
+//    private const val BASE_URL= "http://103.150.190.75:7777/api/"
 
     @Provides
     @Singleton

@@ -23,6 +23,7 @@ type Service interface {
 	AddLatihan(ctx context.Context, req LatihanReq) error
 	DeleteLatihan(ctx context.Context, latihanId string) error
 	AddStatsLatihan(ctx context.Context, req StatsLatihanReq) error
+	GetStatsByUserId(ctx context.Context) (*[]StatsLatihanRes, error)
 }
 
 type service struct {
@@ -204,14 +205,6 @@ func (s *service) AddStatsLatihan(ctx context.Context, req StatsLatihanReq) erro
 		return apierror.FromErr(err)
 	}
 
-	var existing StatsLatihan
-	if err := db.WithContext(ctx).
-		Where("latihan_id = ? AND user_id = ?", latihan.ID, token.Claims.UserID).
-		First(&existing).Error; err == nil {
-
-		return apierror.ExistingStatsLatihan()
-	}
-
 	statsLatihan := StatsLatihan{
 		LatihanID: latihan.ID,
 		UserID:    token.Claims.UserID,
@@ -225,4 +218,56 @@ func (s *service) AddStatsLatihan(ctx context.Context, req StatsLatihanReq) erro
 	}
 
 	return nil
+}
+
+func (s *service) GetStatsByUserId(ctx context.Context) (*[]StatsLatihanRes, error) {
+	token, err := contextUtil.GetTokenClaims(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	db, err := s.dbSelector.GetDBByRole(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	subQuery := db.
+		Table("stats_latihan").
+		Select("MAX(created_at) AS max").
+		Where("user_id = ?", token.Claims.UserID).
+		Group("latihan_id")
+
+	var stats []StatsLatihan
+	err = db.WithContext(ctx).
+		Table("stats_latihan s").
+		Select("s.*").
+		Joins("JOIN (?) latest ON s.created_at = latest.max", subQuery).
+		Where("s.user_id = ?", token.Claims.UserID).
+		Order("s.created_at DESC").
+		Find(&stats).Error
+	if err != nil {
+		return nil, err
+	}
+
+	// response
+	res := make([]StatsLatihanRes, len(stats))
+	for i, stat := range stats {
+		var latihan Latihan
+		err := db.WithContext(ctx).
+			Where("id = ?", stat.LatihanID).
+			First(&latihan).Error
+		if err != nil {
+			return nil, err
+		}
+
+		res[i] = StatsLatihanRes{
+			ID:          stat.ID.String(),
+			LatihanID:   stat.LatihanID.String(),
+			LatihanName: latihan.Name,
+			TotalSoal:   latihan.TotalSoal,
+			Score:       stat.Score,
+		}
+	}
+
+	return &res, nil
 }
