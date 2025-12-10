@@ -15,7 +15,7 @@ jobs:
     steps:
       # 1️⃣ Checkout repo
       - name: Checkout repository
-      - uses: actions/checkout@v4
+        uses: actions/checkout@v4
 
       # 2️⃣ Setup SSH Key
       - name: Setup SSH Key
@@ -35,6 +35,8 @@ jobs:
           ssh -i ~/.ssh/id_ed25519_ci -o StrictHostKeyChecking=no \
             ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }} "
               cd /home/${{ secrets.VPS_USERNAME }}/signlink;
+              tmux
               git pull || true;
               docker-compose up -d ${{ github.event.inputs.build-be == 'true' && '--build' || '' }}
+              exit
             "
