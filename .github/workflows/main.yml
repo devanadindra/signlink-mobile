@@ -1,0 +1,40 @@
+name: CI/CD Backend Only
+
+on:
+  workflow_dispatch:
+    inputs:
+      build-be:
+        description: 'Build backend? (true/false)'
+        required: true
+        default: 'true'
+
+jobs:
+  deploy-backend:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1️⃣ Checkout repo
+      - name: Checkout repository
+      - uses: actions/checkout@v4
+
+      # 2️⃣ Setup SSH Key
+      - name: Setup SSH Key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/id_ed25519_ci
+          chmod 600 ~/.ssh/id_ed25519_ci
+
+      # 3️⃣ Add VPS to known_hosts
+      - name: Add VPS to known_hosts
+        run: |
+          ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
+
+      # 4️⃣ Restart docker-compose di VPS
+      - name: Recreate containers on VPS
+        run: |
+          ssh -i ~/.ssh/id_ed25519_ci -o StrictHostKeyChecking=no \
+            ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }} "
+              cd /home/${{ secrets.VPS_USERNAME }}/signlink;
+              git pull || true;
+              docker-compose up -d ${{ github.event.inputs.build-be == 'true' && '--build' || '' }}
+            "
