@@ -4,7 +4,7 @@
 FROM golang:1.24-alpine AS builder
 
 # Build deps
-RUN apk add --no-cache git build-base
+RUN apk add git build-base
 
 WORKDIR /app
 
