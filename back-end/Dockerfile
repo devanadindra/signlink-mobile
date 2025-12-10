@@ -30,7 +30,7 @@ RUN --mount=type=cache,target=/root/.cache/go-build \
 # =========================
 FROM alpine:latest
 
-RUN apk add --no-cache ca-certificates
+RUN apk add ca-certificates
 
 WORKDIR /app
 
