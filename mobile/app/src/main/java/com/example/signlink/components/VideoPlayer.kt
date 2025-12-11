@@ -29,7 +29,7 @@ fun VideoPlayer(
     onPlayerReady: (ExoPlayer) -> Unit = {}
 ) {
     val context = LocalContext.current
-    val baseUrl = ApiConfig.BASE_URLS
+    val baseUrl = ApiConfig.BASE_URL
 
     val exoPlayer = remember(videoUrl) {
         ExoPlayer.Builder(context).build().apply {

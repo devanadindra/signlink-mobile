@@ -14,7 +14,7 @@ import kotlinx.coroutines.launch
 import java.io.File
 import javax.inject.Inject
 
-private const val BASE_URL = ApiConfig.BASE_URLS
+private const val BASE_URL = ApiConfig.BASE_URL
 
 @HiltViewModel
 class CustomerViewModel @Inject constructor(

@@ -15,6 +15,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -33,9 +34,31 @@ import com.example.signlink.data.di.ApiConfig
 import com.example.signlink.data.models.kamus.KamusData
 import com.example.signlink.ui.theme.SignLinkTeal
 import com.example.signlink.ui.theme.DarkText
+import kotlinx.coroutines.delay
 
 private const val TRANSITION_DURATION = 500
 
+/**
+ * Komponen Skeleton Loader untuk Video
+ */
+@Composable
+fun VideoSkeletonLoader(modifier: Modifier = Modifier) {
+    Box(
+        modifier = modifier
+            .background(Color(0xFFE0E0E0), RoundedCornerShape(8.dp)),
+        contentAlignment = Alignment.Center
+    ) {
+        CircularProgressIndicator(
+            modifier = Modifier.size(48.dp),
+            color = Color.Gray,
+            strokeWidth = 4.dp
+        )
+    }
+}
+
+/**
+ * Halaman Hasil Terjemahan Text-to-Isyarat (TTI)
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TTIResultScreen(
@@ -43,26 +66,32 @@ fun TTIResultScreen(
     data: List<KamusData>,
 ) {
     val context = LocalContext.current
-    val baseUrl = ApiConfig.BASE_URLS
+    val baseUrl = ApiConfig.BASE_URL
 
     val videoList = remember { data.map { it.url } }
     val wordList = remember { data.map { it.arti.replace("_", " ") } }
 
     var currentIndex by remember { mutableIntStateOf(0) }
     var showVideo by remember { mutableStateOf(true) }
-    var isLoading by remember { mutableStateOf(true) }
+    var initialLoading by remember { mutableStateOf(true) }
+
 
     val currentWord = wordList.getOrNull(currentIndex) ?: "Terjemahan"
 
     val exoPlayer = remember {
         ExoPlayer.Builder(context).build().apply {
-            playWhenReady = true
+            playWhenReady = false
         }
     }
 
-    LaunchedEffect(currentIndex, videoList) {
-        if (videoList.isNotEmpty()) {
-            isLoading = true
+    LaunchedEffect(Unit) {
+        initialLoading = true
+        delay(1000)
+        initialLoading = false
+    }
+
+    LaunchedEffect(currentIndex, videoList, initialLoading) {
+        if (!initialLoading && videoList.isNotEmpty()) {
             exoPlayer.pause()
 
             val videoUrl = videoList[currentIndex].removePrefix("/")
@@ -70,13 +99,22 @@ fun TTIResultScreen(
 
             exoPlayer.setMediaItem(item)
             exoPlayer.prepare()
-            exoPlayer.play()
-            isLoading = false
+
+            val listener = object : Player.Listener {
+                override fun onPlaybackStateChanged(state: Int) {
+                    if (state == Player.STATE_READY) {
+                        exoPlayer.play()
+                        exoPlayer.removeListener(this)
+                    }
+                }
+            }
+            exoPlayer.addListener(listener)
         }
     }
 
+
     DisposableEffect(Unit) {
-        val listener = object : Player.Listener {
+        val playbackListener = object : Player.Listener {
             override fun onPlaybackStateChanged(state: Int) {
                 if (state == Player.STATE_ENDED) {
                     if (currentIndex < videoList.size - 1) {
@@ -89,10 +127,10 @@ fun TTIResultScreen(
             }
         }
 
-        exoPlayer.addListener(listener)
+        exoPlayer.addListener(playbackListener)
 
         onDispose {
-            exoPlayer.removeListener(listener)
+            exoPlayer.removeListener(playbackListener)
             exoPlayer.release()
         }
     }
@@ -104,7 +142,6 @@ fun TTIResultScreen(
     }
 
 
-    // UI
     Scaffold(
         topBar = {
             TopAppBar(
@@ -178,26 +215,36 @@ fun TTIResultScreen(
                     } else {
                         Column(Modifier.padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
 
-                            Crossfade(
-                                targetState = currentIndex,
-                                animationSpec = tween(TRANSITION_DURATION),
-                                label = "VideoCrossfade"
-                            ) { index ->
-                                key(index) {
-                                    AndroidView(
-                                        factory = { ctx ->
-                                            PlayerView(ctx).apply {
-                                                player = exoPlayer
-                                                useController = false
-                                            }
-                                        },
-                                        update = { view ->
-                                            if (view.player != exoPlayer) view.player = exoPlayer
-                                        },
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .height(250.dp)
-                                    )
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(250.dp)
+                                    .clip(RoundedCornerShape(8.dp))
+                            ) {
+
+                                if (initialLoading) {
+                                    VideoSkeletonLoader(Modifier.fillMaxSize())
+                                } else {
+                                    Crossfade(
+                                        targetState = currentIndex,
+                                        animationSpec = tween(TRANSITION_DURATION),
+                                        label = "VideoCrossfade",
+                                        modifier = Modifier.fillMaxSize()
+                                    ) { index ->
+                                        key(index) {
+                                            AndroidView(
+                                                factory = { ctx ->
+                                                    PlayerView(ctx).apply {
+                                                        player = exoPlayer
+                                                        useController = false
+                                                    }
+                                                },
+                                                update = { view ->
+                                                },
+                                                modifier = Modifier.fillMaxSize()
+                                            )
+                                        }
+                                    }
                                 }
                             }
 
@@ -205,11 +252,16 @@ fun TTIResultScreen(
 
                             Button(
                                 onClick = {
-                                    exoPlayer.seekTo(0)
-                                    exoPlayer.play()
+                                    if (exoPlayer.playbackState == Player.STATE_ENDED) {
+                                        startFromBeginning()
+                                    } else {
+                                        exoPlayer.seekTo(0)
+                                        exoPlayer.play()
+                                    }
                                 },
                                 modifier = Modifier.fillMaxWidth().height(60.dp),
-                                colors = ButtonDefaults.buttonColors(SignLinkTeal)
+                                colors = ButtonDefaults.buttonColors(SignLinkTeal),
+                                enabled = !initialLoading
                             ) {
                                 Text(
                                     "$currentWord (${currentIndex + 1}/${videoList.size})",
@@ -226,7 +278,7 @@ fun TTIResultScreen(
 
             Button(
                 onClick = startFromBeginning,
-                enabled = videoList.size > 1 && currentIndex > 0,
+                enabled = videoList.size > 1 && currentIndex > 0 && !initialLoading,
                 modifier = Modifier
                     .fillMaxWidth(0.8f)
                     .height(50.dp),
