@@ -1,0 +1,273 @@
+package kuis
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"strings"
+	"time"
+
+	"github.com/devanadindraa/NTTH-Store/back-end/database"
+	apierror "github.com/devanadindraa/NTTH-Store/back-end/utils/api-error"
+	"github.com/devanadindraa/NTTH-Store/back-end/utils/config"
+	"github.com/devanadindraa/NTTH-Store/back-end/utils/constants"
+	contextUtil "github.com/devanadindraa/NTTH-Store/back-end/utils/context"
+	"github.com/devanadindraa/NTTH-Store/back-end/utils/dbselector"
+	"github.com/google/uuid"
+	"gorm.io/gorm"
+)
+
+type Service interface {
+	GetAllLatihan(ctx context.Context, input GetAllLatihanReq, filter constants.FilterReq) (*[]LatihanRes, int64, error)
+	GetLatihanById(ctx context.Context, latihanId string) (*LatihanByIdRes, error)
+	AddLatihan(ctx context.Context, req LatihanReq) error
+	DeleteLatihan(ctx context.Context, latihanId string) error
+	AddStatsLatihan(ctx context.Context, req StatsLatihanReq) error
+	GetStatsByUserId(ctx context.Context) (*[]StatsLatihanRes, error)
+}
+
+type service struct {
+	authConfig config.Auth
+	dbSelector *dbselector.DBService
+	CustomerDB *database.CustomerDB
+	AdminDB    *database.AdminDB
+}
+
+func NewService(config *config.Config, dbSelector *dbselector.DBService, CustomerDB *database.CustomerDB, AdminDB *database.AdminDB) Service {
+	return &service{
+		authConfig: config.Auth,
+		dbSelector: dbSelector,
+		CustomerDB: CustomerDB,
+		AdminDB:    AdminDB,
+	}
+}
+
+func (s *service) GetAllLatihan(ctx context.Context, input GetAllLatihanReq, filter constants.FilterReq) (*[]LatihanRes, int64, error) {
+	var total int64
+	var latihanList []Latihan
+
+	token, err := contextUtil.GetTokenClaims(ctx)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	db, err := s.dbSelector.GetDBByRole(ctx)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	query := db.WithContext(ctx).Model(&Latihan{})
+
+	if err := query.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	offset := (filter.Page - 1) * filter.Limit
+
+	if err := query.
+		Order(fmt.Sprintf("%s %s", filter.OrderBy, filter.SortOrder)).
+		Preload("StatsLatihan", "user_id = ?", token.Claims.UserID).
+		Limit(int(filter.Limit)).
+		Offset(int(offset)).
+		Find(&latihanList).Error; err != nil {
+		return nil, 0, err
+	}
+
+	res := make([]LatihanRes, len(latihanList))
+	for i, l := range latihanList {
+		res[i] = LatihanRes{
+			ID:        l.ID.String(),
+			Name:      l.Name,
+			TotalSoal: l.TotalSoal,
+			IsDone:    len(l.StatsLatihan) > 0,
+		}
+	}
+
+	return &res, total, nil
+}
+
+func (s *service) GetLatihanById(ctx context.Context, latihanId string) (*LatihanByIdRes, error) {
+	db, err := s.dbSelector.GetDBByRole(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var latihan Latihan
+	err = db.WithContext(ctx).
+		Preload("SoalLatihan").
+		Where("id =?", latihanId).
+		Find(&latihan).Error
+	if err != nil {
+		return nil, err
+	}
+
+	soalRes := make([]SoalLatihanRes, len(latihan.SoalLatihan))
+	for i, soal := range latihan.SoalLatihan {
+		soalRes[i] = SoalLatihanRes{
+			ID:        soal.ID.String(),
+			LatihanID: soal.LatihanID.String(),
+			Soal:      soal.Soal,
+		}
+	}
+
+	res := LatihanByIdRes{
+		ID:          latihan.ID.String(),
+		Name:        latihan.Name,
+		TotalSoal:   latihan.TotalSoal,
+		SoalLatihan: soalRes,
+	}
+
+	return &res, nil
+}
+
+func (s *service) AddLatihan(ctx context.Context, req LatihanReq) error {
+	db, err := s.dbSelector.GetDBByRole(ctx)
+	if err != nil {
+		return apierror.FromErr(err)
+	}
+
+	tx := db.Begin()
+	if tx.Error != nil {
+		return tx.Error
+	}
+
+	latihanID := uuid.New()
+
+	latihan := Latihan{
+		ID:        latihanID,
+		Name:      req.Name,
+		TotalSoal: len(req.SoalLatihan),
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+
+	if err := tx.WithContext(ctx).Create(&latihan).Error; err != nil {
+		tx.Rollback()
+		return apierror.FromErr(err)
+	}
+
+	soalList := make([]SoalLatihan, 0, len(req.SoalLatihan))
+	for _, soal := range req.SoalLatihan {
+		soalList = append(soalList, SoalLatihan{
+			ID:        uuid.New(),
+			LatihanID: latihanID,
+			Soal:      strings.ToUpper(soal),
+		})
+	}
+
+	if len(soalList) > 0 {
+		if err := tx.WithContext(ctx).Create(&soalList).Error; err != nil {
+			tx.Rollback()
+			return apierror.FromErr(err)
+		}
+	}
+
+	return tx.Commit().Error
+}
+
+func (s *service) DeleteLatihan(ctx context.Context, latihanId string) error {
+	db, err := s.dbSelector.GetDBByRole(ctx)
+	if err != nil {
+		return apierror.FromErr(err)
+	}
+
+	var latihan Latihan
+	if err := db.WithContext(ctx).First(&latihan, "id = ?", latihanId).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return apierror.LatihanNotFound(latihanId)
+		}
+		return apierror.FromErr(err)
+	}
+
+	if err := db.WithContext(ctx).Delete(&latihan).Error; err != nil {
+		return apierror.FromErr(err)
+	}
+
+	return nil
+}
+
+func (s *service) AddStatsLatihan(ctx context.Context, req StatsLatihanReq) error {
+	token, err := contextUtil.GetTokenClaims(ctx)
+	if err != nil {
+		return err
+	}
+
+	db, err := s.dbSelector.GetDBByRole(ctx)
+	if err != nil {
+		return apierror.FromErr(err)
+	}
+
+	var latihan Latihan
+	if err := db.WithContext(ctx).First(&latihan, "id = ?", req.LatihanID).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return apierror.LatihanNotFound(req.LatihanID)
+		}
+		return apierror.FromErr(err)
+	}
+
+	statsLatihan := StatsLatihan{
+		LatihanID: latihan.ID,
+		UserID:    token.Claims.UserID,
+		Score:     req.Score,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+
+	if err := db.WithContext(ctx).Create(&statsLatihan).Error; err != nil {
+		return apierror.FromErr(err)
+	}
+
+	return nil
+}
+
+func (s *service) GetStatsByUserId(ctx context.Context) (*[]StatsLatihanRes, error) {
+	token, err := contextUtil.GetTokenClaims(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	db, err := s.dbSelector.GetDBByRole(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	subQuery := db.
+		Table("stats_latihan").
+		Select("MAX(created_at) AS max").
+		Where("user_id = ?", token.Claims.UserID).
+		Group("latihan_id")
+
+	var stats []StatsLatihan
+	err = db.WithContext(ctx).
+		Table("stats_latihan s").
+		Select("s.*").
+		Joins("JOIN (?) latest ON s.created_at = latest.max", subQuery).
+		Where("s.user_id = ?", token.Claims.UserID).
+		Order("s.created_at DESC").
+		Find(&stats).Error
+	if err != nil {
+		return nil, err
+	}
+
+	// response
+	res := make([]StatsLatihanRes, len(stats))
+	for i, stat := range stats {
+		var latihan Latihan
+		err := db.WithContext(ctx).
+			Where("id = ?", stat.LatihanID).
+			First(&latihan).Error
+		if err != nil {
+			return nil, err
+		}
+
+		res[i] = StatsLatihanRes{
+			ID:          stat.ID.String(),
+			LatihanID:   stat.LatihanID.String(),
+			LatihanName: latihan.Name,
+			TotalSoal:   latihan.TotalSoal,
+			Score:       stat.Score,
+		}
+	}
+
+	return &res, nil
+}
