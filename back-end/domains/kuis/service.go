@@ -14,16 +14,18 @@ import (
 	contextUtil "github.com/devanadindraa/NTTH-Store/back-end/utils/context"
 	"github.com/devanadindraa/NTTH-Store/back-end/utils/dbselector"
 	"github.com/google/uuid"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 	"gorm.io/gorm"
 )
 
 type Service interface {
-	GetAllLatihan(ctx context.Context, input GetAllLatihanReq, filter constants.FilterReq) (*[]LatihanRes, int64, error)
-	GetLatihanById(ctx context.Context, latihanId string) (*LatihanByIdRes, error)
-	AddLatihan(ctx context.Context, req LatihanReq) error
-	DeleteLatihan(ctx context.Context, latihanId string) error
-	AddStatsLatihan(ctx context.Context, req StatsLatihanReq) error
-	GetStatsByUserId(ctx context.Context) (*[]StatsLatihanRes, error)
+	GetAllKuis(ctx context.Context, input GetAllKuisReq, filter constants.FilterReq) (*[]KuisRes, int64, error)
+	GetKuisById(ctx context.Context, kuisId string) (*KuisByIdRes, error)
+	AddKuis(ctx context.Context, req KuisReq) error
+	DeleteKuis(ctx context.Context, kuisId string) error
+	AddStatsKuis(ctx context.Context, req StatsKuisReq) error
+	GetStatsByUserId(ctx context.Context) (*[]StatsKuisRes, error)
 }
 
 type service struct {
@@ -42,9 +44,9 @@ func NewService(config *config.Config, dbSelector *dbselector.DBService, Custome
 	}
 }
 
-func (s *service) GetAllLatihan(ctx context.Context, input GetAllLatihanReq, filter constants.FilterReq) (*[]LatihanRes, int64, error) {
+func (s *service) GetAllKuis(ctx context.Context, input GetAllKuisReq, filter constants.FilterReq) (*[]KuisRes, int64, error) {
 	var total int64
-	var latihanList []Latihan
+	var kuisList []ModulKuis
 
 	token, err := contextUtil.GetTokenClaims(ctx)
 	if err != nil {
@@ -56,7 +58,7 @@ func (s *service) GetAllLatihan(ctx context.Context, input GetAllLatihanReq, fil
 		return nil, 0, err
 	}
 
-	query := db.WithContext(ctx).Model(&Latihan{})
+	query := db.WithContext(ctx).Model(&ModulKuis{})
 
 	if err := query.Count(&total).Error; err != nil {
 		return nil, 0, err
@@ -66,61 +68,79 @@ func (s *service) GetAllLatihan(ctx context.Context, input GetAllLatihanReq, fil
 
 	if err := query.
 		Order(fmt.Sprintf("%s %s", filter.OrderBy, filter.SortOrder)).
-		Preload("StatsLatihan", "user_id = ?", token.Claims.UserID).
+		Preload("StatsKuis", "user_id = ?", token.Claims.UserID).
 		Limit(int(filter.Limit)).
 		Offset(int(offset)).
-		Find(&latihanList).Error; err != nil {
+		Find(&kuisList).Error; err != nil {
 		return nil, 0, err
 	}
 
-	res := make([]LatihanRes, len(latihanList))
-	for i, l := range latihanList {
-		res[i] = LatihanRes{
-			ID:        l.ID.String(),
-			Name:      l.Name,
-			TotalSoal: l.TotalSoal,
-			IsDone:    len(l.StatsLatihan) > 0,
+	res := make([]KuisRes, len(kuisList))
+	for i, k := range kuisList {
+		res[i] = KuisRes{
+			ID:         k.ID.String(),
+			Name:       k.Name,
+			TotalSoal:  k.TotalSoal,
+			BatasWaktu: k.BatasWaktu,
+			IsDone:     len(k.StatsKuis) > 0,
 		}
 	}
 
 	return &res, total, nil
 }
 
-func (s *service) GetLatihanById(ctx context.Context, latihanId string) (*LatihanByIdRes, error) {
+func (s *service) GetKuisById(ctx context.Context, kuisId string) (*KuisByIdRes, error) {
 	db, err := s.dbSelector.GetDBByRole(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	var latihan Latihan
+	var kuis ModulKuis
 	err = db.WithContext(ctx).
-		Preload("SoalLatihan").
-		Where("id =?", latihanId).
-		Find(&latihan).Error
+		Preload("SoalKuis").
+		Preload("SoalKuis.OpsiKuis").
+		Where("id =?", kuisId).
+		Find(&kuis).Error
 	if err != nil {
 		return nil, err
 	}
 
-	soalRes := make([]SoalLatihanRes, len(latihan.SoalLatihan))
-	for i, soal := range latihan.SoalLatihan {
-		soalRes[i] = SoalLatihanRes{
-			ID:        soal.ID.String(),
-			LatihanID: soal.LatihanID.String(),
-			Soal:      soal.Soal,
+	soalRes := make([]SoalKuisRes, len(kuis.SoalKuis))
+	for i, soal := range kuis.SoalKuis {
+		opsiRes := make([]OpsiKuisRes, len(soal.OpsiKuis))
+		for j, opsi := range soal.OpsiKuis {
+			opsiRes[j] = OpsiKuisRes{
+				ID:     opsi.ID.String(),
+				SoalID: opsi.SoalID.String(),
+				Label:  opsi.Label,
+				Text:   opsi.Text,
+			}
+		}
+
+		soalRes[i] = SoalKuisRes{
+			ID:           soal.ID.String(),
+			ModulID:      soal.ModulID.String(),
+			VideoURL:     soal.VideoURL,
+			Soal:         soal.Soal,
+			JawabanBenar: soal.JawabanBenar,
+			OpsiKuis:     opsiRes,
 		}
 	}
 
-	res := LatihanByIdRes{
-		ID:          latihan.ID.String(),
-		Name:        latihan.Name,
-		TotalSoal:   latihan.TotalSoal,
-		SoalLatihan: soalRes,
+	res := KuisByIdRes{
+		ID:         kuis.ID.String(),
+		Name:       kuis.Name,
+		TotalSoal:  kuis.TotalSoal,
+		BatasWaktu: kuis.BatasWaktu,
+		SoalKuis:   soalRes,
 	}
 
 	return &res, nil
 }
 
-func (s *service) AddLatihan(ctx context.Context, req LatihanReq) error {
+func (s *service) AddKuis(ctx context.Context, req KuisReq) error {
+	titleCaser := cases.Title(language.Indonesian)
+
 	db, err := s.dbSelector.GetDBByRole(ctx)
 	if err != nil {
 		return apierror.FromErr(err)
@@ -131,27 +151,40 @@ func (s *service) AddLatihan(ctx context.Context, req LatihanReq) error {
 		return tx.Error
 	}
 
-	latihanID := uuid.New()
+	modulID := uuid.New()
 
-	latihan := Latihan{
-		ID:        latihanID,
-		Name:      req.Name,
-		TotalSoal: len(req.SoalLatihan),
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
+	kuis := ModulKuis{
+		ID:         modulID,
+		Name:       req.Name,
+		TotalSoal:  len(req.SoalKuis),
+		BatasWaktu: req.BatasWaktu,
+		CreatedAt:  time.Now(),
+		UpdatedAt:  time.Now(),
 	}
 
-	if err := tx.WithContext(ctx).Create(&latihan).Error; err != nil {
+	if err := tx.WithContext(ctx).Create(&kuis).Error; err != nil {
 		tx.Rollback()
 		return apierror.FromErr(err)
 	}
 
-	soalList := make([]SoalLatihan, 0, len(req.SoalLatihan))
-	for _, soal := range req.SoalLatihan {
-		soalList = append(soalList, SoalLatihan{
-			ID:        uuid.New(),
-			LatihanID: latihanID,
-			Soal:      strings.ToUpper(soal),
+	soalList := make([]SoalKuis, 0, len(req.SoalKuis))
+	for _, soal := range req.SoalKuis {
+		opsiList := make([]OpsiKuis, 0, len(soal.OpsiKuis))
+		soalID := uuid.New()
+		for _, opsi := range soal.OpsiKuis {
+			opsiList = append(opsiList, OpsiKuis{
+				SoalID: soalID,
+				Label:  strings.ToUpper(opsi.Label),
+				Text:   titleCaser.String(opsi.Text),
+			})
+		}
+		soalList = append(soalList, SoalKuis{
+			ID:           uuid.New(),
+			ModulID:      modulID,
+			VideoURL:     soal.VideoURL,
+			Soal:         soal.Soal,
+			JawabanBenar: soal.JawabanBenar,
+			OpsiKuis:     opsiList,
 		})
 	}
 
@@ -165,28 +198,28 @@ func (s *service) AddLatihan(ctx context.Context, req LatihanReq) error {
 	return tx.Commit().Error
 }
 
-func (s *service) DeleteLatihan(ctx context.Context, latihanId string) error {
+func (s *service) DeleteKuis(ctx context.Context, kuisId string) error {
 	db, err := s.dbSelector.GetDBByRole(ctx)
 	if err != nil {
 		return apierror.FromErr(err)
 	}
 
-	var latihan Latihan
-	if err := db.WithContext(ctx).First(&latihan, "id = ?", latihanId).Error; err != nil {
+	var kuis ModulKuis
+	if err := db.WithContext(ctx).First(&kuis, "id = ?", kuisId).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return apierror.LatihanNotFound(latihanId)
+			return apierror.LatihanNotFound(kuisId)
 		}
 		return apierror.FromErr(err)
 	}
 
-	if err := db.WithContext(ctx).Delete(&latihan).Error; err != nil {
+	if err := db.WithContext(ctx).Delete(&kuis).Error; err != nil {
 		return apierror.FromErr(err)
 	}
 
 	return nil
 }
 
-func (s *service) AddStatsLatihan(ctx context.Context, req StatsLatihanReq) error {
+func (s *service) AddStatsKuis(ctx context.Context, req StatsKuisReq) error {
 	token, err := contextUtil.GetTokenClaims(ctx)
 	if err != nil {
 		return err
@@ -197,30 +230,30 @@ func (s *service) AddStatsLatihan(ctx context.Context, req StatsLatihanReq) erro
 		return apierror.FromErr(err)
 	}
 
-	var latihan Latihan
-	if err := db.WithContext(ctx).First(&latihan, "id = ?", req.LatihanID).Error; err != nil {
+	var kuis ModulKuis
+	if err := db.WithContext(ctx).First(&kuis, "id = ?", req.KuisID).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return apierror.LatihanNotFound(req.LatihanID)
+			return apierror.LatihanNotFound(req.KuisID)
 		}
 		return apierror.FromErr(err)
 	}
 
-	statsLatihan := StatsLatihan{
-		LatihanID: latihan.ID,
+	statsKuis := StatsKuis{
+		KuisID:    kuis.ID,
 		UserID:    token.Claims.UserID,
 		Score:     req.Score,
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}
 
-	if err := db.WithContext(ctx).Create(&statsLatihan).Error; err != nil {
+	if err := db.WithContext(ctx).Create(&statsKuis).Error; err != nil {
 		return apierror.FromErr(err)
 	}
 
 	return nil
 }
 
-func (s *service) GetStatsByUserId(ctx context.Context) (*[]StatsLatihanRes, error) {
+func (s *service) GetStatsByUserId(ctx context.Context) (*[]StatsKuisRes, error) {
 	token, err := contextUtil.GetTokenClaims(ctx)
 	if err != nil {
 		return nil, err
@@ -232,12 +265,12 @@ func (s *service) GetStatsByUserId(ctx context.Context) (*[]StatsLatihanRes, err
 	}
 
 	subQuery := db.
-		Table("stats_latihan").
+		Table("stats_kuis").
 		Select("MAX(created_at) AS max").
 		Where("user_id = ?", token.Claims.UserID).
 		Group("latihan_id")
 
-	var stats []StatsLatihan
+	var stats []StatsKuis
 	err = db.WithContext(ctx).
 		Table("stats_latihan s").
 		Select("s.*").
@@ -250,22 +283,22 @@ func (s *service) GetStatsByUserId(ctx context.Context) (*[]StatsLatihanRes, err
 	}
 
 	// response
-	res := make([]StatsLatihanRes, len(stats))
+	res := make([]StatsKuisRes, len(stats))
 	for i, stat := range stats {
-		var latihan Latihan
+		var kuis ModulKuis
 		err := db.WithContext(ctx).
-			Where("id = ?", stat.LatihanID).
-			First(&latihan).Error
+			Where("id = ?", stat.KuisID).
+			First(&kuis).Error
 		if err != nil {
 			return nil, err
 		}
 
-		res[i] = StatsLatihanRes{
-			ID:          stat.ID.String(),
-			LatihanID:   stat.LatihanID.String(),
-			LatihanName: latihan.Name,
-			TotalSoal:   latihan.TotalSoal,
-			Score:       stat.Score,
+		res[i] = StatsKuisRes{
+			ID:        stat.ID.String(),
+			KuisID:    stat.KuisID.String(),
+			KuisName:  kuis.Name,
+			TotalSoal: kuis.TotalSoal,
+			Score:     stat.Score,
 		}
 	}
 

@@ -28,6 +28,6 @@ type GetAllKuisReq struct {
 }
 
 type StatsKuisReq struct {
-	LatihanID string `json:"latihan_id" binding:"required"`
-	Score     int    `json:"score" binding:"required"`
+	KuisID string `json:"kuis_id" binding:"required"`
+	Score  int    `json:"score" binding:"required"`
 }

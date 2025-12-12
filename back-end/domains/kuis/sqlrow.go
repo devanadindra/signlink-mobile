@@ -51,7 +51,7 @@ func (OpsiKuis) TableName() string {
 
 type StatsKuis struct {
 	ID        uuid.UUID `gorm:"type:uuid;default:gen_random_uuid();primaryKey"`
-	LatihanID uuid.UUID
+	KuisID    uuid.UUID
 	UserID    uuid.UUID
 	Score     int       `gorm:"type:int;not null"`
 	CreatedAt time.Time `gorm:"autoCreateTime"`
