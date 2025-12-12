@@ -59,9 +59,13 @@ $$;
 		GRANT SELECT ON kamus TO %s;
 		GRANT SELECT ON latihan TO %s;
 		GRANT SELECT ON soal_latihan TO %s;
+		GRANT SELECT ON modul_kuis TO %s;
+		GRANT SELECT ON soal_kuis TO %s;
+		GRANT SELECT ON opsi_kuis TO %s;
 		GRANT select, insert  ON invalid_token TO %s;
 		GRANT select, insert  ON stats_latihan TO %s;
-	`, customerUser, customerUser, customerUser, customerUser, customerUser, customerUser)
+		GRANT select, insert  ON stats_kuis TO %s;
+	`, customerUser, customerUser, customerUser, customerUser, customerUser, customerUser, customerUser, customerUser, customerUser, customerUser)
 
 	if err := db.Exec(grantCustomerSQL).Error; err != nil {
 		log.Fatal("Failed to grant privileges to customer_app:", err)
