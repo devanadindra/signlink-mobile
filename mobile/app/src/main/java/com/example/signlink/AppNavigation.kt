@@ -35,6 +35,7 @@ import com.example.signlink.screens.kuis.AddKuisScreen
 import com.example.signlink.screens.kuis.KuisScreen
 import com.example.signlink.screens.kuis.KuisDetailScreen
 import com.example.signlink.screens.kuis.KuisResultScreen
+import com.example.signlink.screens.kuis.StatsKuisScreen
 import com.example.signlink.screens.latihan.AddLatihanScreen
 import com.example.signlink.screens.latihan.LatihanScreen
 import com.example.signlink.screens.latihan.LatihanDetailScreen
@@ -65,6 +66,7 @@ object Destinations {
     const val KUIS_DETAIL_SCREEN = "kuis_detail_screen"
     const val KUIS_RESULT_SCREEN = "kuis_result_screen"
     const val ADD_KUIS_SCREEN = "add_kuis_screen"
+    const val STATS_KUIS_SCREEN = "stats_kuis_screen"
     const val KAMUS_DETAIL_SCREEN = "kamus_detail_screen"
     const val TTI_SCREEN = "tti_screen"
     const val PROFILE_SCREEN = "profile_screen"
@@ -470,6 +472,13 @@ fun AppNavHost() {
         // Stats Latihan
         composable(Destinations.STATS_LATIHAN_SCREEN) {
             StatsLatihanScreen(
+                navController = navController,
+            )
+        }
+
+        // Stats Kuis
+        composable(Destinations.STATS_KUIS_SCREEN) {
+            StatsKuisScreen(
                 navController = navController,
             )
         }

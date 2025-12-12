@@ -135,7 +135,7 @@ fun ProfileScreen(
 
                 ProfileOptionItem(
                     text = "Statistik Kuis Singkat SignLink",
-                    onClick = { /* TODO: Navigasi Ubah Nomor HP */ }
+                    onClick = { navController.navigate(Destinations.STATS_KUIS_SCREEN) }
                 )
 
                 ProfileOptionItem(

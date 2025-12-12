@@ -279,11 +279,11 @@ func (s *service) GetStatsByUserId(ctx context.Context) (*[]StatsKuisRes, error)
 		Table("stats_kuis").
 		Select("MAX(created_at) AS max").
 		Where("user_id = ?", token.Claims.UserID).
-		Group("latihan_id")
+		Group("kuis_id")
 
 	var stats []StatsKuis
 	err = db.WithContext(ctx).
-		Table("stats_latihan s").
+		Table("stats_kuis s").
 		Select("s.*").
 		Joins("JOIN (?) latest ON s.created_at = latest.max", subQuery).
 		Where("s.user_id = ?", token.Claims.UserID).

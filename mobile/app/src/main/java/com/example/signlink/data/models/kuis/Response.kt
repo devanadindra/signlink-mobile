@@ -48,9 +48,9 @@ data class OpsiKuisRes(
 data class StatsKuisByUserIdRes(
     val id: String,
     @SerializedName("kuis_id")
-    val latihanId: String,
+    val kuisId: String,
     @SerializedName("kuis_name")
-    val latihanName: String,
+    val kuisName: String,
     @SerializedName("total_soal")
     val totalSoal: Int,
     val score: Int,
