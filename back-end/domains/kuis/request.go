@@ -1,20 +1,33 @@
 package kuis
 
-type LatihanReq struct {
-	Name        string   `json:"name" form:"name" binding:"required"`
-	SoalLatihan []string `json:"soal_latihan" form:"soal_latihan" binding:"required"`
+type KuisReq struct {
+	Name       string        `json:"name" form:"name" binding:"required"`
+	BatasWaktu int           `json:"batas_waktu" form:"batas_waktu" binding:"required"`
+	SoalKuis   []SoalKuisReq `json:"soal_kuis" form:"soal_kuis" binding:"required"`
 }
 
-type DeleteLatihanReq struct {
+type SoalKuisReq struct {
+	VideoURL     string        `json:"video_url" form:"video_url" binding:"required"`
+	Soal         string        `json:"soal" form:"soal" binding:"required"`
+	JawabanBenar string        `json:"jawaban_benar" form:"jawaban_benar" binding:"required"`
+	OpsiKuis     []OpsiKuisReq `json:"opsi_kuis" form:"opsi_kuis" binding:"required"`
+}
+
+type OpsiKuisReq struct {
+	Label string `json:"label" form:"label" binding:"required"`
+	Text  string `json:"text" form:"text" binding:"required"`
+}
+
+type DeleteKuisReq struct {
 	ID string `json:"id" binding:"required"`
 }
 
-type GetAllLatihanReq struct {
+type GetAllKuisReq struct {
 	Page  int64
 	Limit int64
 }
 
-type StatsLatihanReq struct {
-	LatihanID string  `json:"latihan_id" binding:"required"`
-	Score     float64 `json:"score" binding:"required"`
+type StatsKuisReq struct {
+	LatihanID string `json:"latihan_id" binding:"required"`
+	Score     int    `json:"score" binding:"required"`
 }
