@@ -11,11 +11,11 @@ import (
 )
 
 type Handler interface {
-	GetLatihanById(ctx *gin.Context)
-	AddLatihan(ctx *gin.Context)
-	DeleteLatihan(ctx *gin.Context)
-	GetAllLatihan(ctx *gin.Context)
-	AddStatsLatihan(ctx *gin.Context)
+	GetKuisById(ctx *gin.Context)
+	AddKuis(ctx *gin.Context)
+	DeleteKuis(ctx *gin.Context)
+	GetAllKuis(ctx *gin.Context)
+	AddStatsKuis(ctx *gin.Context)
 	GetStatsByUserId(ctx *gin.Context)
 }
 
@@ -31,10 +31,10 @@ func NewHandler(service Service, validate *validator.Validate) Handler {
 	}
 }
 
-func (h *handler) GetLatihanById(ctx *gin.Context) {
+func (h *handler) GetKuisById(ctx *gin.Context) {
 	id := ctx.Param("id")
 
-	res, err := h.service.GetLatihanById(ctx, id)
+	res, err := h.service.GetKuisById(ctx, id)
 	if err != nil {
 		respond.Error(ctx, apierror.FromErr(err))
 		return
@@ -43,68 +43,68 @@ func (h *handler) GetLatihanById(ctx *gin.Context) {
 	respond.Success(ctx, http.StatusOK, res)
 }
 
-func (h *handler) AddLatihan(ctx *gin.Context) {
-	var req LatihanReq
+func (h *handler) AddKuis(ctx *gin.Context) {
+	var req KuisReq
 
 	if err := ctx.ShouldBind(&req); err != nil {
 		respond.Error(ctx, apierror.FromErr(err))
 		return
 	}
 
-	if err := h.service.AddLatihan(ctx, req); err != nil {
+	if err := h.service.AddKuis(ctx, req); err != nil {
 		respond.Error(ctx, apierror.FromErr(err))
 		return
 	}
 
-	respond.Success(ctx, http.StatusCreated, gin.H{"message": "latihan added successfully"})
+	respond.Success(ctx, http.StatusCreated, gin.H{"message": "kuis added successfully"})
 }
 
-func (h *handler) DeleteLatihan(ctx *gin.Context) {
+func (h *handler) DeleteKuis(ctx *gin.Context) {
 	id := ctx.Param("id")
 
-	if err := h.service.DeleteLatihan(ctx, id); err != nil {
+	if err := h.service.DeleteKuis(ctx, id); err != nil {
 		respond.Error(ctx, apierror.FromErr(err))
 		return
 	}
 
-	respond.Success(ctx, http.StatusCreated, gin.H{"message": "latihan deleted successfully"})
+	respond.Success(ctx, http.StatusCreated, gin.H{"message": "kuis deleted successfully"})
 }
 
-func (h *handler) GetAllLatihan(ctx *gin.Context) {
+func (h *handler) GetAllKuis(ctx *gin.Context) {
 	filter, err := common.GetMetaData(ctx, h.validate, "created_at", "name")
 	if err != nil {
 		respond.Error(ctx, apierror.FromErr(err))
 		return
 	}
 
-	req := GetAllLatihanReq{
+	req := GetAllKuisReq{
 		Page:  filter.Page,
 		Limit: filter.Limit,
 	}
 
-	latihanList, total, err := h.service.GetAllLatihan(ctx, req, *filter)
+	kuisList, total, err := h.service.GetAllKuis(ctx, req, *filter)
 	if err != nil {
 		respond.Error(ctx, apierror.FromErr(err))
 		return
 	}
 
 	respond.Success(ctx, http.StatusOK, gin.H{
-		"data":  latihanList,
+		"data":  kuisList,
 		"total": total,
 		"page":  filter.Page,
 		"limit": filter.Limit,
 	})
 }
 
-func (h *handler) AddStatsLatihan(ctx *gin.Context) {
-	var req StatsLatihanReq
+func (h *handler) AddStatsKuis(ctx *gin.Context) {
+	var req StatsKuisReq
 
 	if err := ctx.ShouldBind(&req); err != nil {
 		respond.Error(ctx, apierror.FromErr(err))
 		return
 	}
 
-	if err := h.service.AddStatsLatihan(ctx, req); err != nil {
+	if err := h.service.AddStatsKuis(ctx, req); err != nil {
 		respond.Error(ctx, apierror.FromErr(err))
 		return
 	}
