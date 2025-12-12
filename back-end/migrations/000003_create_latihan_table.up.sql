@@ -22,3 +22,9 @@ CREATE TABLE IF NOT EXISTS stats_latihan (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW (),
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW ()
 );
+
+CREATE INDEX IF NOT EXISTS idx_soal_latihan ON soal_latihan(latihan_id);
+CREATE INDEX IF NOT EXISTS idx_stats_latihan_user ON stats_latihan(user_id);
+CREATE INDEX IF NOT EXISTS idx_stats_user_latihan
+ON stats_latihan(user_id, latihan_id);
+

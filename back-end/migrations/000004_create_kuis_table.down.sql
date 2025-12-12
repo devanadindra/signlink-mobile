@@ -1,0 +1,4 @@
+DROP TABLE IF EXISTS modul_kuis;
+DROP TABLE IF EXISTS soal_kuis;
+DROP TABLE IF EXISTS opsi_kuis;
+DROP TABLE IF EXISTS stats_kuis;

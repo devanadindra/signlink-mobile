@@ -8,6 +8,8 @@ CREATE TABLE
         created_at TIMESTAMPTZ NOT NULL DEFAULT NOW ()
     );
 
+CREATE INDEX IF NOT EXISTS idx_kamus_kategori ON kamus(kategori);
+
 -- A
 INSERT INTO kamus (id, arti, kategori, video_url)
 VALUES

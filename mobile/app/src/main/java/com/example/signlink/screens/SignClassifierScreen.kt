@@ -115,10 +115,10 @@ fun CameraContent() {
 
     var lastLabel by remember { mutableStateOf("") }
     var stableCount by remember { mutableIntStateOf(0) }
-    val stabilityThreshold = 5
+    val stabilityThreshold = 8
 
     var isCooldownActive by remember { mutableStateOf(false) }
-    val cooldownDuration = 800L
+    val cooldownDuration = 1000L
 
     var lastDetectedGesture by remember { mutableStateOf<String?>(null) }
     var noHandDetectionStartTime by remember { mutableStateOf<Long?>(null) }
