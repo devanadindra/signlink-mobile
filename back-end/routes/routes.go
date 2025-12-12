@@ -5,15 +5,16 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/devanadindraa/NTTH-Store/back-end/database"
-	"github.com/devanadindraa/NTTH-Store/back-end/domains/kamus"
-	"github.com/devanadindraa/NTTH-Store/back-end/domains/latihan"
-	"github.com/devanadindraa/NTTH-Store/back-end/domains/user"
-	"github.com/devanadindraa/NTTH-Store/back-end/middlewares"
-	apierror "github.com/devanadindraa/NTTH-Store/back-end/utils/api-error"
-	"github.com/devanadindraa/NTTH-Store/back-end/utils/config"
-	"github.com/devanadindraa/NTTH-Store/back-end/utils/constants"
-	"github.com/devanadindraa/NTTH-Store/back-end/utils/respond"
+	"github.com/devanadindra/signlink-mobile/back-end/database"
+	"github.com/devanadindra/signlink-mobile/back-end/domains/kamus"
+	"github.com/devanadindra/signlink-mobile/back-end/domains/kuis"
+	"github.com/devanadindra/signlink-mobile/back-end/domains/latihan"
+	"github.com/devanadindra/signlink-mobile/back-end/domains/user"
+	"github.com/devanadindra/signlink-mobile/back-end/middlewares"
+	apierror "github.com/devanadindra/signlink-mobile/back-end/utils/api-error"
+	"github.com/devanadindra/signlink-mobile/back-end/utils/config"
+	"github.com/devanadindra/signlink-mobile/back-end/utils/constants"
+	"github.com/devanadindra/signlink-mobile/back-end/utils/respond"
 )
 
 func NewDependency(
@@ -24,6 +25,7 @@ func NewDependency(
 	userHandler user.Handler,
 	kamusHandler kamus.Handler,
 	latihanHandler latihan.Handler,
+	kuisHandler kuis.Handler,
 ) *Dependency {
 
 	if conf.Environment != config.DEVELOPMENT_ENVIRONMENT {
@@ -84,6 +86,16 @@ func NewDependency(
 		latihan.POST("/stats", mw.JWT(constants.ADMIN, constants.CUSTOMER), latihanHandler.AddStatsLatihan)
 		latihan.GET("/stats", mw.JWT(constants.ADMIN, constants.CUSTOMER), latihanHandler.GetStatsByUserId)
 		latihan.DELETE("/:id", mw.JWT(constants.ADMIN), latihanHandler.DeleteLatihan)
+	}
+
+	kuis := api.Group("/kuis")
+	{
+		kuis.GET("/", mw.JWT(constants.ADMIN, constants.CUSTOMER), kuisHandler.GetAllKuis)
+		kuis.GET("/:id", mw.JWT(constants.ADMIN, constants.CUSTOMER), kuisHandler.GetKuisById)
+		kuis.POST("/", mw.JWT(constants.ADMIN), kuisHandler.AddKuis)
+		kuis.POST("/stats", mw.JWT(constants.ADMIN, constants.CUSTOMER), kuisHandler.AddStatsKuis)
+		kuis.GET("/stats", mw.JWT(constants.ADMIN, constants.CUSTOMER), kuisHandler.GetStatsByUserId)
+		kuis.DELETE("/:id", mw.JWT(constants.ADMIN), kuisHandler.DeleteKuis)
 	}
 
 	router.NoRoute(func(ctx *gin.Context) {

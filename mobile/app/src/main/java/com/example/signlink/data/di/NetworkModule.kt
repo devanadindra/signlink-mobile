@@ -4,8 +4,10 @@ import com.example.signlink.data.services.CustomerService
 import com.example.signlink.data.repository.AuthRepository
 import com.example.signlink.data.repository.CustomerRepository
 import com.example.signlink.data.repository.KamusRepository
+import com.example.signlink.data.repository.KuisRepository
 import com.example.signlink.data.repository.LatihanRepository
 import com.example.signlink.data.services.KamusService
+import com.example.signlink.data.services.KuisService
 import com.example.signlink.data.services.LatihanService
 import dagger.Module
 import dagger.Provides
@@ -18,8 +20,8 @@ import retrofit2.converter.gson.GsonConverterFactory
 import javax.inject.Singleton
 
 object ApiConfig {
-    const val BASE_URL = "https://devanadindra.site/api/"
-//    const val BASE_URL= "http://10.0.2.2:7777/api/"
+//    const val BASE_URL = "https://devanadindra.site/api/"
+    const val BASE_URL= "http://10.0.2.2:7777/api/"
 }
 
 
@@ -94,6 +96,18 @@ object NetworkModule {
     @Singleton
     fun provideLatihanRepository(service: LatihanService): LatihanRepository {
         return LatihanRepository(service)
+    }
+
+    @Provides
+    @Singleton
+    fun provideKuisService(retrofit: Retrofit): KuisService {
+        return retrofit.create(KuisService::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideKuisRepository(service: KuisService): KuisRepository {
+        return KuisRepository(service)
     }
 }
 

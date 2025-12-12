@@ -43,6 +43,7 @@ import com.example.signlink.data.models.latihan.LatihanData
 import com.example.signlink.data.utils.AuthUtil.getRole
 import com.example.signlink.viewmodel.LatihanViewModel
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.ui.draw.clip
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -277,7 +278,6 @@ fun LatihanModulCard(
     modifier: Modifier = Modifier
 ) {
     val isUserAdmin = userRole == "ADMIN"
-    val itemHeight = if (isUserAdmin) 80.dp else 60.dp
 
     val cardColor = if (modul.isDone) Color(0xFF4CAF50) else SignLinkTeal
 
@@ -287,7 +287,7 @@ fun LatihanModulCard(
         colors = CardDefaults.cardColors(containerColor = cardColor),
         modifier = modifier
             .fillMaxWidth(0.9f)
-            .height(itemHeight)
+            .height(70.dp)
             .clickable(
                 enabled = (!isLocked || isUserAdmin),
                 onClick = onClick
@@ -313,7 +313,7 @@ fun LatihanModulCard(
                         imageVector = if (modul.isDone) Icons.Default.Check else Icons.AutoMirrored.Filled.ListAlt,
                         contentDescription = null,
                         tint = Color.White,
-                        modifier = Modifier.size(42.dp)
+                        modifier = Modifier.size(32.dp)
                     )
                 }
 
@@ -389,6 +389,7 @@ fun LatihanModulCard(
                 Box(
                     modifier = Modifier
                         .matchParentSize()
+                        .clip(RoundedCornerShape(12.dp))
                         .background(Color(0xAA000000))
                 )
 

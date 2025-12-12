@@ -8,14 +8,15 @@ import (
 	_ "github.com/google/subcommands"
 	"github.com/google/wire"
 
-	"github.com/devanadindraa/NTTH-Store/back-end/database"
-	"github.com/devanadindraa/NTTH-Store/back-end/domains/kamus"
-	"github.com/devanadindraa/NTTH-Store/back-end/domains/latihan"
-	"github.com/devanadindraa/NTTH-Store/back-end/domains/user"
-	"github.com/devanadindraa/NTTH-Store/back-end/middlewares"
-	"github.com/devanadindraa/NTTH-Store/back-end/routes"
-	"github.com/devanadindraa/NTTH-Store/back-end/utils/config"
-	"github.com/devanadindraa/NTTH-Store/back-end/utils/dbselector"
+	"github.com/devanadindra/signlink-mobile/back-end/database"
+	"github.com/devanadindra/signlink-mobile/back-end/domains/kamus"
+	"github.com/devanadindra/signlink-mobile/back-end/domains/kuis"
+	"github.com/devanadindra/signlink-mobile/back-end/domains/latihan"
+	"github.com/devanadindra/signlink-mobile/back-end/domains/user"
+	"github.com/devanadindra/signlink-mobile/back-end/middlewares"
+	"github.com/devanadindra/signlink-mobile/back-end/routes"
+	"github.com/devanadindra/signlink-mobile/back-end/utils/config"
+	"github.com/devanadindra/signlink-mobile/back-end/utils/dbselector"
 )
 
 var dbSet = wire.NewSet(
@@ -42,6 +43,11 @@ var latihanSet = wire.NewSet(
 	latihan.NewHandler,
 )
 
+var kuisSet = wire.NewSet(
+	kuis.NewService,
+	kuis.NewHandler,
+)
+
 func initializeDependency(config *config.Config) (*routes.Dependency, error) {
 
 	wire.Build(
@@ -53,6 +59,7 @@ func initializeDependency(config *config.Config) (*routes.Dependency, error) {
 		userSet,
 		kamusSet,
 		latihanSet,
+		kuisSet,
 	)
 
 	return nil, nil

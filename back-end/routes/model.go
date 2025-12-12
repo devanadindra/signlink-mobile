@@ -6,8 +6,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/devanadindraa/NTTH-Store/back-end/database"
-	"github.com/devanadindraa/NTTH-Store/back-end/utils/logger"
+	"github.com/devanadindra/signlink-mobile/back-end/database"
+	"github.com/devanadindra/signlink-mobile/back-end/utils/logger"
 )
 
 type Dependency struct {

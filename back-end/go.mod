@@ -1,4 +1,4 @@
-module github.com/devanadindraa/NTTH-Store/back-end
+module github.com/devanadindra/signlink-mobile/back-end
 
 go 1.24.0
 

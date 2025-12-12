@@ -14,13 +14,13 @@ import (
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 
-	"github.com/devanadindraa/NTTH-Store/back-end/database"
-	apierror "github.com/devanadindraa/NTTH-Store/back-end/utils/api-error"
-	"github.com/devanadindraa/NTTH-Store/back-end/utils/config"
-	"github.com/devanadindraa/NTTH-Store/back-end/utils/constants"
-	contextUtil "github.com/devanadindraa/NTTH-Store/back-end/utils/context"
-	"github.com/devanadindraa/NTTH-Store/back-end/utils/dbselector"
-	fileutils "github.com/devanadindraa/NTTH-Store/back-end/utils/file"
+	"github.com/devanadindra/signlink-mobile/back-end/database"
+	apierror "github.com/devanadindra/signlink-mobile/back-end/utils/api-error"
+	"github.com/devanadindra/signlink-mobile/back-end/utils/config"
+	"github.com/devanadindra/signlink-mobile/back-end/utils/constants"
+	contextUtil "github.com/devanadindra/signlink-mobile/back-end/utils/context"
+	"github.com/devanadindra/signlink-mobile/back-end/utils/dbselector"
+	fileutils "github.com/devanadindra/signlink-mobile/back-end/utils/file"
 )
 
 type Service interface {

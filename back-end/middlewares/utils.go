@@ -6,8 +6,8 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/devanadindraa/NTTH-Store/back-end/utils/constants"
-	"github.com/devanadindraa/NTTH-Store/back-end/utils/logger"
+	"github.com/devanadindra/signlink-mobile/back-end/utils/constants"
+	"github.com/devanadindra/signlink-mobile/back-end/utils/logger"
 	"github.com/gin-gonic/gin"
 )
 

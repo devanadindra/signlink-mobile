@@ -7,7 +7,6 @@ type KuisReq struct {
 }
 
 type SoalKuisReq struct {
-	VideoURL     string        `json:"video_url" form:"video_url" binding:"required"`
 	Soal         string        `json:"soal" form:"soal" binding:"required"`
 	JawabanBenar string        `json:"jawaban_benar" form:"jawaban_benar" binding:"required"`
 	OpsiKuis     []OpsiKuisReq `json:"opsi_kuis" form:"opsi_kuis" binding:"required"`

@@ -8,11 +8,11 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
 
-	apierror "github.com/devanadindraa/NTTH-Store/back-end/utils/api-error"
-	"github.com/devanadindraa/NTTH-Store/back-end/utils/config"
-	"github.com/devanadindraa/NTTH-Store/back-end/utils/constants"
-	contextUtil "github.com/devanadindraa/NTTH-Store/back-end/utils/context"
-	"github.com/devanadindraa/NTTH-Store/back-end/utils/respond"
+	apierror "github.com/devanadindra/signlink-mobile/back-end/utils/api-error"
+	"github.com/devanadindra/signlink-mobile/back-end/utils/config"
+	"github.com/devanadindra/signlink-mobile/back-end/utils/constants"
+	contextUtil "github.com/devanadindra/signlink-mobile/back-end/utils/context"
+	"github.com/devanadindra/signlink-mobile/back-end/utils/respond"
 )
 
 type Handler interface {

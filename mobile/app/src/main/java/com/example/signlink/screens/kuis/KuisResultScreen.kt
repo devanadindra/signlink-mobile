@@ -2,6 +2,7 @@
 
 package com.example.signlink.screens.kuis
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -19,43 +20,86 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.example.signlink.Destinations
 import com.example.signlink.components.VideoPlayer
 import com.example.signlink.ui.theme.DarkText
 import com.example.signlink.ui.theme.SignLinkTeal
+import com.example.signlink.viewmodel.KuisViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun KuisResultScreen(
+    viewModel: KuisViewModel = hiltViewModel(),
     navController: NavController,
     quizId: String?
 ) {
-    val storedQuizId = QuizResultHolder.quizId
-    val questions = remember(storedQuizId) {
-        QuizRepository.getQuestionsByRoute(storedQuizId)
+    val context = LocalContext.current
+
+    LaunchedEffect(quizId) {
+        viewModel.getKuisById(context, quizId.toString())
     }
 
+    val kuisDetail by viewModel.kuisDetail.collectAsState()
+    if (kuisDetail == null) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            CircularProgressIndicator()
+        }
+        return
+    }
+
+    val successMessage by viewModel.successMessage.collectAsState()
+    val errorMessage by viewModel.errorMessage.collectAsState()
+
     val (detailedResults, correctAnswers) = remember {
-        QuizResultHolder.calculateDetailedScore(questions)
+        QuizResultHolder.calculateDetailedScore(kuisDetail!!.soalKuis)
     }
 
     LaunchedEffect(Unit) {
         QuizResultHolder.clear()
     }
 
-    val totalQuestions = questions.size
+    val totalQuestions = kuisDetail!!.totalSoal
     val finalScore = if (totalQuestions > 0) {
         (correctAnswers.toFloat() / totalQuestions.toFloat() * 100).toInt()
     } else {
         0
     }
 
-    val quizName = storedQuizId?.split("/")?.last()?.replace("_", " ")?.replaceFirstChar { it.uppercase() } ?: "Kuis"
+    LaunchedEffect(finalScore) {
+        if (quizId != null) {
+            viewModel.addStatsKuis(context, quizId, finalScore)
+        }
+    }
+
+    LaunchedEffect(successMessage) {
+        successMessage?.let { success ->
+            if (success.isNotBlank()) {
+                Toast.makeText(context, "Berhasil: $success", Toast.LENGTH_SHORT).show()
+                viewModel.clearSuccess()
+            }
+        }
+    }
+
+    LaunchedEffect(errorMessage) {
+        errorMessage?.let { error ->
+            if (error.isNotBlank()) {
+                Toast.makeText(context, "Gagal: $error", Toast.LENGTH_LONG).show()
+                viewModel.clearError()
+            }
+        }
+    }
+
+    val quizName = kuisDetail!!.name.split("/").last().replace("_", " ").replaceFirstChar { it.uppercase() }
 
     val message = when {
         finalScore >= 80 -> "Luar Biasa! Kamu menguasai ${quizName}!"
@@ -126,13 +170,11 @@ fun KuisResultScreen(
                     finalScore = finalScore,
                     correctAnswers = correctAnswers,
                     totalQuestions = totalQuestions,
-                    quizName = quizName,
                     message = message,
                     scoreColor = scoreColor,
                     onRepeatQuiz = {
-                        if (storedQuizId != null) {
-                            navController.navigate("${Destinations.KUIS_DETAIL_SCREEN}/$quizId")
-                        }
+                        QuizResultHolder.quizId
+                        navController.navigate("${Destinations.KUIS_DETAIL_SCREEN}/${kuisDetail!!.id}")
                     },
                     onGoHome = {
                         navController.popBackStack(route = "home_screen", inclusive = false)
@@ -149,7 +191,6 @@ fun ResultTab(
     finalScore: Int,
     correctAnswers: Int,
     totalQuestions: Int,
-    quizName: String,
     message: String,
     scoreColor: Color,
     onRepeatQuiz: () -> Unit,

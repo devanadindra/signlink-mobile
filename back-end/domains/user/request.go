@@ -4,7 +4,7 @@ import (
 	"mime/multipart"
 	"time"
 
-	"github.com/devanadindraa/NTTH-Store/back-end/utils/constants"
+	"github.com/devanadindra/signlink-mobile/back-end/utils/constants"
 )
 
 type LoginReq struct {

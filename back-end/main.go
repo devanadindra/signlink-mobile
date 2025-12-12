@@ -8,9 +8,9 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/devanadindraa/NTTH-Store/back-end/utils/config"
-	"github.com/devanadindraa/NTTH-Store/back-end/utils/logger"
-	wireinject "github.com/devanadindraa/NTTH-Store/back-end/wire"
+	"github.com/devanadindra/signlink-mobile/back-end/utils/config"
+	"github.com/devanadindra/signlink-mobile/back-end/utils/logger"
+	wireinject "github.com/devanadindra/signlink-mobile/back-end/wire"
 	"github.com/go-playground/validator/v10"
 	"github.com/rs/cors"
 )

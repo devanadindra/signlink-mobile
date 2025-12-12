@@ -1,6 +1,6 @@
 package middlewares
 
-import "github.com/devanadindraa/NTTH-Store/back-end/utils/constants"
+import "github.com/devanadindra/signlink-mobile/back-end/utils/constants"
 
 var IGNORED_HEADERS = []string{
 	constants.AUTHORIZATION,

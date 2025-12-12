@@ -4,9 +4,9 @@ import (
 	"net/http"
 	"strings"
 
-	apierror "github.com/devanadindraa/NTTH-Store/back-end/utils/api-error"
-	"github.com/devanadindraa/NTTH-Store/back-end/utils/common"
-	"github.com/devanadindraa/NTTH-Store/back-end/utils/respond"
+	apierror "github.com/devanadindra/signlink-mobile/back-end/utils/api-error"
+	"github.com/devanadindra/signlink-mobile/back-end/utils/common"
+	"github.com/devanadindra/signlink-mobile/back-end/utils/respond"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
 )
@@ -16,6 +16,7 @@ type Handler interface {
 	AddKamus(ctx *gin.Context)
 	DeleteKamus(ctx *gin.Context)
 	GetAllKamus(ctx *gin.Context)
+	GetKamusByArti(ctx *gin.Context)
 }
 
 type handler struct {
@@ -101,4 +102,16 @@ func (h *handler) GetAllKamus(ctx *gin.Context) {
 		"page":  filter.Page,
 		"limit": filter.Limit,
 	})
+}
+
+func (h *handler) GetKamusByArti(ctx *gin.Context) {
+	arti := ctx.Param("arti")
+
+	kamus, err := h.service.GetKamusByArti(ctx, arti)
+	if err != nil {
+		respond.Error(ctx, apierror.FromErr(err))
+		return
+	}
+
+	respond.Success(ctx, http.StatusCreated, kamus)
 }

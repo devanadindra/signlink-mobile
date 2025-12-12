@@ -3,10 +3,10 @@ package logger
 import (
 	"time"
 
-	"github.com/devanadindraa/NTTH-Store/back-end/utils/constants"
+	"github.com/devanadindra/signlink-mobile/back-end/utils/constants"
 )
 
-const PACKAGE_NAME = "github.com/devanadindraa/NTTH-Store/back-end"
+const PACKAGE_NAME = "github.com/devanadindra/signlink-mobile/back-end"
 
 type LogPayload struct {
 	Method         string

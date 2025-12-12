@@ -7,12 +7,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/devanadindraa/NTTH-Store/back-end/database"
-	apierror "github.com/devanadindraa/NTTH-Store/back-end/utils/api-error"
-	"github.com/devanadindraa/NTTH-Store/back-end/utils/config"
-	"github.com/devanadindraa/NTTH-Store/back-end/utils/constants"
-	contextUtil "github.com/devanadindraa/NTTH-Store/back-end/utils/context"
-	"github.com/devanadindraa/NTTH-Store/back-end/utils/dbselector"
+	"github.com/devanadindra/signlink-mobile/back-end/database"
+	"github.com/devanadindra/signlink-mobile/back-end/domains/kamus"
+	apierror "github.com/devanadindra/signlink-mobile/back-end/utils/api-error"
+	"github.com/devanadindra/signlink-mobile/back-end/utils/config"
+	"github.com/devanadindra/signlink-mobile/back-end/utils/constants"
+	contextUtil "github.com/devanadindra/signlink-mobile/back-end/utils/context"
+	"github.com/devanadindra/signlink-mobile/back-end/utils/dbselector"
 	"github.com/google/uuid"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
@@ -169,6 +170,18 @@ func (s *service) AddKuis(ctx context.Context, req KuisReq) error {
 
 	soalList := make([]SoalKuis, 0, len(req.SoalKuis))
 	for _, soal := range req.SoalKuis {
+		jawabanBenar := titleCaser.String(soal.JawabanBenar)
+
+		var kamusItem kamus.Kamus
+		if err := tx.WithContext(ctx).First(&kamusItem, "arti = ?", jawabanBenar).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				tx.Rollback()
+				return apierror.ArtiNotFound(jawabanBenar)
+			}
+			tx.Rollback()
+			return err
+		}
+
 		opsiList := make([]OpsiKuis, 0, len(soal.OpsiKuis))
 		soalID := uuid.New()
 		for _, opsi := range soal.OpsiKuis {
@@ -179,20 +192,18 @@ func (s *service) AddKuis(ctx context.Context, req KuisReq) error {
 			})
 		}
 		soalList = append(soalList, SoalKuis{
-			ID:           uuid.New(),
+			ID:           soalID,
 			ModulID:      modulID,
-			VideoURL:     soal.VideoURL,
+			VideoURL:     kamusItem.VideoUrl,
 			Soal:         soal.Soal,
-			JawabanBenar: soal.JawabanBenar,
+			JawabanBenar: jawabanBenar,
 			OpsiKuis:     opsiList,
 		})
 	}
 
-	if len(soalList) > 0 {
-		if err := tx.WithContext(ctx).Create(&soalList).Error; err != nil {
-			tx.Rollback()
-			return apierror.FromErr(err)
-		}
+	if err := tx.WithContext(ctx).Create(&soalList).Error; err != nil {
+		tx.Rollback()
+		return apierror.FromErr(err)
 	}
 
 	return tx.Commit().Error

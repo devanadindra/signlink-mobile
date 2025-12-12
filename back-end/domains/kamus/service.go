@@ -2,18 +2,21 @@ package kamus
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
 
-	"github.com/devanadindraa/NTTH-Store/back-end/database"
-	"github.com/devanadindraa/NTTH-Store/back-end/utils/config"
-	"github.com/devanadindraa/NTTH-Store/back-end/utils/constants"
-	"github.com/devanadindraa/NTTH-Store/back-end/utils/dbselector"
-	fileutils "github.com/devanadindraa/NTTH-Store/back-end/utils/file"
+	"github.com/devanadindra/signlink-mobile/back-end/database"
+	apierror "github.com/devanadindra/signlink-mobile/back-end/utils/api-error"
+	"github.com/devanadindra/signlink-mobile/back-end/utils/config"
+	"github.com/devanadindra/signlink-mobile/back-end/utils/constants"
+	"github.com/devanadindra/signlink-mobile/back-end/utils/dbselector"
+	fileutils "github.com/devanadindra/signlink-mobile/back-end/utils/file"
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 type Service interface {
@@ -21,6 +24,7 @@ type Service interface {
 	AddKamus(ctx context.Context, req KamusReq) error
 	DeleteKamus(ctx context.Context, kamusId string) error
 	GetAllKamus(ctx context.Context, input GetAllKamusReq, filter constants.FilterReq) (*[]KamusRes, int64, error)
+	GetKamusByArti(ctx context.Context, arti string) (*Kamus, error)
 }
 
 type service struct {
@@ -202,4 +206,21 @@ func (s *service) GetAllKamus(ctx context.Context, input GetAllKamusReq, filter 
 	}
 
 	return &res, total, nil
+}
+
+func (s *service) GetKamusByArti(ctx context.Context, arti string) (*Kamus, error) {
+	db, err := s.dbSelector.GetDBByRole(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var kamus Kamus
+	if err := db.WithContext(ctx).First(&kamus, "arti = ?", arti).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, apierror.ArtiNotFound(arti)
+		}
+		return nil, err
+	}
+
+	return &kamus, nil
 }

@@ -11,7 +11,7 @@ type ModulKuis struct {
 	Name       string
 	TotalSoal  int
 	BatasWaktu int
-	SoalKuis   []SoalKuis  `gorm:"foreignKey:KuisID;references:ID"`
+	SoalKuis   []SoalKuis  `gorm:"foreignKey:ModulID;references:ID"`
 	StatsKuis  []StatsKuis `gorm:"foreignKey:KuisID;references:ID"`
 	CreatedAt  time.Time   `gorm:"autoCreateTime"`
 	UpdatedAt  time.Time   `gorm:"autoUpdateTime"`

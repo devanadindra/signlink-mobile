@@ -5,9 +5,9 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	"github.com/devanadindraa/NTTH-Store/back-end/routes"
-	"github.com/devanadindraa/NTTH-Store/back-end/utils/config"
-	"github.com/devanadindraa/NTTH-Store/back-end/utils/logger"
+	"github.com/devanadindra/signlink-mobile/back-end/routes"
+	"github.com/devanadindra/signlink-mobile/back-end/utils/config"
+	"github.com/devanadindra/signlink-mobile/back-end/utils/logger"
 )
 
 func getLevel(level string) logrus.Level {

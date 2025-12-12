@@ -18,13 +18,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.example.signlink.Destinations
 import com.example.signlink.components.VideoPlayer
+import com.example.signlink.data.models.kuis.OpsiKuisRes
+import com.example.signlink.data.models.kuis.SoalKuisRes
 import com.example.signlink.ui.theme.DarkText
 import com.example.signlink.ui.theme.SignLinkTeal
+import com.example.signlink.viewmodel.KuisViewModel
 import kotlinx.coroutines.delay
 import java.util.concurrent.TimeUnit
 
@@ -38,24 +44,30 @@ private fun formatTime(seconds: Int): String {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun KuisDetailScreen(
+    viewModel: KuisViewModel = hiltViewModel(),
     navController: NavController,
     quizId: String?
 ) {
-    val questions = remember(quizId) {
-        if (quizId != null) {
-            QuizRepository.getQuestionsByRoute(quizId)
-        } else {
-            emptyList()
+    val context = LocalContext.current
+
+    LaunchedEffect(quizId) {
+        viewModel.getKuisById(context, quizId.toString())
+    }
+
+    val kuisDetail by viewModel.kuisDetail.collectAsState()
+    if (kuisDetail == null) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            CircularProgressIndicator()
         }
+        return
     }
 
     var showVideo by remember { mutableStateOf(true) }
 
-    val timeLimitMinutes = remember(quizId) {
-        QuizRepository.getTimeLimit(quizId) ?: 10
-    }
-
-    val totalTimeSeconds = timeLimitMinutes * 60
+    val totalTimeSeconds = kuisDetail!!.batasWaktu * 60
 
     var timeRemainingSeconds by remember { mutableIntStateOf(totalTimeSeconds) }
     var isTimeUp by remember { mutableStateOf(false) }
@@ -71,18 +83,17 @@ fun KuisDetailScreen(
     }
 
     var currentQuestionIndex by remember { mutableIntStateOf(0) }
-    val userAnswers = remember { mutableStateMapOf<Int, String>() }
-    val currentQuestion = questions.getOrNull(currentQuestionIndex)
-    val totalQuestions = questions.size
+    val userAnswers = remember { mutableStateMapOf<String, String>() }
+    val currentQuestion = kuisDetail!!.soalKuis.getOrNull(currentQuestionIndex)
+    val totalQuestions = kuisDetail!!.totalSoal
 
     val isQuizComplete = userAnswers.size == totalQuestions
 
-    val quizTitle = quizId
-        ?.split("/")?.last()
-        ?.replace("_", " ")
-        ?.split(" ")
-        ?.joinToString(" ") { it.replaceFirstChar { c -> c.uppercase() } }
-        ?: "Kuis SignLink"
+    val quizTitle = kuisDetail!!.name
+        .split("/").last()
+        .replace("_", " ")
+        .split(" ")
+        .joinToString(" ") { it.replaceFirstChar { c -> c.uppercase() } }
 
     val timeDisplayText = formatTime(timeRemainingSeconds)
 
@@ -93,7 +104,7 @@ fun KuisDetailScreen(
                 navigationIcon = {
                     IconButton(onClick = {
                         showVideo = false
-                        navController.popBackStack() }) {
+                        navController.navigate(Destinations.KUIS_SCREEN) }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Kembali", tint = Color.Black)
                     }
                 },
@@ -113,9 +124,9 @@ fun KuisDetailScreen(
             )
         }
     ) { paddingValues ->
-        if (questions.isEmpty()) {
+        if (kuisDetail!!.soalKuis.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize().padding(paddingValues), contentAlignment = Alignment.Center) {
-                Text("Soal kuis untuk $quizTitle tidak ditemukan. Cek QuizRepository.kt.", color = Color.Black)
+                Text("Soal kuis untuk $quizTitle tidak ditemukan.", color = Color.Black)
             }
             return@Scaffold
         }
@@ -132,7 +143,7 @@ fun KuisDetailScreen(
                     totalSteps = totalQuestions,
                     onStepClick = { index -> currentQuestionIndex = index },
                     answeredQuestionIds = userAnswers.keys.toList(),
-                    allQuestions = questions,
+                    allQuestions = kuisDetail!!.soalKuis,
                     modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp)
                 )
 
@@ -149,12 +160,12 @@ fun KuisDetailScreen(
 
                         Spacer(modifier = Modifier.height(16.dp))
 
-                        Text(text = question.questionText, fontSize = 18.sp, color = DarkText, modifier = Modifier.padding(bottom = 16.dp))
+                        Text(text = question.soal, fontSize = 18.sp, color = DarkText, modifier = Modifier.padding(bottom = 16.dp))
 
-                        question.options.forEach { option ->
+                        question.opsiKuis.forEach { option ->
                             QuizOption(
                                 option = option,
-                                isSelected = userAnswers[question.id] == option.answerText,
+                                isSelected = userAnswers[question.id] == option.text,
                                 onSelect = { selectedAnswer ->
                                     userAnswers[question.id] = selectedAnswer
                                     QuizResultHolder.userAnswers = userAnswers.toMap()
@@ -216,8 +227,8 @@ fun QuestionStepper(
     currentStep: Int,
     totalSteps: Int,
     onStepClick: (Int) -> Unit,
-    answeredQuestionIds: List<Int>,
-    allQuestions: List<QuizQuestion>,
+    answeredQuestionIds: List<String>,
+    allQuestions: List<SoalKuisRes>,
     modifier: Modifier = Modifier
 ) {
     LazyRow(
@@ -276,7 +287,7 @@ fun QuestionStepper(
  */
 @Composable
 fun QuizOption(
-    option: Option,
+    option: OpsiKuisRes,
     isSelected: Boolean,
     onSelect: (String) -> Unit
 ) {
@@ -291,7 +302,7 @@ fun QuizOption(
             .clip(RoundedCornerShape(8.dp))
             .border(1.dp, borderColor, RoundedCornerShape(8.dp))
             .background(backgroundColor)
-            .clickable { onSelect(option.answerText) }
+            .clickable { onSelect(option.text) }
             .padding(vertical = 12.dp, horizontal = 16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -313,7 +324,7 @@ fun QuizOption(
         Spacer(modifier = Modifier.width(16.dp))
 
         Text(
-            text = option.answerText,
+            text = option.text,
             color = contentColor,
             fontSize = 16.sp
         )

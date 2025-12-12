@@ -15,13 +15,13 @@ import (
 	"github.com/google/uuid"
 	"golang.org/x/time/rate"
 
-	"github.com/devanadindraa/NTTH-Store/back-end/domains/user"
-	apierror "github.com/devanadindraa/NTTH-Store/back-end/utils/api-error"
-	"github.com/devanadindraa/NTTH-Store/back-end/utils/config"
-	"github.com/devanadindraa/NTTH-Store/back-end/utils/constants"
-	contextUtil "github.com/devanadindraa/NTTH-Store/back-end/utils/context"
-	"github.com/devanadindraa/NTTH-Store/back-end/utils/logger"
-	"github.com/devanadindraa/NTTH-Store/back-end/utils/respond"
+	"github.com/devanadindra/signlink-mobile/back-end/domains/user"
+	apierror "github.com/devanadindra/signlink-mobile/back-end/utils/api-error"
+	"github.com/devanadindra/signlink-mobile/back-end/utils/config"
+	"github.com/devanadindra/signlink-mobile/back-end/utils/constants"
+	contextUtil "github.com/devanadindra/signlink-mobile/back-end/utils/context"
+	"github.com/devanadindra/signlink-mobile/back-end/utils/logger"
+	"github.com/devanadindra/signlink-mobile/back-end/utils/respond"
 )
 
 type Middlewares interface {

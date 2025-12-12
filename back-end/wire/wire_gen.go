@@ -7,19 +7,18 @@
 package wireinject
 
 import (
-	"github.com/devanadindraa/NTTH-Store/back-end/database"
-	"github.com/devanadindraa/NTTH-Store/back-end/domains/kamus"
-	"github.com/devanadindraa/NTTH-Store/back-end/domains/latihan"
-	"github.com/devanadindraa/NTTH-Store/back-end/domains/user"
-	"github.com/devanadindraa/NTTH-Store/back-end/middlewares"
-	"github.com/devanadindraa/NTTH-Store/back-end/routes"
-	"github.com/devanadindraa/NTTH-Store/back-end/utils/config"
-	"github.com/devanadindraa/NTTH-Store/back-end/utils/dbselector"
+	"github.com/devanadindra/signlink-mobile/back-end/database"
+	"github.com/devanadindra/signlink-mobile/back-end/domains/kamus"
+	"github.com/devanadindra/signlink-mobile/back-end/domains/kuis"
+	"github.com/devanadindra/signlink-mobile/back-end/domains/latihan"
+	"github.com/devanadindra/signlink-mobile/back-end/domains/user"
+	"github.com/devanadindra/signlink-mobile/back-end/middlewares"
+	"github.com/devanadindra/signlink-mobile/back-end/routes"
+	"github.com/devanadindra/signlink-mobile/back-end/utils/config"
+	"github.com/devanadindra/signlink-mobile/back-end/utils/dbselector"
 	"github.com/go-playground/validator/v10"
 	"github.com/google/wire"
-)
 
-import (
 	_ "github.com/google/subcommands"
 )
 
@@ -43,7 +42,9 @@ func initializeDependency(config2 *config.Config) (*routes.Dependency, error) {
 	kamusHandler := kamus.NewHandler(kamusService, validate)
 	latihanService := latihan.NewService(config2, dbService, customerDB, adminDB)
 	latihanHandler := latihan.NewHandler(latihanService, validate)
-	dependency := routes.NewDependency(config2, middlewaresMiddlewares, adminDB, customerDB, handler, kamusHandler, latihanHandler)
+	kuisService := kuis.NewService(config2, dbService, customerDB, adminDB)
+	kuisHandler := kuis.NewHandler(kuisService, validate)
+	dependency := routes.NewDependency(config2, middlewaresMiddlewares, adminDB, customerDB, handler, kamusHandler, latihanHandler, kuisHandler)
 	return dependency, nil
 }
 
@@ -58,3 +59,5 @@ var userSet = wire.NewSet(user.NewService, user.NewHandler)
 var kamusSet = wire.NewSet(kamus.NewService, kamus.NewHandler)
 
 var latihanSet = wire.NewSet(latihan.NewService, latihan.NewHandler)
+
+var kuisSet = wire.NewSet(kuis.NewService, kuis.NewHandler)

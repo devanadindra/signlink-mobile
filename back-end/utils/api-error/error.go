@@ -117,6 +117,10 @@ func LatihanNotFound(latihanId string) error {
 	return NewWarn(http.StatusConflict, fmt.Sprintf("latihan dengan id '%s' tidak ditemukan", latihanId))
 }
 
+func ArtiNotFound(arti string) error {
+	return NewWarn(http.StatusConflict, fmt.Sprintf("kamus dengan arti '%s' tidak ditemukan", arti))
+}
+
 func ExistingStatsLatihan() error {
 	return NewWarn(http.StatusConflict, "anda sudah memiliki skor untuk latihan ini.")
 }

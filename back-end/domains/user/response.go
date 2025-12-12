@@ -3,7 +3,7 @@ package user
 import (
 	"time"
 
-	"github.com/devanadindraa/NTTH-Store/back-end/utils/constants"
+	"github.com/devanadindra/signlink-mobile/back-end/utils/constants"
 	"github.com/google/uuid"
 )
 
