@@ -121,7 +121,7 @@ fun TextToIsyaratScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(Color.White)
-                    .padding(horizontal = 24.dp, vertical = 8.dp)
+                    .padding(horizontal = 24.dp, vertical = 42.dp)
             ) {
                 Button(
                     onClick = {

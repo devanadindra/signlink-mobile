@@ -134,12 +134,12 @@ fun ProfileScreen(
                 )
 
                 ProfileOptionItem(
-                    text = "Statistik Kuis Singkat SignLink",
+                    text = "Statistik Kuis",
                     onClick = { navController.navigate(Destinations.STATS_KUIS_SCREEN) }
                 )
 
                 ProfileOptionItem(
-                    text = "Statistik Latihan Bahasa Isyarat",
+                    text = "Statistik Latihan",
                     onClick = { navController.navigate(Destinations.STATS_LATIHAN_SCREEN) }
                 )
             }

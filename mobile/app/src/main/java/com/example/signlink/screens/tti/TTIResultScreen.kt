@@ -283,8 +283,8 @@ fun TTIResultScreen(
                     .fillMaxWidth(0.8f)
                     .height(50.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    contentColor = SignLinkTeal
+                    containerColor = Color.Green,
+                    contentColor = Color.White
                 )
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {

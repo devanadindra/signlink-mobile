@@ -70,6 +70,7 @@ fun BottomBarSignLink(
     )
 
     BottomAppBar(
+        contentPadding = PaddingValues(horizontal = 12.dp),
         containerColor = Color.White,
         modifier = Modifier.height(72.dp).navigationBarsPadding()
     ) {

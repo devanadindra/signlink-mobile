@@ -20,8 +20,8 @@ import retrofit2.converter.gson.GsonConverterFactory
 import javax.inject.Singleton
 
 object ApiConfig {
-//    const val BASE_URL = "https://devanadindra.site/api/"
-    const val BASE_URL= "http://10.0.2.2:7777/api/"
+    const val BASE_URL = "https://devanadindra.site/api/"
+//    const val BASE_URL= "http://10.0.2.2:7777/api/"
 }
 
 
