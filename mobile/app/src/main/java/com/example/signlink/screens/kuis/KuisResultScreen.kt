@@ -120,7 +120,7 @@ fun KuisResultScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Hasil Kuis", fontWeight = FontWeight.SemiBold) },
+                title = { Text("Hasil Kuis", fontWeight = FontWeight.SemiBold, color = DarkText) },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
             )
         }
@@ -271,7 +271,7 @@ fun ResultTab(
                 modifier = Modifier.fillMaxWidth().height(56.dp)
             ) {
                 Icon(Icons.Default.Refresh, contentDescription = "Ulangi Kuis", modifier = Modifier.size(24.dp).padding(end = 8.dp))
-                Text("Ulangi Kuis", fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
+                Text("Ulangi Kuis", fontSize = 18.sp, fontWeight = FontWeight.SemiBold, color = Color.White)
             }
 
             Spacer(modifier = Modifier.height(12.dp))

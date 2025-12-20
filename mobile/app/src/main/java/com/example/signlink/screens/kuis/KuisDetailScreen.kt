@@ -100,12 +100,12 @@ fun KuisDetailScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(quizTitle, fontWeight = FontWeight.SemiBold, color = Color.Black) },
+                title = { Text(quizTitle, fontWeight = FontWeight.SemiBold, color = DarkText) },
                 navigationIcon = {
                     IconButton(onClick = {
                         showVideo = false
                         navController.navigate(Destinations.KUIS_SCREEN) }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Kembali", tint = Color.Black)
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Kembali", tint = DarkText)
                     }
                 },
                 actions = {

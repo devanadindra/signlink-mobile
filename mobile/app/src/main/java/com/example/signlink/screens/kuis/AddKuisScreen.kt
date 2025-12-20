@@ -43,15 +43,12 @@ fun AddKuisScreen(
 ) {
     val context = LocalContext.current
 
-    // 1. State Modul Kuis
     var name by remember { mutableStateOf("") }
     var batasWaktuInput by remember { mutableStateOf("10") }
     var listSoalKuis by remember { mutableStateOf(mutableListOf<SoalKuisReq>()) }
 
-    // 2. State Edit
-    var editingIndex by remember { mutableStateOf<Int?>(null) } // null = mode tambah, Int = mode edit
+    var editingIndex by remember { mutableStateOf<Int?>(null) }
 
-    // 3. State Input Soal Saat Ini
     var currentSoalText by remember { mutableStateOf("") }
     var currentJawabanBenar by remember { mutableStateOf("") }
 
@@ -64,15 +61,12 @@ fun AddKuisScreen(
         )
     }
 
-    // 4. State Error
     var nameError by remember { mutableStateOf<String?>(null) }
     var batasWaktuError by remember { mutableStateOf<String?>(null) }
     var listSoalError by remember { mutableStateOf<String?>(null) }
 
-    // 5. State Loading
     val isLoading by viewModel.isLoading.collectAsState()
 
-    // 6. Efek Samping (Toast)
     LaunchedEffect(Unit) {
         viewModel.errorMessage.collectLatest { error ->
             error?.let {
@@ -94,7 +88,6 @@ fun AddKuisScreen(
         }
     }
 
-    // Fungsi Validasi Input Soal
     fun validateCurrentSoal(): Boolean {
         if (currentSoalText.trim().isBlank()) {
             Toast.makeText(context, "Teks soal harus diisi.", Toast.LENGTH_SHORT).show()
@@ -116,7 +109,6 @@ fun AddKuisScreen(
         return true
     }
 
-    // Fungsi Reset Input Soal
     fun resetCurrentSoalFields() {
         currentSoalText = ""
         currentJawabanBenar = ""
@@ -126,7 +118,6 @@ fun AddKuisScreen(
         editingIndex = null
     }
 
-    // FUNGSI UTAMA: Tambah/Simpan Edit Soal ke Daftar
     fun handleSaveSoal() {
         if (!validateCurrentSoal()) return
 
@@ -137,11 +128,9 @@ fun AddKuisScreen(
         )
 
         if (editingIndex != null && editingIndex!! < listSoalKuis.size) {
-            // Mode Edit: Ganti soal yang ada
             listSoalKuis[editingIndex!!] = newSoal
             Toast.makeText(context, "Soal ${editingIndex!! + 1} berhasil diperbarui.", Toast.LENGTH_SHORT).show()
         } else {
-            // Mode Tambah: Tambahkan soal baru
             listSoalKuis.add(newSoal)
             Toast.makeText(context, "Soal berhasil ditambahkan.", Toast.LENGTH_SHORT).show()
         }
@@ -150,7 +139,6 @@ fun AddKuisScreen(
         listSoalError = null
     }
 
-    // FUNGSI BARU: Muat Soal untuk Diedit
     fun handleEditSoal(index: Int, soal: SoalKuisReq) {
         editingIndex = index
         currentSoalText = soal.soal
@@ -161,7 +149,6 @@ fun AddKuisScreen(
         Toast.makeText(context, "Mode Edit Soal ${index + 1} diaktifkan.", Toast.LENGTH_SHORT).show()
     }
 
-    // Fungsi Validasi Form Akhir (Tidak berubah)
     fun validateForm(): Boolean {
         nameError = null
         batasWaktuError = null
@@ -187,7 +174,6 @@ fun AddKuisScreen(
         return valid
     }
 
-    // Fungsi Submit Form (Tidak berubah)
     fun handleSubmit() {
         if (!validateForm()) return
 
@@ -199,7 +185,6 @@ fun AddKuisScreen(
             soalKuis = listSoalKuis.toList()
         )
 
-        // Panggil ViewModel
         viewModel.addKuis(
             context = context,
             req = kuisReq
@@ -212,7 +197,7 @@ fun AddKuisScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Tambah Modul Kuis", fontWeight = FontWeight.SemiBold, color = Color.Black) },
+                title = { Text("Tambah Modul Kuis", fontWeight = FontWeight.SemiBold, color = DarkText) },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Kembali", tint = Color.Black)
@@ -232,12 +217,10 @@ fun AddKuisScreen(
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.Start
         ) {
-            // --- BAGIAN 1: DETAIL MODUL KUIS ---
             Spacer(Modifier.height(16.dp))
             Text("Detail Modul", color = DarkText, fontWeight = FontWeight.Bold, fontSize = 20.sp)
             Spacer(Modifier.height(16.dp))
 
-            // Input Nama Kuis
             InputLabel("Nama Kuis")
             InputTextField(
                 value = name,
@@ -249,7 +232,6 @@ fun AddKuisScreen(
 
             Spacer(Modifier.height(16.dp))
 
-            // Input Batas Waktu
             InputLabel("Batas Waktu (Menit)")
             InputTextField(
                 value = batasWaktuInput,
@@ -265,7 +247,6 @@ fun AddKuisScreen(
             Divider(color = Color.LightGray, thickness = 1.dp)
             Spacer(Modifier.height(32.dp))
 
-            // --- BAGIAN 2: TAMBAH/EDIT SOAL KUIS ---
             val soalHeader = if (editingIndex != null) "Edit Soal ${editingIndex!! + 1}" else "Tambah Soal Baru"
             Text(soalHeader, color = DarkText, fontWeight = FontWeight.Bold, fontSize = 20.sp)
             Spacer(Modifier.height(16.dp))
@@ -312,7 +293,6 @@ fun AddKuisScreen(
 
             Spacer(Modifier.height(24.dp))
 
-            // Tombol Simpan/Tambah Soal
             Button(
                 onClick = { handleSaveSoal() },
                 modifier = Modifier
@@ -330,7 +310,6 @@ fun AddKuisScreen(
                 Text(actionButtonText, color = Color.White)
             }
 
-            // Tombol Batalkan Edit
             if (editingIndex != null) {
                 Spacer(Modifier.height(8.dp))
                 TextButton(
@@ -346,7 +325,6 @@ fun AddKuisScreen(
             Divider(color = Color.LightGray, thickness = 1.dp)
             Spacer(Modifier.height(32.dp))
 
-            // --- BAGIAN 3: DAFTAR SOAL & SUBMIT ---
             Text("Daftar Soal Kuis (${listSoalKuis.size})", color = DarkText, fontWeight = FontWeight.Bold, fontSize = 20.sp)
             Spacer(Modifier.height(16.dp))
 
@@ -355,10 +333,9 @@ fun AddKuisScreen(
                     SoalKuisItem(
                         index = index,
                         soal = soal,
-                        isEditing = editingIndex == index, // Tandai soal yang sedang diedit
+                        isEditing = editingIndex == index,
                         onDelete = {
                             listSoalKuis.removeAt(index)
-                            // Jika yang dihapus adalah yang sedang diedit, reset form
                             if (editingIndex == index) resetCurrentSoalFields()
                         },
                         onEdit = { handleEditSoal(index, soal) }
@@ -378,7 +355,6 @@ fun AddKuisScreen(
                 Spacer(Modifier.height(30.dp))
             }
 
-            // Tombol Simpan Modul
             Button(
                 onClick = { handleSubmit() },
                 modifier = Modifier
@@ -388,7 +364,7 @@ fun AddKuisScreen(
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = SignLinkTeal),
                 enabled = !isLoading && listSoalKuis.isNotEmpty() && name.isNotBlank() && (batasWaktuInput.toIntOrNull()
-                    ?: 0) > 0 && editingIndex == null // Tidak boleh submit saat masih dalam mode edit
+                    ?: 0) > 0 && editingIndex == null
             ) {
                 if (isLoading) {
                     CircularProgressIndicator(color = Color.White, modifier = Modifier.size(22.dp))
@@ -401,7 +377,6 @@ fun AddKuisScreen(
     }
 }
 
-// --- REUSABLE COMPONENTS ---
 
 @Composable
 fun InputLabel(text: String) {

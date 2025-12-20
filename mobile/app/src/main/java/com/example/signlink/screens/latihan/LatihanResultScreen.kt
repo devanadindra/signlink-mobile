@@ -59,12 +59,12 @@ fun LatihanResultScreen(
 
     val averageSpeed: Float =
         if (totalChars > 0 && totalTime > 0) {
-            (totalTime.toFloat() / totalChars).let {
-                String.format("%.1f", it).toFloat()
-            }
+            val value = totalTime.toFloat() / totalChars
+            kotlin.math.round(value * 10) / 10f
         } else {
             Float.NaN
         }
+
 
     LaunchedEffect(result) {
         if (latihanId != null) {
@@ -166,9 +166,10 @@ fun LatihanResultScreen(
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Text(
-                        "Kembali ke Daftar Modul",
+                        text = "Kembali ke Daftar Modul",
                         fontSize = 18.sp,
-                        fontWeight = FontWeight.SemiBold
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color.White
                     )
                 }
 

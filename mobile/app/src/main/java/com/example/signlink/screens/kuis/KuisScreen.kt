@@ -39,6 +39,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -64,6 +65,7 @@ import com.example.signlink.R
 import com.example.signlink.components.DictionaryHeaderCard
 import com.example.signlink.data.models.kuis.KuisData
 import com.example.signlink.data.utils.AuthUtil.getRole
+import com.example.signlink.ui.theme.DarkText
 import com.example.signlink.ui.theme.SignLinkTeal
 import com.example.signlink.viewmodel.KuisViewModel
 
@@ -126,12 +128,13 @@ fun KuisScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Daftar Kuis", fontWeight = FontWeight.SemiBold) },
+                title = { Text("Daftar Kuis", fontWeight = FontWeight.SemiBold, color = DarkText) },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack(Destinations.HOME_SCREEN, inclusive = false) }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Kembali")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Kembali", tint = DarkText)
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
             )
         }
     ) { paddingValues ->

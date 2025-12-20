@@ -50,9 +50,6 @@ import com.example.signlink.data.models.latihan.StatsLatihanByUserIdRes
 import com.example.signlink.ui.theme.SignLinkTeal
 import com.example.signlink.viewmodel.LatihanViewModel
 
-// Asumsi LatihanViewModel memiliki fungsi getStatsLatihanByUserId
-// dan koleksi statsLatihanByuserIdList: StateFlow<List<StatsLatihanByUserIdRes>>
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun StatsLatihanScreen(

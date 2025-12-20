@@ -15,9 +15,10 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Backspace
 import androidx.compose.material.icons.filled.Cameraswitch
 import androidx.compose.material.icons.filled.VolumeUp
-import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.DeleteSweep
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -144,38 +145,25 @@ fun CameraContent() {
     LaunchedEffect(Unit) {
         tts = TextToSpeech(context) { status ->
             if (status == TextToSpeech.SUCCESS) {
-                val result = tts?.setLanguage(Locale("id", "ID"))
-                if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
-                    Log.e("TTS", "Bahasa tidak didukung.")
-                }
-            } else {
-                Log.e("TTS", "Inisialisasi TTS gagal.")
+                tts?.setLanguage(Locale("id", "ID"))
             }
         }
     }
 
     LaunchedEffect(Unit) {
         val (front, back) = checkCameraAvailability(context)
-        when {
-            front && back -> {
-                isSwitchButtonVisible = true
-                isFrontCameraActive = true
-            }
-            back -> isFrontCameraActive = false
-            front -> isFrontCameraActive = true
-            else -> Log.e("CameraContent", "No usable camera found!")
-        }
+        isSwitchButtonVisible = front && back
+        isFrontCameraActive = front
     }
 
+    // Logika spasi otomatis jika tangan tidak terdeteksi selama 1 detik
     LaunchedEffect(Unit) {
         while (true) {
             delay(100)
-
             if (detectedWord.isEmpty()) {
                 noHandDetectionStartTime = null
                 continue
             }
-
             if (lastDetectedGesture == "No Hand") {
                 val now = System.currentTimeMillis()
                 if (noHandDetectionStartTime == null) {
@@ -183,7 +171,6 @@ fun CameraContent() {
                 } else if (now - noHandDetectionStartTime!! >= 1000) {
                     if (!detectedWord.endsWith(" ")) {
                         detectedWord += " "
-                        Log.i("SignClassifier", "Space added after 1s 'No Hand'")
                     }
                     noHandDetectionStartTime = null
                 }
@@ -192,7 +179,6 @@ fun CameraContent() {
             }
         }
     }
-
 
     val previewView = remember { PreviewView(context) }
     val cameraProviderFuture = remember { ProcessCameraProvider.getInstance(context) }
@@ -210,21 +196,17 @@ fun CameraContent() {
                 context = context,
                 onGestureDetected = { gesture, conf ->
                     lastDetectedGesture = gesture
-
                     if (!isCooldownActive) {
                         label = gesture
                         confidence = conf
-
                         if (gesture != "No Hand" && gesture.length == 1) {
                             if (gesture == lastLabel) {
                                 stableCount++
                                 if (stableCount >= stabilityThreshold) {
                                     detectedWord += gesture
-
                                     isCooldownActive = true
                                     stableCount = 0
                                     lastLabel = ""
-
                                     coroutineScope.launch {
                                         delay(cooldownDuration)
                                         isCooldownActive = false
@@ -250,11 +232,7 @@ fun CameraContent() {
                 .setTargetResolution(Size(640, 480))
                 .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                 .build()
-                .also { analysis ->
-                    analysis.setAnalyzer(cameraExecutor) { imageProxy ->
-                        detector?.detect(imageProxy)
-                    }
-                }
+                .also { it.setAnalyzer(cameraExecutor) { img -> detector?.detect(img) } }
 
             try {
                 provider.bindToLifecycle(lifecycleOwner, selector, preview, analyzer)
@@ -264,82 +242,78 @@ fun CameraContent() {
         }, ContextCompat.getMainExecutor(context))
     }
 
-    AndroidView(factory = { previewView }, modifier = Modifier.fillMaxSize())
+    Box(modifier = Modifier.fillMaxSize()) {
+        AndroidView(factory = { previewView }, modifier = Modifier.fillMaxSize())
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
-        Box(modifier = Modifier.align(Alignment.TopCenter)) {
+        // Overlay Label Real-time
+        Box(modifier = Modifier.align(Alignment.TopCenter).padding(top = 16.dp)) {
             Text(
                 text = if (label == "No Hand") "Tidak ada tangan"
                 else "$label (${String.format("%.2f", confidence)})",
                 color = Color.White,
-                fontSize = 22.sp,
+                fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier
-                    .background(Color.Black.copy(alpha = 0.7f), RoundedCornerShape(8.dp))
-                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                    .background(Color.Black.copy(alpha = 0.6f), RoundedCornerShape(8.dp))
+                    .padding(horizontal = 16.dp, vertical = 6.dp)
             )
         }
 
+        // Card Hasil Kata & Tombol Aksi
         Card(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth()
-                .padding(12.dp),
+                .padding(16.dp),
             colors = CardDefaults.cardColors(containerColor = Color(0xFF2E7D32)),
-            shape = RoundedCornerShape(16.dp)
+            shape = RoundedCornerShape(20.dp)
         ) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier.padding(16.dp)
             ) {
-                Text("Hasil Kata:", color = Color.White.copy(alpha = 0.8f), fontSize = 16.sp)
+                Text("Hasil Terjemahan:", color = Color.White.copy(alpha = 0.8f), fontSize = 14.sp)
                 Text(
-                    text = if (detectedWord.isEmpty())
-                        "Belum ada huruf terdeteksi"
-                    else detectedWord + "\uFEFF",
+                    text = if (detectedWord.isEmpty()) "..." else detectedWord,
                     color = Color.White,
-                    fontSize = 22.sp,
-                    fontWeight = FontWeight.Bold
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    modifier = Modifier.padding(vertical = 8.dp)
                 )
 
                 Spacer(Modifier.height(8.dp))
 
                 if (detectedWord.isNotEmpty()) {
                     Row(
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Button(
-                            onClick = {
-                                tts?.speak(detectedWord, TextToSpeech.QUEUE_FLUSH, null, null)
-                            },
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = Color.White,
-                                contentColor = Color(0xFF2E7D32)
-                            ),
-                            shape = RoundedCornerShape(50)
-                        ) {
-                            Icon(Icons.Default.VolumeUp, contentDescription = "Baca Kata")
-                            Spacer(Modifier.width(4.dp))
-                            Text("Baca", fontWeight = FontWeight.Bold)
-                        }
+                        // Tombol Baca (TTS)
+                        ActionButton(
+                            onClick = { tts?.speak(detectedWord, TextToSpeech.QUEUE_FLUSH, null, null) },
+                            icon = Icons.Default.VolumeUp,
+                            label = "Baca",
+                            containerColor = Color.White,
+                            contentColor = Color(0xFF2E7D32)
+                        )
 
-                        Button(
+                        // Tombol Hapus Satu Huruf (BACKSPACE)
+                        ActionButton(
+                            onClick = { detectedWord = detectedWord.dropLast(1) },
+                            icon = Icons.AutoMirrored.Filled.Backspace,
+                            label = "Hapus",
+                            containerColor = Color.White.copy(alpha = 0.2f),
+                            contentColor = Color.White
+                        )
+
+                        // Tombol Reset Semua
+                        ActionButton(
                             onClick = { detectedWord = "" },
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = Color.White.copy(alpha = 0.9f),
-                                contentColor = Color(0xFFB71C1C)
-                            ),
-                            shape = RoundedCornerShape(50)
-                        ) {
-                            Icon(Icons.Default.Clear, contentDescription = "Hapus Kata")
-                            Spacer(Modifier.width(4.dp))
-                            Text("Hapus", fontWeight = FontWeight.Bold)
-                        }
+                            icon = Icons.Default.DeleteSweep,
+                            label = "Reset",
+                            containerColor = Color.White.copy(alpha = 0.2f),
+                            contentColor = Color.White
+                        )
                     }
                 }
             }
@@ -350,7 +324,8 @@ fun CameraContent() {
                 onClick = { isFrontCameraActive = !isFrontCameraActive },
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
-                    .offset(y = (-100).dp)
+                    .padding(bottom = 180.dp, end = 16.dp),
+                containerColor = MaterialTheme.colorScheme.primaryContainer
             ) {
                 Icon(Icons.Default.Cameraswitch, contentDescription = "Ganti Kamera")
             }
@@ -358,6 +333,28 @@ fun CameraContent() {
     }
 }
 
+@Composable
+fun ActionButton(
+    onClick: () -> Unit,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    label: String,
+    containerColor: Color,
+    contentColor: Color
+) {
+    Button(
+        onClick = onClick,
+        colors = ButtonDefaults.buttonColors(
+            containerColor = containerColor,
+            contentColor = contentColor
+        ),
+        shape = RoundedCornerShape(12.dp),
+        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
+    ) {
+        Icon(icon, contentDescription = label, modifier = Modifier.size(18.dp))
+        Spacer(Modifier.width(4.dp))
+        Text(label, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+    }
+}
 
 @Composable
 fun PermissionDeniedView(launcher: androidx.activity.compose.ManagedActivityResultLauncher<String, Boolean>) {
@@ -366,14 +363,10 @@ fun PermissionDeniedView(launcher: androidx.activity.compose.ManagedActivityResu
         verticalArrangement = Arrangement.Center,
         modifier = Modifier.fillMaxSize().padding(24.dp)
     ) {
-        Text(
-            "Akses kamera diperlukan untuk menerjemahkan gerakan.",
-            style = MaterialTheme.typography.titleMedium,
-            color = Color.Black
-        )
+        Text("Akses kamera diperlukan untuk aplikasi ini.", color = Color.Black)
         Spacer(Modifier.height(16.dp))
         Button(onClick = { launcher.launch(Manifest.permission.CAMERA) }) {
-            Text("Minta Izin Kamera")
+            Text("Berikan Izin")
         }
     }
 }

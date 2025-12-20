@@ -176,7 +176,7 @@ fun AddKamusScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Tambah Kata Isyarat Baru", fontWeight = FontWeight.SemiBold) },
+                title = { Text("Tambah Kata Isyarat Baru", fontWeight = FontWeight.SemiBold, color = DarkText) },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Kembali")
