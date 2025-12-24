@@ -24,7 +24,7 @@ services:
       - ./back-end/uploads:/app/uploads
       - ./back-end/kamus_videos:/app/kamus_videos
     depends_on:
-      - db
+      - db-signlink
 
 volumes:
   db_data:
