@@ -1,7 +1,7 @@
 services:
   db:
     image: postgres:15
-    container_name: db-signlink
+    container_name: signlink-db
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${BACKEND_DATABASE_ROOT_USERNAME}
@@ -14,7 +14,7 @@ services:
 
   back-end:
     build: ./back-end
-    container_name: back-end
+    container_name: signlink-back-end
     restart: unless-stopped
     env_file:
       - ./back-end/.env
